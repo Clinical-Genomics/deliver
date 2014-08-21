@@ -2,33 +2,58 @@
 #   usage:
 #      cg2custnames.bash     (run in the OUTBOX directory of the flowcell, it should contain the fastqfiles and sampleList.csv)
 #
-date > renaminglog.txt
-metas=$(ls | grep meta)
-for meta in ${metas[@]}; do
+DATETIME=$(date +%Y%m%d%H%M%S)
+renaminglog="renaminglog.${DATETIME}.txt"
+date > ${renaminglog}
+meta=$(ls | grep meta)
+sfil=$(ls stats*txt)
+slist=$(ls | grep sampleList)
+if [ ! -f ${meta} ] ; then
+  echo meta: ${meta} is no file 
+  echo meta: ${meta} is no file, will exi, will exit >> ${renaminglog}
+  exit 9
+else
+  echo meta: ${meta} exists
+  echo meta: ${meta} exists >> ${renaminglog}
+fi
+if [ ! -f ${sfil} ] ; then
+  echo stats: ${sfil} is no file
+  echo stats: ${sfil} is no file, will exit >> ${renaminglog}
+  exit 9
+else
+  echo stats: ${sfil} exists
+  echo stats: ${sfil} exists >> ${renaminglog}
+fi
+if [ ! -f ${slist} ] ; then
+  echo samplelist: ${slist} is no file 
+  echo samplelist: ${slist} is no file, will exit >> ${renaminglog}
+  exit 9
+else
+  echo samplelist: ${slist} exists
+  echo samplelist: ${slist} exists >> ${renaminglog}
+fi
+
+#     remove 'Sample_' from sample name in meta file
 cp ${meta} ${meta}.bak
 awk '{split($1,arr,"_");if (arr[1]=="Sample") {out=arr[2]} else {out=arr[1]};print out,$2,$3,$4,$5,$6,$7}' ${meta} > metatext
 mv metatext ${meta}
 chmod g+w ${meta}
-echo cp ${meta} ${meta}.bak >> renaminglog.txt
-sfil=$(ls stats*txt)
+echo cp ${meta} ${meta}.bak >> ${renaminglog}
 
+#     remove 'Sample_' from sample name in stats file if present
 cp ${sfil} ${sfil}.bak
-echo cp ${sfil} ${sfil}.bak >> renaminglog.txt
+echo cp ${sfil} ${sfil}.bak >> ${renaminglog}
 awk 'BEGIN {OFS="\t"} {split($1,arr,"_");if (arr[1]=="Sample") {out=arr[2]} else {out=arr[1]};print out,$2,$3,$4,$5,$6,$7,$8,$9}' ${sfil} > wo${sfil}
 mv wo${sfil} ${sfil}
 chmod g+w ${sfil}
-smplists=$(ls | grep sampleList)
-for slist in ${smplists[@]}; do
+
+#     change internal sample name to customer sample name in fastq file names as shown in 'sampleList'
 namepairs=$(awk 'BEGIN {FS=","} {if ($1 != "Project") print $3"KLISTERKLISTER"$2}' ${slist})
 fastqfiles=$(ls | grep ".fastq.gz$")
 for fil in ${fastqfiles[@]};do
   for pair in ${namepairs[@]};do 
-#  echo ${pair}
     cgname=$(echo ${pair} | awk 'BEGIN {FS="KLISTERKLISTER"} {print $1}')
-#  echo ${cgname}
     cuname=$(echo ${pair} | awk 'BEGIN {FS="KLISTERKLISTER"} {print $2}')
-#  echo ${cuname}
-#  echo $fastqfiles
     if [[ ${fil} == *${cgname}* ]]; then 
       newname=$(echo ${fil} | sed "s/${cgname}/${cuname}/")
       newname=$(echo ${newname} | sed 's/Sample_//g' | sed 's/_R1/_1/g' | sed 's/_R2/_2/g')
@@ -37,25 +62,25 @@ for fil in ${fastqfiles[@]};do
         newname=${nnwopn}
       fi
       sed -i "s/${fil}/${newname}/g" ${meta}
-      echo sed -i "s/${fil}/${newname}/g" ${meta} >> renaminglog.txt
+      echo sed -i "s/${fil}/${newname}/g" ${meta} >> ${renaminglog}
+      echo renaming ${fil} to ${newname} in ${meta} 
     fi
-#    echo ${fil} ${newname} 
   done
   mv ${fil} ${newname} 
-  echo mv ${fil} ${newname} >> renaminglog.txt
-#  echo ${fil} ${nnwopn}
+  echo mv ${fil} ${newname} >> ${renaminglog}
+  echo renaming file ${fil} to ${newname} 
 done
 
-
+#     change internal sample name to customer sample name in meta and stats files as shown in 'sampleList'
 for pair in ${namepairs[@]};do
   cgname=$(echo ${pair} | awk 'BEGIN {FS="KLISTERKLISTER"} {print $1}')
   cuname=$(echo ${pair} | awk 'BEGIN {FS="KLISTERKLISTER"} {print $2}')
   sed -i "s/${cgname}/${cuname}/g" ${sfil}
-  echo sed -i "s/${cgname}/${cuname}/g" ${sfil} >> renaminglog.txt
+  echo sed -i "s/${cgname}/${cuname}/g" ${sfil} >> ${renaminglog}
   sed -i "s/${cgname}/${cuname}/g" ${meta}
-  echo sed -i "s/${cgname}/${cuname}/g" ${meta} >> renaminglog.txt
+  echo sed -i "s/${cgname}/${cuname}/g" ${meta} >> ${renaminglog}
+  echo renaming sample ${cgname} to ${cuname} in ${sfil} and ${meta}
 done
 
-done
 
-done
+
