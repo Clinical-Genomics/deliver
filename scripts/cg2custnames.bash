@@ -6,27 +6,27 @@ DATETIME=$(date +%Y%m%d%H%M%S)
 renaminglog="renaminglog.${DATETIME}.txt"
 date > ${renaminglog}
 meta=$(ls | grep meta)
-sfil=$(ls stats*txt)
+sfil=$(ls | grep stats | grep txt)
 slist=$(ls | grep sampleList)
-if [ ! -f ${meta} ] ; then
-  echo meta: ${meta} is no file 
-  echo meta: ${meta} is no file, will exi, will exit >> ${renaminglog}
+if [ ! -f "${meta}" ] ; then
+  echo meta: ${meta} no such file, will exit 
+  echo meta: ${meta} no such file, will exit >> ${renaminglog}
   exit 9
 else
   echo meta: ${meta} exists
   echo meta: ${meta} exists >> ${renaminglog}
 fi
-if [ ! -f ${sfil} ] ; then
-  echo stats: ${sfil} is no file
-  echo stats: ${sfil} is no file, will exit >> ${renaminglog}
+if [ ! -f "${sfil}" ] ; then
+  echo stats: ${sfil} no such file, will exit
+  echo stats: ${sfil} no such file, will exit >> ${renaminglog}
   exit 9
 else
   echo stats: ${sfil} exists
   echo stats: ${sfil} exists >> ${renaminglog}
 fi
-if [ ! -f ${slist} ] ; then
-  echo samplelist: ${slist} is no file 
-  echo samplelist: ${slist} is no file, will exit >> ${renaminglog}
+if [ ! -f "${slist}" ] ; then
+  echo samplelist: ${slist} no such file, will exit
+  echo samplelist: ${slist} no such file, will exit >> ${renaminglog}
   exit 9
 else
   echo samplelist: ${slist} exists
