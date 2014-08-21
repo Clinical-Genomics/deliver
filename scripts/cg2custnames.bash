@@ -5,6 +5,40 @@
 DATETIME=$(date +%Y%m%d%H%M%S)
 renaminglog="renaminglog.${DATETIME}.txt"
 date > ${renaminglog}
+metas=$(ls | grep meta)
+if [ -f "meta.txt" ] ; then
+  rm meta.txt
+fi
+for meta in ${metas[@]}; do
+  tail -n +2 ${meta} >> meta.txt
+  new=$(echo ${meta} | sed 's/meta/meOLDta/')
+  mv ${meta} ${new}
+done
+sfil=$(ls | grep stats | grep txt)
+if [ -f "stats.txt" ] ; then
+  rm stats.txt
+fi
+for stat in ${sfil[@]}; do
+  head -1 ${stat} > stats.txt
+done
+for stat in ${sfil[@]}; do
+  tail -n +2 ${stat} >> stats.txt
+  new=$(echo ${stat} | sed 's/stat/stOLDat/')
+  mv ${stat} ${new}
+done
+slist=$(ls | grep sampleList)
+if [ -f "sampleList.csv" ] ; then
+  rm sampleList.csv
+fi
+for list in ${slist[@]}; do
+  head -1 ${list} > sampleList.csv
+done
+for list in ${slist[@]}; do
+  tail -n +2 ${list} >> sampleList.csv
+  new=$(echo ${list} | sed 's/pleLi/pleOLDLi/')
+  mv ${list} ${new}
+done
+
 meta=$(ls | grep meta)
 sfil=$(ls | grep stats | grep txt)
 slist=$(ls | grep sampleList)
