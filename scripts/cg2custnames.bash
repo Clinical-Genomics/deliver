@@ -72,6 +72,7 @@ cp ${meta} ${meta}.bak
 awk '{split($1,arr,"_");if (arr[1]=="Sample") {out=arr[2]} else {out=arr[1]};print out,$2,$3,$4,$5,$6,$7}' ${meta} > metatext
 mv metatext ${meta}
 chmod g+w ${meta}
+chmod g+x ${meta}
 echo cp ${meta} ${meta}.bak >> ${renaminglog}
 
 #     remove 'Sample_' from sample name in stats file if present
@@ -80,6 +81,7 @@ echo cp ${sfil} ${sfil}.bak >> ${renaminglog}
 awk 'BEGIN {OFS="\t"} {split($1,arr,"_");if (arr[1]=="Sample") {out=arr[2]} else {out=arr[1]};print out,$2,$3,$4,$5,$6,$7,$8,$9}' ${sfil} > wo${sfil}
 mv wo${sfil} ${sfil}
 chmod g+w ${sfil}
+chmod g+x ${sfil}
 
 #     change internal sample name to customer sample name in fastq file names as shown in 'sampleList'
 namepairs=$(awk 'BEGIN {FS=","} {if ($1 != "Project") print $3"KLISTERKLISTER"$2}' ${slist})
@@ -101,6 +103,7 @@ for fil in ${fastqfiles[@]};do
     fi
   done
   mv ${fil} ${newname} 
+  chmod g+x ${newname}
   echo mv ${fil} ${newname} >> ${renaminglog}
   echo renaming file ${fil} to ${newname} 
 done
