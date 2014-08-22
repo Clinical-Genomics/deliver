@@ -10,7 +10,7 @@ if [ -f "meta.txt" ] ; then
   rm meta.txt
 fi
 for meta in ${metas[@]}; do
-  tail -n +2 ${meta} >> meta.txt
+  awk '{if (NF>1) print $0}' ${meta} >> meta.txt
   new=$(echo ${meta} | sed 's/meta/meOLDta/')
   mv ${meta} ${new}
 done
