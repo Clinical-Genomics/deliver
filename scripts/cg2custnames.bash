@@ -119,5 +119,10 @@ for pair in ${namepairs[@]};do
   echo renaming sample ${cgname} to ${cuname} in ${sfil} and ${meta}
 done
 
+prj=$(ls | grep meOLDta | awk BEGIN {FS"-"} {print $2})
+flc=$(ls | grep meOLDta | awk BEGIN {FS"-"} {print $3} | sed 's/.txt//')
+echo copying ${renaminglog} to /mnt/hds/proj/bioinfo/OUTBOX/${flc}Project_${prj}/
+cp ${renaminglog} /mnt/hds/proj/bioinfo/OUTBOX/${flc}Project_${prj}/
+
 
 
