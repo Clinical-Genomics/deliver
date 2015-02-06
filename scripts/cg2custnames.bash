@@ -84,6 +84,7 @@ chmod g+w ${sfil}
 chmod g+x ${sfil}
 
 #     change internal sample name to customer sample name in fastq file names as shown in 'sampleList'
+# awk 'BEGIN {FS=","} {if (substr($2, length($2))=="B") {$2=substr($2,1,length($2)-1)};if ($1 != "Project") print $3"KLISTERKLISTER"$2}' sampleList.csv 
 namepairs=$(awk 'BEGIN {FS=","} {if ($1 != "Project") print $3"KLISTERKLISTER"$2}' ${slist})
 fastqfiles=$(ls | grep ".fastq.gz$")
 for fil in ${fastqfiles[@]};do
