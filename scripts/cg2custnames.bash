@@ -93,7 +93,7 @@ for fil in ${fastqfiles[@]};do
     echo ${pair}
     cgname=$(echo ${pair} | awk 'BEGIN {FS="KLISTERKLISTER"} {print $1}')
     cuname=$(echo ${pair} | awk 'BEGIN {FS="KLISTERKLISTER"} {print $2}')
-    newname=""
+    
     if [[ ${fil} == *${cgname}F* ]]; then 
       newname=$(echo ${fil} | sed "s/_${cgname}F_/_${cuname}_/")
       echo "f", ${newname}
