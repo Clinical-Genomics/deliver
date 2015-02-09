@@ -85,14 +85,25 @@ chmod g+x ${sfil}
 
 #     change internal sample name to customer sample name in fastq file names as shown in 'sampleList'
 # awk 'BEGIN {FS=","} {if (substr($2, length($2))=="B") {$2=substr($2,1,length($2)-1)};if ($1 != "Project") print $3"KLISTERKLISTER"$2}' sampleList.csv 
-namepairs=$(awk 'BEGIN {FS=","} {if ($1 != "Project") print $3"KLISTERKLISTER"$2}' ${slist})
+#awk 'BEGIN {FS=","} {if ($1 != "Project") print $3"KLISTERKLISTER"$2}' ${slist})
+namepairs=$(awk 'BEGIN {FS=","} {if (NF>1) {cgout=$3;if (substr($3, length($3))=="B") {cgout=substr($3,1,length($3)-1)};
+if (substr($3, length($3))=="F") {cgout=substr($3,1,length($3)-1)}};
+if ($1 != "Project") print cgout"KLISTERKLISTER"$2}' ${slist})
 fastqfiles=$(ls | grep ".fastq.gz$")
 for fil in ${fastqfiles[@]};do
   for pair in ${namepairs[@]};do 
     cgname=$(echo ${pair} | awk 'BEGIN {FS="KLISTERKLISTER"} {print $1}')
     cuname=$(echo ${pair} | awk 'BEGIN {FS="KLISTERKLISTER"} {print $2}')
+    newname=""
+    if [[ ${fil} == *${cgname}F* ]]; then 
+      newname=$(echo ${fil} | sed "s/${cgname}F/${cuname}/")
+    fi
+    if [[ ${fil} == *${cgname}B* ]]; then 
+      newname=$(echo ${fil} | sed "s/${cgname}B/${cuname}/")
+    fi
     if [[ ${fil} == *${cgname}* ]]; then 
       newname=$(echo ${fil} | sed "s/${cgname}/${cuname}/")
+    fi
       newname=$(echo ${newname} | sed 's/Sample_//g' | sed 's/_R1/_1/g' | sed 's/_R2/_2/g')
       nnwopn=$(echo ${newname} | awk 'BEGIN {FS="_";OFS="_"} {if ($7!="") print $1,$2,$3,$4,$6,$7}')
       if [ ! -z ${nnwopn} ]; then
@@ -113,11 +124,15 @@ done
 for pair in ${namepairs[@]};do
   cgname=$(echo ${pair} | awk 'BEGIN {FS="KLISTERKLISTER"} {print $1}')
   cuname=$(echo ${pair} | awk 'BEGIN {FS="KLISTERKLISTER"} {print $2}')
+  sed -i "s/${cgname}F/${cuname}/g" ${sfil}
+  sed -i "s/${cgname}B/${cuname}/g" ${sfil}
   sed -i "s/${cgname}/${cuname}/g" ${sfil}
-  echo sed -i "s/${cgname}/${cuname}/g" ${sfil} >> ${renaminglog}
+  echo sed -i "s/${cgname}[FB]/${cuname}/g" ${sfil} >> ${renaminglog}
+  sed -i "s/${cgname}F/${cuname}/g" ${meta}
+  sed -i "s/${cgname}B/${cuname}/g" ${meta}
   sed -i "s/${cgname}/${cuname}/g" ${meta}
-  echo sed -i "s/${cgname}/${cuname}/g" ${meta} >> ${renaminglog}
-  echo renaming sample ${cgname} to ${cuname} in ${sfil} and ${meta}
+  echo sed -i "s/${cgname}[FB]/${cuname}/g" ${meta} >> ${renaminglog}
+  echo renaming sample ${cgname}[FB] to ${cuname} in ${sfil} and ${meta}
 done
 
 prj=$(ls | grep meOLDta | awk BEGIN {FS="-"} {print $2})
