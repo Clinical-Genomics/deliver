@@ -90,20 +90,21 @@ namepairs=$(awk 'BEGIN {FS=","} {if (NF>1) {cgout=$3;if (substr($3, length($3))=
 fastqfiles=$(ls | grep ".fastq.gz$")
 for fil in ${fastqfiles[@]};do
   for pair in ${namepairs[@]};do 
+    echo ${pair}
     cgname=$(echo ${pair} | awk 'BEGIN {FS="KLISTERKLISTER"} {print $1}')
     cuname=$(echo ${pair} | awk 'BEGIN {FS="KLISTERKLISTER"} {print $2}')
     newname=""
     if [[ ${fil} == *${cgname}F* ]]; then 
       newname=$(echo ${fil} | sed "s/_${cgname}F_/_${cuname}_/")
-      print "f", ${newname}
+      echo "f", ${newname}
     fi
     if [[ ${fil} == *${cgname}B* ]]; then 
       newname=$(echo ${fil} | sed "s/_${cgname}B_/_${cuname}_/")
-      print "b", ${newname}
+      echo "b", ${newname}
     fi
     if [[ ${fil} == *${cgname}* ]]; then 
       newname=$(echo ${fil} | sed "s/_${cgname}_/_${cuname}_/")
-      print ${newname}
+      echo ${newname}
     fi
     print "after", ${newname}
     newname=$(echo ${newname} | sed 's/Sample_//g' | sed 's/_R1/_1/g' | sed 's/_R2/_2/g')
