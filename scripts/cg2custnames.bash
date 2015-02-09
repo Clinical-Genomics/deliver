@@ -86,9 +86,7 @@ chmod g+x ${sfil}
 #     change internal sample name to customer sample name in fastq file names as shown in 'sampleList'
 # awk 'BEGIN {FS=","} {if (substr($2, length($2))=="B") {$2=substr($2,1,length($2)-1)};if ($1 != "Project") print $3"KLISTERKLISTER"$2}' sampleList.csv 
 #awk 'BEGIN {FS=","} {if ($1 != "Project") print $3"KLISTERKLISTER"$2}' ${slist})
-namepairs=$(awk 'BEGIN {FS=","} {if (NF>1) {cgout=$3;if (substr($3, length($3))=="B") {cgout=substr($3,1,length($3)-1)};
-if (substr($3, length($3))=="F") {cgout=substr($3,1,length($3)-1)}}; 
-if ($1 != "Project") print cgout"KLISTERKLISTER"$2}' ${slist})
+namepairs=$(awk 'BEGIN {FS=","} {if (NF>1) {cgout=$3;if (substr($3, length($3))=="B") {cgout=substr($3,1,length($3)-1)};if (substr($3, length($3))=="F") {cgout=substr($3,1,length($3)-1)}}; if ($1 != "Project") print cgout"KLISTERKLISTER"$2}' ${slist})
 fastqfiles=$(ls | grep ".fastq.gz$")
 for fil in ${fastqfiles[@]};do
   for pair in ${namepairs[@]};do 
