@@ -96,13 +96,13 @@ for fil in ${fastqfiles[@]};do
     cuname=$(echo ${pair} | awk 'BEGIN {FS="KLISTERKLISTER"} {print $2}')
     newname=""
     if [[ ${fil} == *${cgname}F* ]]; then 
-      newname=$(echo ${fil} | sed "s/${cgname}F/${cuname}/")
+      newname=$(echo ${fil} | sed "s/_${cgname}F_/_${cuname}_/")
     fi
     if [[ ${fil} == *${cgname}B* ]]; then 
-      newname=$(echo ${fil} | sed "s/${cgname}B/${cuname}/")
+      newname=$(echo ${fil} | sed "s/_${cgname}B_/_${cuname}_/")
     fi
     if [[ ${fil} == *${cgname}* ]]; then 
-      newname=$(echo ${fil} | sed "s/${cgname}/${cuname}/")
+      newname=$(echo ${fil} | sed "s/_${cgname}_/_${cuname}_/")
     fi
     newname=$(echo ${newname} | sed 's/Sample_//g' | sed 's/_R1/_1/g' | sed 's/_R2/_2/g')
     nnwopn=$(echo ${newname} | awk 'BEGIN {FS="_";OFS="_"} {if ($7!="") print $1,$2,$3,$4,$6,$7}')
@@ -123,21 +123,21 @@ done
 for pair in ${namepairs[@]};do
   cgname=$(echo ${pair} | awk 'BEGIN {FS="KLISTERKLISTER"} {print $1}')
   cuname=$(echo ${pair} | awk 'BEGIN {FS="KLISTERKLISTER"} {print $2}')
-  sed -i "s/${cgname}F/${cuname}/g" ${sfil}
-  sed -i "s/${cgname}B/${cuname}/g" ${sfil}
-  sed -i "s/${cgname}/${cuname}/g" ${sfil}
-  echo sed -i "s/${cgname}[FB]/${cuname}/g" ${sfil} >> ${renaminglog}
-  sed -i "s/${cgname}F/${cuname}/g" ${meta}
-  sed -i "s/${cgname}B/${cuname}/g" ${meta}
-  sed -i "s/${cgname}/${cuname}/g" ${meta}
-  echo sed -i "s/${cgname}[FB]/${cuname}/g" ${meta} >> ${renaminglog}
+  sed -i "s/_${cgname}F_/_${cuname}_/g" ${sfil}
+  sed -i "s/_${cgname}B_/_${cuname}_/g" ${sfil}
+  sed -i "s/_${cgname}_/_${cuname}_/g" ${sfil}
+  echo sed -i "s/_${cgname}[FB]_/_${cuname}_/g" ${sfil} >> ${renaminglog}
+  sed -i "s/_${cgname}F_/_${cuname}_/g" ${meta}
+  sed -i "s/_${cgname}B_/_${cuname}_/g" ${meta}
+  sed -i "s/_${cgname}_/_${cuname}_/g" ${meta}
+  echo sed -i "s/_${cgname}[FB]_/_${cuname}_/g" ${meta} >> ${renaminglog}
   echo renaming sample ${cgname}[FB] to ${cuname} in ${sfil} and ${meta}
 done
 
-prj=$(ls | grep meOLDta | awk BEGIN {FS="-"} {print $2})
-flc=$(ls | grep meOLDta | awk BEGIN {FS="-"} {print $3} | sed 's/.txt//')
-echo copying ${renaminglog} to /mnt/hds/proj/bioinfo/OUTBOX/${flc}/Project_${prj}/
-cp ${renaminglog} /mnt/hds/proj/bioinfo/OUTBOX/${flc}/Project_${prj}/
+#prj=$(ls | grep meOLDta | awk BEGIN {FS="-"} {print $2})
+#flc=$(ls | grep meOLDta | awk BEGIN {FS="-"} {print $3} | sed 's/.txt//')
+#echo copying ${renaminglog} to /mnt/hds/proj/bioinfo/OUTBOX/${flc}/Project_${prj}/
+#cp ${renaminglog} /mnt/hds/proj/bioinfo/OUTBOX/${flc}/Project_${prj}/
 
 
 
