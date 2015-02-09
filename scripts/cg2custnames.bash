@@ -133,6 +133,9 @@ for pair in ${namepairs[@]};do
   sed -i "s/_${cgname}F_/_${cuname}_/g" ${meta}
   sed -i "s/_${cgname}B_/_${cuname}_/g" ${meta}
   sed -i "s/_${cgname}_/_${cuname}_/g" ${meta}
+  sed -i "s/${cgname}F/${cuname}/g" ${meta}
+  sed -i "s/${cgname}B/${cuname}/g" ${meta}
+  sed -i "s/${cgname}/${cuname}/g" ${meta}
   echo sed -i "s/_${cgname}[FB]_/_${cuname}_/g" ${meta} >> ${renaminglog}
   echo renaming sample ${cgname}[FB] to ${cuname} in ${sfil} and ${meta}
 done
