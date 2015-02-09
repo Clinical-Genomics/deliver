@@ -107,7 +107,7 @@ for fil in ${fastqfiles[@]};do
       newname=$(echo ${fil} | sed "s/_${cgname}_/_${cuname}_/")
       print ${newname}
     fi
-    print "after", "${newname}
+    print "after", ${newname}
     newname=$(echo ${newname} | sed 's/Sample_//g' | sed 's/_R1/_1/g' | sed 's/_R2/_2/g')
     nnwopn=$(echo ${newname} | awk 'BEGIN {FS="_";OFS="_"} {if ($7!="") print $1,$2,$3,$4,$6,$7}')
     if [ ! -z ${nnwopn} ]; then
