@@ -93,7 +93,10 @@ for fil in ${fastqfiles[@]};do
     echo ${pair}
     cgname=$(echo ${pair} | awk 'BEGIN {FS="KLISTERKLISTER"} {print $1}')
     cuname=$(echo ${pair} | awk 'BEGIN {FS="KLISTERKLISTER"} {print $2}')
-    
+    if [[ ${fil} == *${cgname}* ]]; then 
+      newname=$(echo ${fil} | sed "s/_${cgname}_/_${cuname}_/")
+      echo ohne ${newname}
+    fi
     if [[ ${fil} == *${cgname}F* ]]; then 
       newname=$(echo ${fil} | sed "s/_${cgname}F_/_${cuname}_/")
       echo "f", ${newname}
@@ -101,10 +104,6 @@ for fil in ${fastqfiles[@]};do
     if [[ ${fil} == *${cgname}B* ]]; then 
       newname=$(echo ${fil} | sed "s/_${cgname}B_/_${cuname}_/")
       echo "b", ${newname}
-    fi
-    if [[ ${fil} == *${cgname}* ]]; then 
-      newname=$(echo ${fil} | sed "s/_${cgname}_/_${cuname}_/")
-      echo ${newname}
     fi
     echo "after", ${newname}
     newname=$(echo ${newname} | sed 's/Sample_//g' | sed 's/_R1/_1/g' | sed 's/_R2/_2/g')
