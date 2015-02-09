@@ -104,15 +104,14 @@ for fil in ${fastqfiles[@]};do
     if [[ ${fil} == *${cgname}* ]]; then 
       newname=$(echo ${fil} | sed "s/${cgname}/${cuname}/")
     fi
-      newname=$(echo ${newname} | sed 's/Sample_//g' | sed 's/_R1/_1/g' | sed 's/_R2/_2/g')
-      nnwopn=$(echo ${newname} | awk 'BEGIN {FS="_";OFS="_"} {if ($7!="") print $1,$2,$3,$4,$6,$7}')
-      if [ ! -z ${nnwopn} ]; then
-        newname=${nnwopn}
-      fi
-      sed -i "s/${fil}/${newname}/g" ${meta}
-      echo sed -i "s/${fil}/${newname}/g" ${meta} >> ${renaminglog}
-      echo renaming ${fil} to ${newname} in ${meta} 
+    newname=$(echo ${newname} | sed 's/Sample_//g' | sed 's/_R1/_1/g' | sed 's/_R2/_2/g')
+    nnwopn=$(echo ${newname} | awk 'BEGIN {FS="_";OFS="_"} {if ($7!="") print $1,$2,$3,$4,$6,$7}')
+    if [ ! -z ${nnwopn} ]; then
+      newname=${nnwopn}
     fi
+    sed -i "s/${fil}/${newname}/g" ${meta}
+    echo sed -i "s/${fil}/${newname}/g" ${meta} >> ${renaminglog}
+    echo renaming ${fil} to ${newname} in ${meta} 
   done
   mv ${fil} ${newname} 
   chmod g+x ${newname}
