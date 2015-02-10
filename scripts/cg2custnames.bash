@@ -31,7 +31,7 @@ if [ -f "sampleList.csv" ] ; then
   rm sampleList.csv
 fi
 for list in ${slist[@]}; do
-  head -1 ${list} > sampleList.csv
+  head -1 ${list} > sampleList.csv 
 done
 for list in ${slist[@]}; do
   tail -n +2 ${list} >> sampleList.csv
