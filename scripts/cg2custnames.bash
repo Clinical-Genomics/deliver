@@ -90,22 +90,17 @@ namepairs=$(awk 'BEGIN {FS=","} {if (NF>1) {cgout=$3;if (substr($3, length($3))=
 fastqfiles=$(ls | grep ".fastq.gz$")
 for fil in ${fastqfiles[@]};do
   for pair in ${namepairs[@]};do 
-    echo ${pair}
     cgname=$(echo ${pair} | awk 'BEGIN {FS="KLISTERKLISTER"} {print $1}')
     cuname=$(echo ${pair} | awk 'BEGIN {FS="KLISTERKLISTER"} {print $2}')
     if [[ ${fil} == *${cgname}* ]]; then 
       newname=$(echo ${fil} | sed "s/_${cgname}_/_${cuname}_/")
-      echo ohne ${newname}
     fi
     if [[ ${fil} == *${cgname}F* ]]; then 
       newname=$(echo ${fil} | sed "s/_${cgname}F_/_${cuname}_/")
-      echo "f", ${newname}
     fi
     if [[ ${fil} == *${cgname}B* ]]; then 
       newname=$(echo ${fil} | sed "s/_${cgname}B_/_${cuname}_/")
-      echo "b", ${newname}
     fi
-    echo "after", ${newname}
     newname=$(echo ${newname} | sed 's/Sample_//g' | sed 's/_R1/_1/g' | sed 's/_R2/_2/g')
     nnwopn=$(echo ${newname} | awk 'BEGIN {FS="_";OFS="_"} {if ($7!="") print $1,$2,$3,$4,$6,$7}')
     if [ ! -z ${nnwopn} ]; then
@@ -129,9 +124,9 @@ for pair in ${namepairs[@]};do
   sed -i "s/${cgname}B/${cuname}/g" ${sfil}
   sed -i "s/${cgname}/${cuname}/g" ${sfil}
   echo sed -i "s/${cgname}[FB]/${cuname}/g" ${sfil} >> ${renaminglog}
-  sed -i "s/_${cgname}F_/_${cuname}_/g" ${meta}
-  sed -i "s/_${cgname}B_/_${cuname}_/g" ${meta}
-  sed -i "s/_${cgname}_/_${cuname}_/g" ${meta}
+#  sed -i "s/_${cgname}F_/_${cuname}_/g" ${meta}
+#  sed -i "s/_${cgname}B_/_${cuname}_/g" ${meta}
+#  sed -i "s/_${cgname}_/_${cuname}_/g" ${meta}
   sed -i "s/${cgname}F/${cuname}/g" ${meta}
   sed -i "s/${cgname}B/${cuname}/g" ${meta}
   sed -i "s/${cgname}/${cuname}/g" ${meta}
