@@ -106,10 +106,10 @@ for fil in ${fastqfiles[@]};do
     if [ ! -z ${nnwopn} ]; then
       newname=${nnwopn}
     fi
-    sed -i "s/${fil}/${newname}/g" ${meta}
-    echo sed -i "s/${fil}/${newname}/g" ${meta} >> ${renaminglog}
-    echo renaming ${fil} to ${newname} in ${meta} 
   done
+  sed -i "s/${fil}/${newname}/g" ${meta}
+  echo sed -i "s/${fil}/${newname}/g" ${meta} >> ${renaminglog}
+  echo renaming ${fil} to ${newname} in ${meta} 
   mv ${fil} ${newname} 
   chmod g+x ${newname}
   echo mv ${fil} ${newname} >> ${renaminglog}
