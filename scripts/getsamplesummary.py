@@ -10,7 +10,15 @@ import os
 import select
 from access import db
 
- 
+fc = "flowcell"
+
+try:
+  sys.argv[1]
+except NameError:
+  sys.exit("Usage: " + sys.argv[0] + " <flowcell name>")
+else:
+  fc = sys.argv[1]
+
 pars = db.readconfig("non")
 
 def getsamplesfromflowcell(fc):
