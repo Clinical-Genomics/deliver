@@ -57,8 +57,8 @@ for sample in smpls.iterkeys():
   for info in dbinfo:
     print str(info)
     if (info['q30'] > 80):
-      cnt =+ 1
-      rc =+ info['M_reads']
+      cnt += 1
+      rc += info['M_reads']
       fclanes[cnt] = info['fc'] + "_" + info['lanes']
   if (rc > 75):
     print "pass " + str(rc) + " M reads " + str(fclanes)
