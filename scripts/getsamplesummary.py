@@ -29,7 +29,7 @@ def getsampleinfofromname(pars, sample):
                    pars['CLINICALDBUSER'], pars['CLINICALDBPASSWD']) as dbc:
       replies = dbc.generalquery( query )
       print len(replies), sample
-    
+  return replies
     
     
 fc = "flowcell"
