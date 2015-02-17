@@ -8,8 +8,8 @@ import re
 import socket
 import os
 import select
-from db import *
-from lims import *
+from access import *
+
 
 print "Hi"
 
