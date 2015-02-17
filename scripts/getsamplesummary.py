@@ -11,7 +11,7 @@ import select
 from access import db, lims
 
 fc_samples = {}
-def getsamplesfromflowcell(flwc):
+def getsamplesfromflowcell(pars, flwc):
   samples = glob.glob(pars['DEMUXDIR'] + "*" + flwc + "*/Unaligned/Project_*/Sample_*")
   for sampl in samples:
     sample = sampl.split("/")[len(sampl.split("/"))-1].split("_")[1]
@@ -42,10 +42,11 @@ if len(sys.argv) > 0:
 else:
   sys.exit("Usage: " + sys.argv[0] + " <flowcell name>")
 
-pars = db.readconfig("non")
+params = db.readconfig("non")
 
 smpls = getsamplesfromflowcell(fc)
 
 for sample in smpls.iterkeys():
   print sample
+  dbinfo = getsampleinfofromname(params, sample)
 
