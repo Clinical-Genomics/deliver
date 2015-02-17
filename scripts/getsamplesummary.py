@@ -18,8 +18,18 @@ def getsamplesfromflowcell(flwc):
     fc_samples[sample] = ''
   return fc_samples
   
-def getcustidfromsample
-
+def getsampleinfofromname(pars, sample):
+  query = """" SELECT sample_id, flowcellname, lane, readcounts, q30_bases_pct, mean_quality_score FROM sample, unaligned, flowcell 
+              WHERE sample.sample_id = unaligned.sample_id AND unaligned.flowcell_id = flowcell-flowcell_id 
+              AND samplename = '""" + sample + """' """
+  with create_tunnel(pars['TUNNELCMD']):
+    with dbconnect(pars['CLINICALDBHOST'], pars['CLINICALDBPORT'], pars['STATSDB'], 
+                   pars['CLINICALDBUSER'], pars['CLINICALDBPASSWD']) as dbc:
+      replies = dbc.generalquery( query )
+      print len(replies), sample
+    
+    
+    
 fc = "flowcell"
 
 if len(sys.argv) > 0:
