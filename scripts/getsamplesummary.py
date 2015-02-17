@@ -11,7 +11,7 @@ import select
 from access import db
 
 fc = "flowcell"
-if len(sys.argv) > 1:
+if len(sys.argv) > 0:
   try:
     sys.argv[1]
   except NameError:
