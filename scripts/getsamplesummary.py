@@ -44,7 +44,7 @@ else:
 
 params = db.readconfig("non")
 
-smpls = getsamplesfromflowcell(fc)
+smpls = getsamplesfromflowcell(params, fc)
 
 for sample in smpls.iterkeys():
   print sample
