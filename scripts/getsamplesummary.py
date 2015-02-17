@@ -32,7 +32,6 @@ def getsampleinfofromname(pars, sample):
       print len(replies), sample
   return replies
     
-    
 fc = "flowcell"
 
 if len(sys.argv) > 0:
@@ -52,6 +51,17 @@ smpls = getsamplesfromflowcell(params, fc)
 for sample in smpls.iterkeys():
   print sample
   dbinfo = getsampleinfofromname(params, sample)
+  rc = 0
+  fclanes = {}
+  cnt = 0
   for info in dbinfo:
     print str(info)
-
+    if (info['q30'] > 80):
+      cnt =+ 1
+      rc =+ info['M_reads']
+      fclanes[cnt] = info['fc'] + "_" + info['lane']
+  if (rc > 75):
+    print "pass " + str(rc) + " M reads " + str(fclanes)
+  else:
+    print "fail " + str(rc) + " M reads " + str(fclanes)
+    
