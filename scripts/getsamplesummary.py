@@ -11,13 +11,15 @@ import select
 from access import db
 
 fc = "flowcell"
-
-try:
-  sys.argv[1]
-except NameError:
-  sys.exit("Usage: " + sys.argv[0] + " <flowcell name>")
+if len(sys.argv) > 1:
+  try:
+    sys.argv[1]
+  except NameError:
+    sys.exit("Usage: " + sys.argv[0] + " <flowcell name>")
+  else:
+    fc = sys.argv[1]
 else:
-  fc = sys.argv[1]
+  sys.exit("Usage: " + sys.argv[0] + " <flowcell name>")
 
 pars = db.readconfig("non")
 
