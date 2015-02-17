@@ -20,7 +20,7 @@ def getsamplesfromflowcell(pars, flwc):
   
 def getsampleinfofromname(pars, sample):
   query = (" SELECT GROUP_CONCAT(DISTINCT sample.sample_id), GROUP_CONCAT(DISTINCT flowcellname), GROUP_CONCAT(DISTINCT lane), " + 
-           " ROUND(SUM(readcounts)/2000000,2), GROUP_CONCAT(ROUND(q30_bases_pct,2), " ", ROUND(mean_quality_score,2)) " + 
+           " ROUND(SUM(readcounts)/2000000,2), GROUP_CONCAT(ROUND(q30_bases_pct,2), ' ', ROUND(mean_quality_score,2)) " + 
            " FROM sample, unaligned, flowcell " + 
            " WHERE sample.sample_id = unaligned.sample_id AND unaligned.flowcell_id = flowcell.flowcell_id " +
            " AND samplename LIKE '" + sample + "%' GROUP BY flowcell.flowcell_id")
