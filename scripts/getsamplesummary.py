@@ -13,8 +13,8 @@ from access import db
 def getsamplesfromflowcell(flwc):
   print flwc
   samples = glob.glob(pars['DEMUXDIR'] + "*" + flwc + "*/Unaligned/Project_*/")
-  for sample.full in samples:
-    sample = sample.full.split("_")[1]
+  for sampl in samples:
+    sample = sampl.split("_")[1]
     print sample
   return samples
 
