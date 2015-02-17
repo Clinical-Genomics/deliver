@@ -10,6 +10,14 @@ import os
 import select
 from access import db
 
+def getsamplesfromflowcell(flwc):
+  print flwc
+  samples = glob.glob(pars['DEMUX'] + "*" + flwc + "*/Unaligned/Project_*/")
+  for sample.full in samples:
+    sample = sample.full.split("_")[1]
+    print sample
+  return samples
+
 fc = "flowcell"
 print sys.argv[1]
 if len(sys.argv) > 0:
@@ -25,14 +33,6 @@ else:
 pars = db.readconfig("non")
 
 smpls = getsamplesfromflowcell(fc)
-
-def getsamplesfromflowcell(flwc):
-  print flwc
-  samples = glob.glob(pars['DEMUX'] + "*" + flwc + "*/Unaligned/Project_*/")
-  for sample.full in samples:
-    sample = sample.full.split("_")[1]
-    print sample
-  return samples
 
 
 print "Hi"
