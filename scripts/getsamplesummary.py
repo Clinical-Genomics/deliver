@@ -10,7 +10,7 @@ import os
 import select
 from access import db
 
-with access 
+ 
 pars = readconfig()
 
 def getsamplesfromflowcell(fc):
