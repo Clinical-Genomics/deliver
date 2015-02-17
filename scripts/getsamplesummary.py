@@ -8,7 +8,7 @@ import re
 import socket
 import os
 import select
-from access import db
+from access import db, lims
 
 fc_samples = {}
 def getsamplesfromflowcell(flwc):
@@ -17,6 +17,8 @@ def getsamplesfromflowcell(flwc):
     sample = sampl.split("/")[len(sampl.split("/"))-1].split("_")[1]
     fc_samples[sample] = ''
   return fc_samples
+  
+def getcustidfromsample
 
 fc = "flowcell"
 
@@ -36,3 +38,4 @@ smpls = getsamplesfromflowcell(fc)
 
 for sample in smpls.iterkeys():
   print sample
+
