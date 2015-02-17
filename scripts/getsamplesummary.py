@@ -24,11 +24,16 @@ else:
 
 pars = db.readconfig("non")
 
-def getsamplesfromflowcell(fc):
-  samples = glob.glob(pars['DEMUX'] + "*" + fc + "*/Unaligned/Project_*/")
+smpls = getsamplesfromflowcell(fc)
+
+def getsamplesfromflowcell(flwc):
+  print flwc
+  samples = glob.glob(pars['DEMUX'] + "*" + flwc + "*/Unaligned/Project_*/")
   for sample.full in samples:
     sample = sample.full.split("_")[1]
     print sample
+  return samples
+
 
 print "Hi"
 
