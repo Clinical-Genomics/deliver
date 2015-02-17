@@ -59,7 +59,7 @@ for sample in smpls.iterkeys():
     if (info['q30'] > 80):
       cnt =+ 1
       rc =+ info['M_reads']
-      fclanes[cnt] = info['fc'] + "_" + info['lane']
+      fclanes[cnt] = info['fc'] + "_" + info['lanes']
   if (rc > 75):
     print "pass " + str(rc) + " M reads " + str(fclanes)
   else:
