@@ -8,8 +8,9 @@ import re
 import socket
 import os
 import select
-from access import db.readconfig
+from access import db
 
+with access 
 pars = readconfig()
 
 def getsamplesfromflowcell(fc):
