@@ -51,4 +51,6 @@ smpls = getsamplesfromflowcell(params, fc)
 for sample in smpls.iterkeys():
   print sample
   dbinfo = getsampleinfofromname(params, sample)
+  for info in dbinfo:
+    print str(info)
 
