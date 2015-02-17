@@ -14,8 +14,8 @@ def getsamplesfromflowcell(flwc):
   print flwc
   samples = glob.glob(pars['DEMUXDIR'] + "*" + flwc + "*/Unaligned/Project_*/Sample_*")
   for sampl in samples:
-    sample = sampl.split("/")[:1]
-    print sample
+    smpl = sampl.split("/")[len(sampl.split("/"))]
+    print smpl
   return samples
 
 fc = "flowcell"
