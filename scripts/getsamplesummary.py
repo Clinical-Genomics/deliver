@@ -19,10 +19,11 @@ def getsamplesfromflowcell(pars, flwc):
   return fc_samples
   
 def getsampleinfofromname(pars, sample):
-  query = (" SELECT sample.sample_id, flowcellname, lane, readcounts, q30_bases_pct, mean_quality_score " + 
+  query = (" SELECT GROUP_CONCAT(DISTINCT sample.sample_id), GROUP_CONCAT(DISTINCT flowcellname), GROUP_CONCAT(DISTINCT lane), " + 
+           " GROUP_CONCAT(readcounts, q30_bases_pct, mean_quality_score) " + 
            " FROM sample, unaligned, flowcell " + 
            " WHERE sample.sample_id = unaligned.sample_id AND unaligned.flowcell_id = flowcell.flowcell_id " +
-           " AND samplename LIKE '" + sample + "%' ")
+           " AND samplename LIKE '" + sample + "%' GROUP BY flowcell.flowcell_id")
   with db.create_tunnel(pars['TUNNELCMD']):
     with db.dbconnect(pars['CLINICALDBHOST'], pars['CLINICALDBPORT'], pars['STATSDB'], 
                    pars['CLINICALDBUSER'], pars['CLINICALDBPASSWD']) as dbc:
