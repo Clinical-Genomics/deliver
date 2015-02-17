@@ -8,7 +8,7 @@ import re
 import socket
 import os
 import select
-from access import readconfig
+from access import db.readconfig
 
 pars = readconfig()
 
