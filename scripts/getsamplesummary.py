@@ -11,7 +11,7 @@ import select
 from access import db
 
  
-pars = db.readconfig()
+pars = db.readconfig("non")
 
 def getsamplesfromflowcell(fc):
   samples = glob.glob(pars['DEMUX'] + "*" + fc + "*/Unaligned/Project_*/")
