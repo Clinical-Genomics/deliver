@@ -19,7 +19,7 @@ def getsamplesfromflowcell(pars, flwc):
   return fc_samples
   
 def getsampleinfofromname(pars, sample):
-  query = (" SELECT sample.sample_id AS id, flowcellname AS fc, " + 
+  query = (" SELECT sample.sample_id AS id, samplename, flowcellname AS fc, " + 
            " lane, ROUND(readcounts/2000000,2) AS M_reads, " +
            " ROUND(q30_bases_pct,2) AS q30, ROUND(mean_quality_score,2) AS score " + 
            " FROM sample, unaligned, flowcell " + 
