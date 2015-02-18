@@ -48,22 +48,23 @@ params = db.readconfig("non")
 smpls = getsamplesfromflowcell(params, fc)
 
 for sample in smpls.iterkeys():
-  print 
+  print sample
   with lims.limsconnect(params['apiuser'], params['apipass'], params['baseuri']) as lmc:
     analysistype = lmc.getattribute('samples', sample, "Sequencing Analysis")
     print analysistype
+    readcounts = analysistype[-3:]
   dbinfo = getsampleinfofromname(params, sample)
   rc = 0         # counter for total readcount of sample
   fclanes = {}   # dict to keep flowcell names and lanes for a sample
   cnt = 0        # counter used in the dict to keep folwcell/lane count
   for info in dbinfo:
-    if (info['q30'] > 80):     # Use readcount from lane only if it satisfies QC
+    if (info['q30'] > 80):     # Use readcount from lane only if it satisfies QC [=80%]
       cnt += 1
       rc += info['M_reads']    
       fclanes[cnt] = info['fc'] + "_" + str(info['lane'])
-  if (rc > 75):
+  if (rc > readcounts):
     print sample + " Passed " + str(rc) + " M reads\nUsing reads from " + str(fclanes)
-    
+    print readcounts
   else:
     print sample + " Fail " + str(rc) + " M reads\nThese flowcells summarixed " + str(fclanes)
     
