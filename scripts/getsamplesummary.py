@@ -67,5 +67,5 @@ for sample in smpls.iterkeys():
     print readcounts
   else:
     print sample + " Fail " + str(rc) + " M reads\nThese flowcells summarixed " + str(fclanes)
-    
+    print readcounts
 
