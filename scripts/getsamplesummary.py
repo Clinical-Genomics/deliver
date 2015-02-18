@@ -49,7 +49,7 @@ smpls = getsamplesfromflowcell(params, fc)
 
 for sample in smpls.iterkeys():
   print sample
-  analysistype = getattribute('samples', sample, "Sequencing Analysis")
+  analysistype = lims.getattribute('samples', sample, "Sequencing Analysis")
   print analysistype
   dbinfo = getsampleinfofromname(params, sample)
   rc = 0         # counter for total readcount of sample
