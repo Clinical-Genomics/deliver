@@ -52,7 +52,7 @@ for sample in smpls.iterkeys():
   with lims.limsconnect(params['apiuser'], params['apipass'], params['baseuri']) as lmc:
     analysistype = lmc.getattribute('samples', sample, "Sequencing Analysis")
     print analysistype
-    readcounts = analysistype[-3:]
+    readcounts = .75 * analysistype[-3:]    # Accepted readcount is 75% of ordered million reads
   dbinfo = getsampleinfofromname(params, sample)
   rc = 0         # counter for total readcount of sample
   fclanes = {}   # dict to keep flowcell names and lanes for a sample
