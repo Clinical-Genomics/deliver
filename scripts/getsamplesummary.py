@@ -49,20 +49,20 @@ params = db.readconfig("non")
 smpls = getsamplesfromflowcell(params, fc)
 
 for sample in smpls.iterkeys():
-  print sample
+#  print sample
   dbinfo = getsampleinfofromname(params, sample)
-  rc = 0
-  fclanes = {}
-  cnt = 0
+  rc = 0         # counter for total readcount of sample
+  fclanes = {}   # dict to keep flowcell names and lanes for a sample
+  cnt = 0        # counter used in the dict to keep folwcell/lane count
   for info in dbinfo:
-#    print str(info)
-    if (info['q30'] > 80):
+    if (info['q30'] > 80):     # Use readcount from lane only if it satisfies QC
       cnt += 1
-      rc += info['M_reads']
+      rc += info['M_reads']    
       fclanes[cnt] = info['fc'] + "_" + str(info['lane'])
   if (rc > 75):
-    print "Passed " + str(rc) + " M reads\nUsing reads from " + str(fclanes)
+    print sample + " Passed " + str(rc) + " M reads\nUsing reads from " + str(fclanes)
     
   else:
-    print "Fail " + str(rc) + " M reads\nThese flowcells summarixed " + str(fclanes)
+    print sample + " Fail " + str(rc) + " M reads\nThese flowcells summarixed " + str(fclanes)
     
+
