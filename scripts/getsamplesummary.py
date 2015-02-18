@@ -49,7 +49,7 @@ params = db.readconfig("non")
 smpls = getsamplesfromflowcell(params, fc)
 
 for sample in smpls.iterkeys():
-#  print sample
+  print sample
   dbinfo = getsampleinfofromname(params, sample)
   rc = 0         # counter for total readcount of sample
   fclanes = {}   # dict to keep flowcell names and lanes for a sample
