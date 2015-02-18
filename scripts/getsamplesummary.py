@@ -29,7 +29,6 @@ def getsampleinfofromname(pars, sample):
     with db.dbconnect(pars['CLINICALDBHOST'], pars['CLINICALDBPORT'], pars['STATSDB'], 
                    pars['CLINICALDBUSER'], pars['CLINICALDBPASSWD']) as dbc:
       replies = dbc.generalquery( query )
-      print len(replies), sample
   return replies
     
 fc = "flowcell"
@@ -50,6 +49,8 @@ smpls = getsamplesfromflowcell(params, fc)
 
 for sample in smpls.iterkeys():
   print sample
+  analysistype = getattribute('samples', sample, "Sequencing Analysis")
+  print analysistype
   dbinfo = getsampleinfofromname(params, sample)
   rc = 0         # counter for total readcount of sample
   fclanes = {}   # dict to keep flowcell names and lanes for a sample
