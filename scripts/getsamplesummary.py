@@ -55,13 +55,14 @@ for sample in smpls.iterkeys():
   fclanes = {}
   cnt = 0
   for info in dbinfo:
-    print str(info)
+#    print str(info)
     if (info['q30'] > 80):
       cnt += 1
       rc += info['M_reads']
       fclanes[cnt] = info['fc'] + "_" + str(info['lane'])
   if (rc > 75):
-    print "pass " + str(rc) + " M reads " + str(fclanes)
+    print "Passed " + str(rc) + " M reads\nUsing reads from " + str(fclanes)
+    
   else:
-    print "fail " + str(rc) + " M reads " + str(fclanes)
+    print "Fail " + str(rc) + " M reads\nThese flowcells summarixed " + str(fclanes)
     
