@@ -49,7 +49,7 @@ smpls = getsamplesfromflowcell(params, fc)
 
 for sample in smpls.iterkeys():
   print 
-  with limsconnect(params['apiuser'], params['apipass'], params['baseuri']) as lmc:
+  with lims.limsconnect(params['apiuser'], params['apipass'], params['baseuri']) as lmc:
     analysistype = lmc.getattribute('samples', sample, "Sequencing Analysis")
     print analysistype
   dbinfo = getsampleinfofromname(params, sample)
