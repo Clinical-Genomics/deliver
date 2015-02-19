@@ -25,6 +25,7 @@ def getsampleinfofromname(pars, sample):
            " FROM sample, unaligned, flowcell " + 
            " WHERE sample.sample_id = unaligned.sample_id AND unaligned.flowcell_id = flowcell.flowcell_id " +
            " AND (samplename LIKE '" + sample + "_%' OR samplename = '" + sample + "')")
+  print query
   with db.create_tunnel(pars['TUNNELCMD']):
     with db.dbconnect(pars['CLINICALDBHOST'], pars['CLINICALDBPORT'], pars['STATSDB'], 
                    pars['CLINICALDBUSER'], pars['CLINICALDBPASSWD']) as dbc:
