@@ -12,8 +12,18 @@ from access import db, lims
 
 outputdir = '/mnt/hds/proj/bioinfo/tmp/MIPP/exomes/'
 
-if not os.path.exists(outputdir):
-  os.makedirs(outputdir)
+fc = "flowcell"
+if len(sys.argv) > 0:
+  try:
+    sys.argv[1]
+  except NameError:
+    sys.exit("Usage: " + sys.argv[0] + " <flowcell name>")
+  else:
+    fc = sys.argv[1]
+else:
+  sys.exit("Usage: " + sys.argv[0] + " <flowcell name>")
+
+params = db.readconfig("non")
 
 fc_samples = {}
 def getsamplesfromflowcell(pars, flwc):
@@ -36,18 +46,16 @@ def getsampleinfofromname(pars, sample):
       replies = dbc.generalquery( query )
   return replies
 
-fc = "flowcell"
-if len(sys.argv) > 0:
-  try:
-    sys.argv[1]
-  except NameError:
-    sys.exit("Usage: " + sys.argv[0] + " <flowcell name>")
+def makelinks(samplename, lanedict):
+  if os.path.exists(outputdir + samplename):
+    print outputdir + samplename + ' exists, has data already been exported?'
+    return
   else:
-    fc = sys.argv[1]
-else:
-  sys.exit("Usage: " + sys.argv[0] + " <flowcell name>")
-
-params = db.readconfig("non")
+    os.makedirs(outputdir + samplename)
+    for entry in lanedict:
+      fclane = lanedict.split("_")
+      fastqfile = glob.glob(pars['DEMUXDIR'] + "*" + fclane[0] + "*/Unaligned/Project_*/Sample_*" + samplename + "[_/]*/*gz")
+      print fastqfile
 
 smpls = getsamplesfromflowcell(params, fc)
 
@@ -66,11 +74,7 @@ for sample in smpls.iterkeys():
       fclanes[cnt] = info['fc'] + "_" + str(info['q30']) + "_" + str(info['lane'])
   if (rc > readcounts):        # If enough reads are obtained do
     print sample + " Passed " + str(rc) + " M reads\nUsing reads from " + str(fclanes)
-    if not os.path.exists(outputdir + sample):
-      os.makedirs()
-      
-    else:
-      print outputdir + sample + ' already exists has data already been exported?'
+    makelinks(sample, fclanes)
 
   else:                        # Otherwise just present the data
     print sample + " Fail " + str(rc) + " M reads\nThese flowcells summarixed " + str(fclanes)
