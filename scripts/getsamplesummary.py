@@ -47,11 +47,11 @@ def getsampleinfofromname(pars, sample):
   return replies
 
 def makelinks(samplename, lanedict):
-  if os.path.exists(outputdir + samplename):
+  if not os.path.exists(outputdir + samplename):
     print outputdir + samplename + ' exists, has data already been exported?'
-    return
+#    return
   else:
-    os.makedirs(outputdir + samplename)
+#    os.makedirs(outputdir + samplename)
     for entry in lanedict:
       fclane = lanedict[entry].split("_")
       fastqfiles = glob.glob(pars['DEMUXDIR'] + "*" + fclane[0] + "*/Unaligned/Project_*/Sample_*" + 
