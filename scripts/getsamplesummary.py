@@ -54,8 +54,10 @@ def makelinks(samplename, lanedict):
     os.makedirs(outputdir + samplename)
     for entry in lanedict:
       fclane = lanedict.split("_")
-      fastqfile = glob.glob(pars['DEMUXDIR'] + "*" + fclane[0] + "*/Unaligned/Project_*/Sample_*" + samplename + "[_/]*/*gz")
-      print fastqfile
+      fastqfiles = glob.glob(pars['DEMUXDIR'] + "*" + fclane[0] + "*/Unaligned/Project_*/Sample_*" + 
+                            samplename + "[_/]*/*L00" + fclane[0] + "*gz")
+      for fastqfile in fastqfiles:
+        print fastqfile
 
 smpls = getsamplesfromflowcell(params, fc)
 
