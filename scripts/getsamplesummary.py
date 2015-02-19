@@ -59,6 +59,9 @@ def makelinks(samplename, lanedict):
       fastqfiles = glob.glob(params['DEMUXDIR'] + "*" + fclane[0] + "*/Unaligned/Project_*/Sample_*" + 
                             samplename + "_*/*L00" + fclane[2] + "*gz")
       for fastqfile in fastqfiles:
+        nameparts = fastqfile.split("/")[len(fastqfile.split("/"))-1].split("_")
+        date_fc = fastqfile.split("/")[6].split("_")[0] + "_" + fastqfile.split("/")[6][-9:]
+        newname = nameparts[3][-1:] + "_" + date_fc + nameparts[2] + "_" + nameparts[4][-1:] + ".fastq.gz"
         print fastqfile
 
 smpls = getsamplesfromflowcell(params, fc)
