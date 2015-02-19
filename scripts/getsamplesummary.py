@@ -54,7 +54,7 @@ def makelinks(samplename, lanedict):
 #    os.makedirs(outputdir + samplename)
     for entry in lanedict:
       fclane = lanedict[entry].split("_")
-      fastqfiles = glob.glob(pars['DEMUXDIR'] + "*" + fclane[0] + "*/Unaligned/Project_*/Sample_*" + 
+      fastqfiles = glob.glob(params['DEMUXDIR'] + "*" + fclane[0] + "*/Unaligned/Project_*/Sample_*" + 
                             samplename + "[_/]*/*L00" + fclane[0] + "*gz")
       for fastqfile in fastqfiles:
         print fastqfile
