@@ -25,7 +25,6 @@ def getsampleinfofromname(pars, sample):
            " FROM sample, unaligned, flowcell " + 
            " WHERE sample.sample_id = unaligned.sample_id AND unaligned.flowcell_id = flowcell.flowcell_id " +
            " AND (samplename LIKE '" + sample + "_%' OR samplename = '" + sample + "')")
-  print query
   with db.create_tunnel(pars['TUNNELCMD']):
     with db.dbconnect(pars['CLINICALDBHOST'], pars['CLINICALDBPORT'], pars['STATSDB'], 
                    pars['CLINICALDBUSER'], pars['CLINICALDBPASSWD']) as dbc:
@@ -60,7 +59,7 @@ for sample in smpls.iterkeys():
       cnt += 1
       rc += info['M_reads']    
       fclanes[cnt] = info['fc'] + "_" + str(info['q30']) + "_" + str(info['lane'])
-  if (rc > readcounts):        # If enough reads are obteined do
+  if (rc > readcounts):        # If enough reads are obtained do
     print sample + " Passed " + str(rc) + " M reads\nUsing reads from " + str(fclanes)
   else:                        # Otherwise just present the data
     print sample + " Fail " + str(rc) + " M reads\nThese flowcells summarixed " + str(fclanes)
