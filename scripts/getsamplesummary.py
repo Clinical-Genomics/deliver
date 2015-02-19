@@ -10,6 +10,11 @@ import os
 import select
 from access import db, lims
 
+outputdir = '/mnt/hds/proj/bioinfo/tmp/MIPP/exomes/'
+
+if not os.path.exists(outputdir):
+  os.makedirs(outputdir)
+
 fc_samples = {}
 def getsamplesfromflowcell(pars, flwc):
   samples = glob.glob(pars['DEMUXDIR'] + "*" + flwc + "*/Unaligned/Project_*/Sample_*")
@@ -17,7 +22,7 @@ def getsamplesfromflowcell(pars, flwc):
     sample = sampl.split("/")[len(sampl.split("/"))-1].split("_")[1]
     fc_samples[sample] = ''
   return fc_samples
-  
+
 def getsampleinfofromname(pars, sample):
   query = (" SELECT sample.sample_id AS id, samplename, flowcellname AS fc, " + 
            " lane, ROUND(readcounts/2000000,2) AS M_reads, " +
@@ -61,6 +66,12 @@ for sample in smpls.iterkeys():
       fclanes[cnt] = info['fc'] + "_" + str(info['q30']) + "_" + str(info['lane'])
   if (rc > readcounts):        # If enough reads are obtained do
     print sample + " Passed " + str(rc) + " M reads\nUsing reads from " + str(fclanes)
+    if not os.path.exists(outputdir + sample):
+      os.makedirs()
+      
+    else:
+      print outputdir + sample + ' already exists has data already been exported?'
+
   else:                        # Otherwise just present the data
     print sample + " Fail " + str(rc) + " M reads\nThese flowcells summarixed " + str(fclanes)
 
