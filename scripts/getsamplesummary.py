@@ -24,7 +24,7 @@ def getsampleinfofromname(pars, sample):
            " ROUND(q30_bases_pct,2) AS q30, ROUND(mean_quality_score,2) AS score " + 
            " FROM sample, unaligned, flowcell " + 
            " WHERE sample.sample_id = unaligned.sample_id AND unaligned.flowcell_id = flowcell.flowcell_id " +
-           " AND (samplename LIKE '" + sample + "_%' OR samplename = '" + sample + "'")
+           " AND (samplename LIKE '" + sample + "_%' OR samplename = '" + sample + "')")
   with db.create_tunnel(pars['TUNNELCMD']):
     with db.dbconnect(pars['CLINICALDBHOST'], pars['CLINICALDBPORT'], pars['STATSDB'], 
                    pars['CLINICALDBUSER'], pars['CLINICALDBPASSWD']) as dbc:
