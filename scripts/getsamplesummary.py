@@ -63,7 +63,7 @@ def makelinks(samplename, lanedict):
         newname = nameparts[3][-1:] + "_" + date_fc + "_" + nameparts[2] + "_" + nameparts[4][-1:] + ".fastq.gz"
         print fastqfile
         print newname
-        os.symlink(fastqfile, outputdir + samplename + "/" newname)
+        os.symlink(fastqfile, outputdir + samplename + "/" + newname)
 
 smpls = getsamplesfromflowcell(params, fc)
 
