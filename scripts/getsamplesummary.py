@@ -32,6 +32,7 @@ def getsampleinfofromname(pars, sample):
       replies = dbc.generalquery( query )
   return replies
 
+fc = "flowcell"
 if len(sys.argv) > 0:
   try:
     sys.argv[1]
@@ -44,7 +45,6 @@ else:
 
 params = db.readconfig("non")
 
-fc = "flowcell"
 smpls = getsamplesfromflowcell(params, fc)
 
 for sample in smpls.iterkeys():
