@@ -60,7 +60,8 @@ def makelinks(samplename, lanedict):
       for fastqfile in fastqfiles:
         nameparts = fastqfile.split("/")[len(fastqfile.split("/"))-1].split("_")
         date_fc = fastqfile.split("/")[6].split("_")[0] + "_" + fastqfile.split("/")[6][-9:]
-        newname = nameparts[3][-1:] + "_" + date_fc + "_" + nameparts[2] + "_" + nameparts[4][-1:] + ".fastq.gz"
+        newname = (nameparts[3][-1:] + "_" + date_fc + "_" + samplename + "_" + nameparts[2] +
+                   "_" + nameparts[4][-1:] + ".fastq.gz")
         print fastqfile
         print newname
         os.symlink(fastqfile, outputdir + samplename + "/" + newname)
