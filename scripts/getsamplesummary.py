@@ -79,7 +79,7 @@ for sample in smpls.iterkeys():
   for info in dbinfo:
     if (info['q30'] > 80):     # Use readcount from lane only if it satisfies QC [=80%]
       cnt += 1
-      rc += info['M_reads']    
+      rc += info['M_reads']
       fclanes[cnt] = info['fc'] + "_" + str(info['q30']) + "_" + str(info['lane'])
   if (rc > readcounts):        # If enough reads are obtained do
     print sample + " Passed " + str(rc) + " M reads\nUsing reads from " + str(fclanes)
