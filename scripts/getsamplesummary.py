@@ -81,10 +81,12 @@ for sample in smpls.iterkeys():
       cnt += 1
       rc += info['M_reads']
       fclanes[cnt] = info['fc'] + "_" + str(info['q30']) + "_" + str(info['lane'])
-  if (rc > readcounts):        # If enough reads are obtained do
-    print sample + " Passed " + str(rc) + " M reads\nUsing reads from " + str(fclanes)
-    makelinks(sample, fclanes)
-
+  if readcounts:
+    if (rc > readcounts):        # If enough reads are obtained do
+      print sample + " Passed " + str(rc) + " M reads\nUsing reads from " + str(fclanes)
+      makelinks(sample, fclanes)
+  else:
+    print sample + " - no analysis parameter specified in lims"
   else:                        # Otherwise just present the data
     print sample + " Fail " + str(rc) + " M reads\nThese flowcells summarixed " + str(fclanes)
 
