@@ -85,8 +85,8 @@ for sample in smpls.iterkeys():
     if (rc > readcounts):        # If enough reads are obtained do
       print sample + " Passed " + str(rc) + " M reads\nUsing reads from " + str(fclanes)
       makelinks(sample, fclanes)
+    else:                        # Otherwise just present the data
+      print sample + " Fail " + str(rc) + " M reads\nThese flowcells summarixed " + str(fclanes)
   else:
     print sample + " - no analysis parameter specified in lims"
-  else:                        # Otherwise just present the data
-    print sample + " Fail " + str(rc) + " M reads\nThese flowcells summarixed " + str(fclanes)
 
