@@ -27,7 +27,7 @@ params = db.readconfig("non")
 
 fc_samples = {}
 def getsamplesfromflowcell(pars, flwc):
-  samples = glob.glob(pars['DEMUXDIR'] + "*" + flwc + "*/Unaligned/Project_*/Sample_*")
+  samples = glob.glob(pars['DEMUXDIR'] + "*" + flwc + "*/Unalign*/Project_*/Sample_*")
   for sampl in samples:
     sample = sampl.split("/")[len(sampl.split("/"))-1].split("_")[1]
     fc_samples[sample] = ''
@@ -55,7 +55,7 @@ def makelinks(samplename, lanedict):
     for entry in lanedict:
       fclane = lanedict[entry].split("_")
       print fclane
-      fastqfiles = glob.glob(params['DEMUXDIR'] + "*" + fclane[0] + "*/Unaligned/Project_*/Sample_*" + 
+      fastqfiles = glob.glob(params['DEMUXDIR'] + "*" + fclane[0] + "*/Unalign*/Project_*/Sample_*" + 
                             samplename + "_*/*L00" + fclane[2] + "*gz")
       for fastqfile in fastqfiles:
         nameparts = fastqfile.split("/")[len(fastqfile.split("/"))-1].split("_")
