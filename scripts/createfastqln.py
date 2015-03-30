@@ -36,6 +36,26 @@ def getsampleinfofromname(sample):
   replies = dbc.generalquery( query )
   return replies
 
+def makelinks(samplename, lanedict):
+  if os.path.exists(outputdir + samplename):
+    print outputdir + samplename + ' exists, has data already been exported?'
+    return
+  else:
+    os.makedirs(outputdir + samplename)
+    for entry in lanedict:
+      fclane = lanedict[entry].split("_")
+      print fclane
+      fastqfiles = glob.glob(params['DEMUXDIR'] + "*" + fclane[0] + "*/Unalign*/Project_*/Sample_*" + 
+                            samplename + "_*/*L00" + fclane[2] + "*gz")
+      for fastqfile in fastqfiles:
+        nameparts = fastqfile.split("/")[len(fastqfile.split("/"))-1].split("_")
+        date_fc = fastqfile.split("/")[6].split("_")[0] + "_" + fastqfile.split("/")[6][-9:]
+        newname = (nameparts[3][-1:] + "_" + date_fc + "_" + samplename + "_" + nameparts[2] +
+                   "_" + nameparts[4][-1:] + ".fastq.gz")
+        print fastqfile
+        print newname
+        os.symlink(fastqfile, outputdir + samplename + "/" + newname)
+
 with db.create_tunnel(pars['TUNNELCMD']):
 
   with db.dbconnect(pars['CLINICALDBHOST'], pars['CLINICALDBPORT'], pars['STATSDB'], 
