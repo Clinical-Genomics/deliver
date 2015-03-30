@@ -71,7 +71,7 @@ with db.create_tunnel(pars['TUNNELCMD']):
 
   flowc = sys.argv[1]
 
-  smpls = getsamplesfromflowcell(params, fc)
+  smpls = getsamplesfromflowcell(flowc)
 
   for sample in smpls.iterkeys():
     with lims.limsconnect(params['apiuser'], params['apipass'], params['baseuri']) as lmc:
