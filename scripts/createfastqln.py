@@ -34,6 +34,7 @@ def getsampleinfofromname(sample):
             WHERE sample.sample_id = unaligned.sample_id AND unaligned.demux_id = demux.demux_id 
             AND flowcell.flowcell_id = demux.flowcell_id  
             AND (samplename LIKE '""" + sample + """_%' OR samplename = '""" + sample + """')""")
+  print query
   replies = dbc.generalquery( query )
   return replies
 
