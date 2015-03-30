@@ -78,7 +78,7 @@ with db.create_tunnel(pars['TUNNELCMD']):
     with lims.limsconnect(pars['apiuser'], pars['apipass'], params['baseuri']) as lmc:
       analysistype = lmc.getattribute('samples', sample, "Sequencing Analysis")
       readcounts = .75 * float(analysistype[-3:])    # Accepted readcount is 75% of ordered million reads
-    dbinfo = getsampleinfofromname(params, sample)
+    dbinfo = getsampleinfofromname(sample)
     rc = 0         # counter for total readcount of sample
     fclanes = {}   # dict to keep flowcell names and lanes for a sample
     cnt = 0        # counter used in the dict to keep folwcell/lane count
