@@ -61,6 +61,7 @@ with db.create_tunnel(pars['TUNNELCMD']):
 
   with db.dbconnect(pars['CLINICALDBHOST'], pars['CLINICALDBPORT'], pars['STATSDB'], 
                         pars['CLINICALDBUSER'], pars['CLINICALDBPASSWD']) as dbc:
+    print pars['CLINICALDBHOST'], pars['CLINICALDBPORT'], pars['STATSDB'], pars['CLINICALDBUSER'], pars['CLINICALDBPASSWD']
 
     ver = dbc.versioncheck(pars['STATSDB'], pars['DBVERSION'])
 
