@@ -69,7 +69,7 @@ with db.create_tunnel(pars['TUNNELCMD']):
     else:
       print "Correct db " + pars['STATSDB'] + " v:" + pars['DBVERSION']
 
-    flowc = sys.argv[2]
+  flowc = sys.argv[1]
 
   smpls = getsamplesfromflowcell(params, fc)
 
