@@ -1,6 +1,7 @@
 #!/usr/bin/python
 #
 import sys
+import glob
 from access import db
 
 """Summarize read counts for sample on flowcell and generat.
