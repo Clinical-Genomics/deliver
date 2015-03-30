@@ -76,9 +76,9 @@ with db.create_tunnel(pars['TUNNELCMD']):
   smpls = getsamplesfromflowcell(flowc)
 
   for sample in smpls.iterkeys():
-    with lims.limsconnect(pars['apiuser'], pars['apipass'], pars['baseuri']) as lmc:
-      analysistype = lmc.getattribute('samples', sample, "Sequencing Analysis")
-      readcounts = .75 * float(analysistype[-3:])    # Accepted readcount is 75% of ordered million reads
+#    with lims.limsconnect(pars['apiuser'], pars['apipass'], pars['baseuri']) as lmc:
+#      analysistype = lmc.getattribute('samples', sample, "Sequencing Analysis")
+#      readcounts = .75 * float(analysistype[-3:])    # Accepted readcount is 75% of ordered million reads
     dbinfo = getsampleinfofromname(sample)
     rc = 0         # counter for total readcount of sample
     fclanes = {}   # dict to keep flowcell names and lanes for a sample
@@ -88,11 +88,11 @@ with db.create_tunnel(pars['TUNNELCMD']):
         cnt += 1
         rc += info['M_reads']
         fclanes[cnt] = info['fc'] + "_" + str(info['q30']) + "_" + str(info['lane'])
-    if readcounts:
-      if (rc > readcounts):        # If enough reads are obtained do
-        print sample + " Passed " + str(rc) + " M reads\nUsing reads from " + str(fclanes)
-        makelinks(sample, fclanes)
-      else:                        # Otherwise just present the data
-        print sample + " Fail " + str(rc) + " M reads\nThese flowcells summarixed " + str(fclanes)
-    else:
-      print sample + " - no analysis parameter specified in lims"
+#    if readcounts:
+    if (rc > readcounts):        # If enough reads are obtained do
+      print sample + " Passed " + str(rc) + " M reads\nUsing reads from " + str(fclanes)
+      makelinks(sample, fclanes)
+    else:                        # Otherwise just present the data
+      print sample + " Fail " + str(rc) + " M reads\nThese flowcells summarixed " + str(fclanes)
+#    else:
+#      print sample + " - no analysis parameter specified in lims"
