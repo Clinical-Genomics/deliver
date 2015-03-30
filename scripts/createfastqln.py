@@ -75,7 +75,7 @@ with db.create_tunnel(pars['TUNNELCMD']):
   smpls = getsamplesfromflowcell(flowc)
 
   for sample in smpls.iterkeys():
-    with lims.limsconnect(pars['apiuser'], pars['apipass'], params['baseuri']) as lmc:
+    with lims.limsconnect(pars['apiuser'], pars['apipass'], pars['baseuri']) as lmc:
       analysistype = lmc.getattribute('samples', sample, "Sequencing Analysis")
       readcounts = .75 * float(analysistype[-3:])    # Accepted readcount is 75% of ordered million reads
     dbinfo = getsampleinfofromname(sample)
