@@ -35,7 +35,7 @@ def getsampleinfofromname(sample):
             WHERE sample.sample_id = unaligned.sample_id AND unaligned.demux_id = demux.demux_id 
             AND flowcell.flowcell_id = demux.flowcell_id  
             AND (samplename LIKE '""" + sample + """_%' OR samplename = '""" + sample + """')""")
-  print query
+#  print query
   replies = dbc.generalquery( query )
   return replies
 
@@ -48,7 +48,7 @@ def makelinks(samplename, lanedict):
     for entry in lanedict:
       fclane = lanedict[entry].split("_")
       print fclane
-      fastqfiles = glob.glob(params['DEMUXDIR'] + "*" + fclane[0] + "*/Unalign*/Project_*/Sample_*" + 
+      fastqfiles = glob.glob(pars['DEMUXDIR'] + "*" + fclane[0] + "*/Unalign*/Project_*/Sample_*" + 
                             samplename + "_*/*L00" + fclane[2] + "*gz")
       for fastqfile in fastqfiles:
         nameparts = fastqfile.split("/")[len(fastqfile.split("/"))-1].split("_")
