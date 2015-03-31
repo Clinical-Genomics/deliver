@@ -58,6 +58,8 @@ def makelinks(samplename, lanedict):
         print fastqfile
         print newname
         os.symlink(fastqfile, outputdir + samplename + "/" + newname)
+        
+outputdir = "/mnt/hds/proj/bioinfo/tmp/MIP2/"
 
 with db.create_tunnel(pars['TUNNELCMD']):
 
