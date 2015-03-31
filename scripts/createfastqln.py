@@ -1,6 +1,7 @@
 #!/usr/bin/python
 #
 import sys
+import os
 import glob
 from access import db, lims
 
