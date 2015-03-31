@@ -90,7 +90,7 @@ with db.create_tunnel(pars['TUNNELCMD']):
           rc += info['M_reads']
           fclanes[cnt] = info['fc'] + "_" + str(info['q30']) + "_" + str(info['lane'])
 #    if readcounts:
-      if (rc > readcounts):        # If enough reads are obtained do
+      if (rc > 75):        # If enough reads are obtained do
         print sample + " Passed " + str(rc) + " M reads\nUsing reads from " + str(fclanes)
         makelinks(sample, fclanes)
       else:                        # Otherwise just present the data
