@@ -3,14 +3,9 @@
 
 from __future__ import print_function
 import sys
-import datetime
-import time
 import glob
 import re
-import socket
 import os
-import os.path
-import select
 from access import db, lims
 
 def getsamplesfromflowcell(pars, flwc):
