@@ -51,21 +51,21 @@ def getsampleinfofromname(pars, sample):
 
 def makelinks(family_id, cust_name, sample_name, lanes):
     try:
-      os.makedirs(outputdir + sample_name)
+      os.makedirs(os.path.join(outputdir, 'exomes', sample_name, 'fastq'))
     except OSError:
       pass
     for entry in lanes:
       fclane = lanes[entry].split("_")
       print(fclane)
       fastqfiles = glob.glob(params['DEMUXDIR'] + "*" + fclane[0] + "*/Unalign*/Project_*/Sample_*" + 
-                            sample_name + "_*/*L00" + fclane[2] + "*gz")
+                            sample_name + "[BF]_*/*L00" + fclane[2] + "*gz")
       for fastqfile in fastqfiles:
         nameparts = fastqfile.split("/")[len(fastqfile.split("/"))-1].split("_")
         date_fc = fastqfile.split("/")[6].split("_")[0] + "_" + fastqfile.split("/")[6][-9:]
         newname = (nameparts[3][-1:] + "_" + date_fc + "_" + sample_name + "_" + nameparts[2] +
                    "_" + nameparts[4][-1:] + ".fastq.gz")
         print(fastqfile)
-        print(newname)
+        print(os.path.join(outputdir, 'exomes', sample_name, 'fastq', newname))
         try:
           os.symlink(fastqfile, os.path.join(outputdir, 'exomes', sample_name, 'fastq', newname))
         except:
