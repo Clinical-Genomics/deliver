@@ -90,6 +90,10 @@ def main(argv):
     cust_name = None
     with lims.limsconnect(params['apiuser'], params['apipass'], params['baseuri']) as lmc:
       analysistype = lmc.getattribute('samples', sample, "Sequencing Analysis")
+      if analysistype is None:
+        print("WARNING: Sequencing Analysis tag not defined for {}".format(sample))
+        # skip to the next sample
+        continue
       readcounts = .75 * float(analysistype[-3:])    # Accepted readcount is 75% of ordered million reads
       family_id = lmc.getattribute('samples', sample, 'familyID')
       cust_name = lmc.getattribute('samples', sample, 'customer')
