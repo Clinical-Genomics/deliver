@@ -1,5 +1,9 @@
 #!/bin/bash
 #
+
+source /mnt/hds/proj/bioinfo/SCRIPTS/log.bash
+echo $(getversion)
+
 UNABASE=/mnt/hds/proj/bioinfo/DEMUX/
 ALIBASE=/mnt/hds/proj/bioinfo/ALIGN/
 runs=$(ls ${UNABASE})
