@@ -10,7 +10,7 @@ import os
 import select
 from access import db, lims
 
-outputdir = '/mnt/hds/proj/bioinfo/tmp/MIPP/exomes/'
+outputdir = '/mnt/hds/proj/bioinfo/MIP_ANALYSIS/exomes/'
 
 fc = "flowcell"
 if len(sys.argv) > 0:
@@ -47,11 +47,10 @@ def getsampleinfofromname(pars, sample):
   return replies
 
 def makelinks(samplename, lanedict):
-  if os.path.exists(outputdir + samplename):
-    print outputdir + samplename + ' exists, has data already been exported?'
-    return
-  else:
-    os.makedirs(outputdir + samplename)
+    try:
+      os.makedirs(outputdir + samplename)
+    except OSError:
+      pass
     for entry in lanedict:
       fclane = lanedict[entry].split("_")
       print fclane
@@ -64,15 +63,19 @@ def makelinks(samplename, lanedict):
                    "_" + nameparts[4][-1:] + ".fastq.gz")
         print fastqfile
         print newname
-        os.symlink(fastqfile, outputdir + samplename + "/" + newname)
+        try:
+          os.symlink(fastqfile, outputdir + samplename + "/fastq/" + newname)
+        except:
+          print "Can't create symlink for " + samplename
 
 smpls = getsamplesfromflowcell(params, fc)
 
 for sample in smpls.iterkeys():
   with lims.limsconnect(params['apiuser'], params['apipass'], params['baseuri']) as lmc:
-    analysistype = lmc.getattribute('samples', sample, "Sequencing Analysis")
+    pure_sample = sample.rstrip('BF') # remove the reprep (B) and reception control fail (F) letters from the samplename
+    analysistype = lmc.getattribute('samples', pure_sample, "Sequencing Analysis")
     readcounts = .75 * float(analysistype[-3:])    # Accepted readcount is 75% of ordered million reads
-  dbinfo = getsampleinfofromname(params, sample)
+  dbinfo = getsampleinfofromname(params, pure_sample)
   rc = 0         # counter for total readcount of sample
   fclanes = {}   # dict to keep flowcell names and lanes for a sample
   cnt = 0        # counter used in the dict to keep folwcell/lane count
@@ -83,10 +86,10 @@ for sample in smpls.iterkeys():
       fclanes[cnt] = info['fc'] + "_" + str(info['q30']) + "_" + str(info['lane'])
   if readcounts:
     if (rc > readcounts):        # If enough reads are obtained do
-      print sample + " Passed " + str(rc) + " M reads\nUsing reads from " + str(fclanes)
-      makelinks(sample, fclanes)
+      print pure_sample + " Passed " + str(rc) + " M reads\nUsing reads from " + str(fclanes)
+      makelinks(pure_sample, fclanes)
     else:                        # Otherwise just present the data
-      print sample + " Fail " + str(rc) + " M reads\nThese flowcells summarixed " + str(fclanes)
+      print pure_sample + " Fail " + str(rc) + " M reads\nThese flowcells summarixed " + str(fclanes)
   else:
-    print sample + " - no analysis parameter specified in lims"
+    print pure_sample + " - no analysis parameter specified in lims"
 
