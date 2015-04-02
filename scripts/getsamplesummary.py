@@ -9,7 +9,8 @@ import os
 from access import db, lims
 
 def getsamplesfromflowcell(demuxdir, flwc):
-  samples = glob.glob("{demuxdir}*{flowcell}*/Unalign*/Project_*/Sample_*".format(demuxdir=demuxdir, flowcell=flwc))
+  samples = glob.glob("{demuxdir}*{flowcell}*/Unalign*/Project_*/Sample_*".\
+    format(demuxdir=demuxdir, flowcell=flwc))
   fc_samples = {}
   for sample in samples:
     sample = sample.split("/")[-1].split("_")[1]
@@ -30,13 +31,7 @@ def getsampleinfofromname(pars, sample):
       replies = dbc.generalquery( query )
   return replies
 
-def makelinks(demuxdir, outputdir, family_id, cust_name, sample_name, lanes):
-    try:
-      os.makedirs(os.path.join(outputdir, 'exomes', sample_name, 'fastq'))
-    except OSError:
-      pass
-    for entry in lanes:
-      fclane = lanes[entry].split("_")
+def make_link(demuxdir, outputdir, family_id, cust_name, sample_name, fclane):
       fastqfiles = glob.glob(
         "{demuxdir}*{fc}*/Unalign*/Project_*/Sample_*{sample_name}[BF]_*/*L00{lane}*gz".format(
           demuxdir=demuxdir, fc=fclane[0], sample_name=sample_name, lane=fclane[2]
@@ -113,14 +108,20 @@ def main(argv):
     if readcounts:
       if (rc > readcounts):        # If enough reads are obtained do
         print("{sample} Passed {readcount} M reads\nUsing reads from {fclanes}".format(sample=sample, readcount=rc, fclanes=fclanes))
-        makelinks(
-          demuxdir=params['DEMUXDIR'],
-          outputdir=outputdir,
-          family_id=family_id,
-          cust_name=cust_name,
-          sample_name=sample,
-          lanes=fclanes
-        )
+        try:
+          os.makedirs(os.path.join(outputdir, 'exomes', sample, 'fastq'))
+        except OSError:
+          pass
+        for entry in fclanes.values():
+          fclane = entry.split("_")
+          make_link(
+            demuxdir=params['DEMUXDIR'],
+            outputdir=outputdir,
+            family_id=family_id,
+            cust_name=cust_name,
+            sample_name=sample,
+            fclane=fclane
+          )
       else:                        # Otherwise just present the data
         print("{sample} Fail {readcount} M reads" +
               "These flowcells summarized {fclanes}".format(sample=sample, readcount=rc, fclanes=fclanes))
