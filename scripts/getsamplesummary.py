@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #
 
-from __future__ import printfunction
+from __future__ import print_function
 import sys
 import datetime
 import time
@@ -56,7 +56,7 @@ def makelinks(family_id, cust_name, sample_name, lanes):
       pass
     for entry in lanes:
       fclane = lanes[entry].split("_")
-      print fclane
+      print(fclane)
       fastqfiles = glob.glob(params['DEMUXDIR'] + "*" + fclane[0] + "*/Unalign*/Project_*/Sample_*" + 
                             sample_name + "_*/*L00" + fclane[2] + "*gz")
       for fastqfile in fastqfiles:
@@ -64,17 +64,22 @@ def makelinks(family_id, cust_name, sample_name, lanes):
         date_fc = fastqfile.split("/")[6].split("_")[0] + "_" + fastqfile.split("/")[6][-9:]
         newname = (nameparts[3][-1:] + "_" + date_fc + "_" + sample_name + "_" + nameparts[2] +
                    "_" + nameparts[4][-1:] + ".fastq.gz")
-        print fastqfile
-        print newname
+        print(fastqfile)
+        print(newname)
         try:
           os.symlink(fastqfile, os.path.join(outputdir, 'exomes', sample_name, 'fastq', newname))
         except:
-          print "Can't create symlink for {}".format(sample_name)
+          print("Can't create symlink for {}".format(sample_name))
         try:
-          if cust_name != None or family_id != None:
-            os.symlink(fastqfile, os.path.join(outputdir, cust_name, family_id, sample_name, 'fastq', newname))
+          if cust_name != None and family_id != None:
+            mip_outdir = os.path.join(outputdir, cust_name, family_id, 'exomes')
+            link_source = os.path.join(outputdir, 'exomes', sample_name)
+            print('mkdir {}'.format(mip_outdir))
+
+            os.makedirs(mip_outdir)
+            os.symlink(link_source, os.path.join(mip_outdir, sample_name))
         except:
-          print "Can't create symlink for {} in MIP_ANALYSIS/cust".format(sample_name)
+          print("Can't create symlink for {} in MIP_ANALYSIS/cust".format(sample_name))
 
 smpls = getsamplesfromflowcell(params, fc)
 
@@ -88,7 +93,7 @@ for sample in smpls.iterkeys():
     family_id = lmc.getattribute('samples', pure_sample, 'familyID')
     cust_name = lmc.getattribute('samples', pure_sample, 'customer')
     if not re.match(r'cust\d{3}', cust_name):
-      print "'{}' does not match an internal customer name".format(cust_name)
+      print("'{}' does not match an internal customer name".format(cust_name))
       cust_name = None
   dbinfo = getsampleinfofromname(params, pure_sample)
   rc = 0         # counter for total readcount of sample
@@ -101,10 +106,10 @@ for sample in smpls.iterkeys():
       fclanes[cnt] = info['fc'] + "_" + str(info['q30']) + "_" + str(info['lane'])
   if readcounts:
     if (rc > readcounts):        # If enough reads are obtained do
-      print pure_sample + " Passed " + str(rc) + " M reads\nUsing reads from " + str(fclanes)
+      print(pure_sample + " Passed " + str(rc) + " M reads\nUsing reads from " + str(fclanes))
       makelinks(family_id=family_id, cust_name=cust_name, sample_name=pure_sample, lanes=fclanes)
     else:                        # Otherwise just present the data
-      print pure_sample + " Fail " + str(rc) + " M reads\nThese flowcells summarixed " + str(fclanes)
+      print(pure_sample + " Fail " + str(rc) + " M reads\nThese flowcells summarixed " + str(fclanes))
   else:
-    print pure_sample + " - no analysis parameter specified in lims"
+    print(pure_sample + " - no analysis parameter specified in lims")
 
