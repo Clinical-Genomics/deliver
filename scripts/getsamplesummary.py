@@ -1,5 +1,7 @@
 #!/usr/bin/python
 #
+
+from __future__ import printfunction
 import sys
 import datetime
 import time
@@ -7,10 +9,11 @@ import glob
 import re
 import socket
 import os
+import os.path
 import select
 from access import db, lims
 
-outputdir = '/mnt/hds/proj/bioinfo/MIP_ANALYSIS/exomes/'
+outputdir = '/mnt/hds/proj/bioinfo/MIP_ANALYSIS/'
 
 fc = "flowcell"
 if len(sys.argv) > 0:
@@ -46,35 +49,47 @@ def getsampleinfofromname(pars, sample):
       replies = dbc.generalquery( query )
   return replies
 
-def makelinks(samplename, lanedict):
+def makelinks(family_id, cust_name, sample_name, lanes):
     try:
-      os.makedirs(outputdir + samplename)
+      os.makedirs(outputdir + sample_name)
     except OSError:
       pass
-    for entry in lanedict:
-      fclane = lanedict[entry].split("_")
+    for entry in lanes:
+      fclane = lanes[entry].split("_")
       print fclane
       fastqfiles = glob.glob(params['DEMUXDIR'] + "*" + fclane[0] + "*/Unalign*/Project_*/Sample_*" + 
-                            samplename + "_*/*L00" + fclane[2] + "*gz")
+                            sample_name + "_*/*L00" + fclane[2] + "*gz")
       for fastqfile in fastqfiles:
         nameparts = fastqfile.split("/")[len(fastqfile.split("/"))-1].split("_")
         date_fc = fastqfile.split("/")[6].split("_")[0] + "_" + fastqfile.split("/")[6][-9:]
-        newname = (nameparts[3][-1:] + "_" + date_fc + "_" + samplename + "_" + nameparts[2] +
+        newname = (nameparts[3][-1:] + "_" + date_fc + "_" + sample_name + "_" + nameparts[2] +
                    "_" + nameparts[4][-1:] + ".fastq.gz")
         print fastqfile
         print newname
         try:
-          os.symlink(fastqfile, outputdir + samplename + "/fastq/" + newname)
+          os.symlink(fastqfile, os.path.join(outputdir, 'exomes', sample_name, 'fastq', newname))
         except:
-          print "Can't create symlink for " + samplename
+          print "Can't create symlink for {}".format(sample_name)
+        try:
+          if cust_name != None or family_id != None:
+            os.symlink(fastqfile, os.path.join(outputdir, cust_name, family_id, sample_name, 'fastq', newname))
+        except:
+          print "Can't create symlink for {} in MIP_ANALYSIS/cust".format(sample_name)
 
 smpls = getsamplesfromflowcell(params, fc)
 
 for sample in smpls.iterkeys():
+  family_id = None
+  cust_name = None
   with lims.limsconnect(params['apiuser'], params['apipass'], params['baseuri']) as lmc:
     pure_sample = sample.rstrip('BF') # remove the reprep (B) and reception control fail (F) letters from the samplename
     analysistype = lmc.getattribute('samples', pure_sample, "Sequencing Analysis")
     readcounts = .75 * float(analysistype[-3:])    # Accepted readcount is 75% of ordered million reads
+    family_id = lmc.getattribute('samples', pure_sample, 'familyID')
+    cust_name = lmc.getattribute('samples', pure_sample, 'customer')
+    if not re.match(r'cust\d{3}', cust_name):
+      print "'{}' does not match an internal customer name".format(cust_name)
+      cust_name = None
   dbinfo = getsampleinfofromname(params, pure_sample)
   rc = 0         # counter for total readcount of sample
   fclanes = {}   # dict to keep flowcell names and lanes for a sample
@@ -87,7 +102,7 @@ for sample in smpls.iterkeys():
   if readcounts:
     if (rc > readcounts):        # If enough reads are obtained do
       print pure_sample + " Passed " + str(rc) + " M reads\nUsing reads from " + str(fclanes)
-      makelinks(pure_sample, fclanes)
+      makelinks(family_id=family_id, cust_name=cust_name, sample_name=pure_sample, lanes=fclanes)
     else:                        # Otherwise just present the data
       print pure_sample + " Fail " + str(rc) + " M reads\nThese flowcells summarixed " + str(fclanes)
   else:
