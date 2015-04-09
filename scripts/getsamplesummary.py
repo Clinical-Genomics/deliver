@@ -32,39 +32,37 @@ def getsampleinfofromname(pars, sample):
   return replies
 
 def make_link(demuxdir, outputdir, family_id, cust_name, sample_name, fclane):
-      fastqfiles = glob.glob(
-        "{demuxdir}*{fc}*/Unalign*/Project_*/Sample_*{sample_name}[BF]_*/*L00{lane}*gz".format(
-          demuxdir=demuxdir, fc=fclane[0], sample_name=sample_name, lane=fclane[2]
-        ))
-      for fastqfile in fastqfiles:
-        nameparts = fastqfile.split("/")[-1].split("_")
-        rundir = fastqfile.split("/")[6]
-        date = rundir.split("_")[0]
-        fc = rundir[-9:]
-        newname = "{lane}_{date}_{fc}_{sample_name}_{index}_{readdirection}.fastq.gz".format(
-          lane=nameparts[3][-1:],
-          date=date,
-          fc=fc,
-          sample_name=sample_name,
-          index=nameparts[2],
-          readdirection=nameparts[4][-1:]
-        )
-        print(fastqfile)
-        print(os.path.join(outputdir, 'exomes', sample_name, 'fastq', newname))
-        try:
-          os.symlink(fastqfile, os.path.join(outputdir, 'exomes', sample_name, 'fastq', newname))
-        except:
-          print("Can't create symlink for {}".format(sample_name))
-        try:
-          if cust_name != None and family_id != None:
-            mip_outdir = os.path.join(outputdir, cust_name, family_id, 'exomes')
-            link_source = os.path.join(outputdir, 'exomes', sample_name)
-            print('mkdir {}'.format(mip_outdir))
+  fastqfiles = glob.glob(
+    "{demuxdir}*{fc}*/Unalign*/Project_*/Sample_*{sample_name}*_*/*L00{lane}*gz".format(
+      demuxdir=demuxdir, fc=fclane['fc'], sample_name=sample_name, lane=fclane['lane']
+    ))
+  for fastqfile in fastqfiles:
+    nameparts = fastqfile.split("/")[-1].split("_")
+    rundir = fastqfile.split("/")[6]
+    date = rundir.split("_")[0]
+    fc = rundir[-9:]
+    newname = "{lane}_{date}_{fc}_{sample_name}_{index}_{readdirection}.fastq.gz".format(
+      lane=nameparts[3][-1:],
+      date=date,
+      fc=fc,
+      sample_name=sample_name,
+      index=nameparts[2],
+      readdirection=nameparts[4][-1:]
+    )
 
-            os.makedirs(mip_outdir)
-            os.symlink(link_source, os.path.join(mip_outdir, sample_name))
-        except:
-          print("Can't create symlink for {} in MIP_ANALYSIS/cust".format(sample_name))
+    # link in old structure
+    try:
+      os.symlink(fastqfile, os.path.join(outputdir, 'exomes', sample_name, 'fastq', newname))
+    except:
+      pass
+      print("Can't create symlink for {}".format(sample_name))
+
+    # link in new structure
+    if cust_name != None and family_id != None:
+      try:
+        os.symlink(fastqfile, os.path.join(os.path.join(outputdir, cust_name, family_id, 'exomes', sample_name, 'fastq', newname)))
+      except:
+        print("Can't create symlink for {} in MIP_ANALYSIS/cust".format(sample_name))
 
 def main(argv):
 
@@ -85,7 +83,6 @@ def main(argv):
   smpls = getsamplesfromflowcell(params['DEMUXDIR'], fc)
 
   for sample in smpls.iterkeys():
-    print(sample)
     family_id = None
     cust_name = None
     with lims.limsconnect(params['apiuser'], params['apipass'], params['baseuri']) as lmc:
@@ -98,26 +95,34 @@ def main(argv):
       family_id = lmc.getattribute('samples', sample, 'familyID')
       cust_name = lmc.getattribute('samples', sample, 'customer')
       if not re.match(r'cust\d{3}', cust_name):
-        print("'{}' does not match an internal customer name".format(cust_name))
+        print("WARNING '{}' does not match an internal customer name".format(cust_name))
         cust_name = None
     dbinfo = getsampleinfofromname(params, sample)
     rc = 0         # counter for total readcount of sample
-    fclanes = {}   # dict to keep flowcell names and lanes for a sample
-    cnt = 0        # counter used in the dict to keep folwcell/lane count
+    fclanes = []   # list to keep flowcell names and lanes for a sample
     for info in dbinfo:
       if (info['q30'] > 80):     # Use readcount from lane only if it satisfies QC [=80%]
-        cnt += 1
         rc += info['M_reads']
-        fclanes[cnt] = "{info[fc]}_{info[q30]}_{info[lane]}".format(info=info)
+        fclanes.append(dict(( (key, info[key]) for key in ['fc', 'q30', 'lane'] )))
     if readcounts:
       if (rc > readcounts):        # If enough reads are obtained do
         print("{sample} Passed {readcount} M reads\nUsing reads from {fclanes}".format(sample=sample, readcount=rc, fclanes=fclanes))
+
+        # try to create old dir structure
         try:
           os.makedirs(os.path.join(outputdir, 'exomes', sample, 'fastq'))
         except OSError:
           pass
-        for entry in fclanes.values():
-          fclane = entry.split("_")
+
+        # try to create new dir structure
+        try:
+          if cust_name != None and family_id != None:
+            os.makedirs(os.path.join(outputdir, cust_name, family_id, 'exomes', sample, 'fastq'))
+        except OSError:
+          pass
+
+        # create symlinks for each fastq file
+        for fclane in fclanes:
           make_link(
             demuxdir=params['DEMUXDIR'],
             outputdir=outputdir,
@@ -127,7 +132,7 @@ def main(argv):
             fclane=fclane
           )
       else:                        # Otherwise just present the data
-        print("{sample} Fail {readcount} M reads" +
+        print("{sample} Fail {readcount} M reads"
               "These flowcells summarized {fclanes}".format(sample=sample, readcount=rc, fclanes=fclanes))
     else:
       print("{} - no analysis parameter specified in lims".format(sample))
