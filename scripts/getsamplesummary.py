@@ -1,35 +1,20 @@
 #!/usr/bin/python
 #
+
+from __future__ import print_function
 import sys
-import datetime
-import time
 import glob
 import re
-import socket
 import os
-import select
 from access import db, lims
 
-outputdir = '/mnt/hds/proj/bioinfo/MIP_ANALYSIS/exomes/'
-
-fc = "flowcell"
-if len(sys.argv) > 0:
-  try:
-    sys.argv[1]
-  except NameError:
-    sys.exit("Usage: " + sys.argv[0] + " <flowcell name>")
-  else:
-    fc = sys.argv[1]
-else:
-  sys.exit("Usage: " + sys.argv[0] + " <flowcell name>")
-
-params = db.readconfig("non")
-
-fc_samples = {}
-def getsamplesfromflowcell(pars, flwc):
-  samples = glob.glob(pars['DEMUXDIR'] + "*" + flwc + "*/Unalign*/Project_*/Sample_*")
-  for sampl in samples:
-    sample = sampl.split("/")[len(sampl.split("/"))-1].split("_")[1]
+def getsamplesfromflowcell(demuxdir, flwc):
+  samples = glob.glob("{demuxdir}*{flowcell}*/Unalign*/Project_*/Sample_*".\
+    format(demuxdir=demuxdir, flowcell=flwc))
+  fc_samples = {}
+  for sample in samples:
+    sample = sample.split("/")[-1].split("_")[1]
+    sample = sample.rstrip('BF') # remove the reprep (B) and reception control fail (F) letters from the samplename
     fc_samples[sample] = ''
   return fc_samples
 
@@ -39,57 +24,118 @@ def getsampleinfofromname(pars, sample):
            " ROUND(q30_bases_pct,2) AS q30, ROUND(mean_quality_score,2) AS score " + 
            " FROM sample, unaligned, flowcell " + 
            " WHERE sample.sample_id = unaligned.sample_id AND unaligned.flowcell_id = flowcell.flowcell_id " +
-           " AND (samplename LIKE '" + sample + "_%' OR samplename = '" + sample + "')")
+           " AND (samplename LIKE '{sample}_%' OR samplename = '{sample}')".format(sample=sample))
   with db.create_tunnel(pars['TUNNELCMD']):
     with db.dbconnect(pars['CLINICALDBHOST'], pars['CLINICALDBPORT'], pars['STATSDB'], 
                    pars['CLINICALDBUSER'], pars['CLINICALDBPASSWD']) as dbc:
       replies = dbc.generalquery( query )
   return replies
 
-def makelinks(samplename, lanedict):
+def make_link(demuxdir, outputdir, family_id, cust_name, sample_name, fclane):
+  fastqfiles = glob.glob(
+    "{demuxdir}*{fc}*/Unalign*/Project_*/Sample_*{sample_name}*_*/*L00{lane}*gz".format(
+      demuxdir=demuxdir, fc=fclane['fc'], sample_name=sample_name, lane=fclane['lane']
+    ))
+  for fastqfile in fastqfiles:
+    nameparts = fastqfile.split("/")[-1].split("_")
+    rundir = fastqfile.split("/")[6]
+    date = rundir.split("_")[0]
+    fc = rundir[-9:]
+    newname = "{lane}_{date}_{fc}_{sample_name}_{index}_{readdirection}.fastq.gz".format(
+      lane=nameparts[3][-1:],
+      date=date,
+      fc=fc,
+      sample_name=sample_name,
+      index=nameparts[2],
+      readdirection=nameparts[4][-1:]
+    )
+
+    # link in old structure
     try:
-      os.makedirs(outputdir + samplename)
-    except OSError:
+      os.symlink(fastqfile, os.path.join(outputdir, 'exomes', sample_name, 'fastq', newname))
+    except:
       pass
-    for entry in lanedict:
-      fclane = lanedict[entry].split("_")
-      print fclane
-      fastqfiles = glob.glob(params['DEMUXDIR'] + "*" + fclane[0] + "*/Unalign*/Project_*/Sample_*" + 
-                            samplename + "_*/*L00" + fclane[2] + "*gz")
-      for fastqfile in fastqfiles:
-        nameparts = fastqfile.split("/")[len(fastqfile.split("/"))-1].split("_")
-        date_fc = fastqfile.split("/")[6].split("_")[0] + "_" + fastqfile.split("/")[6][-9:]
-        newname = (nameparts[3][-1:] + "_" + date_fc + "_" + samplename + "_" + nameparts[2] +
-                   "_" + nameparts[4][-1:] + ".fastq.gz")
-        print fastqfile
-        print newname
-        try:
-          os.symlink(fastqfile, outputdir + samplename + "/fastq/" + newname)
-        except:
-          print "Can't create symlink for " + samplename
+      print("Can't create symlink for {}".format(sample_name))
 
-smpls = getsamplesfromflowcell(params, fc)
+    # link in new structure
+    if cust_name != None and family_id != None:
+      try:
+        os.symlink(fastqfile, os.path.join(os.path.join(outputdir, cust_name, family_id, 'exomes', sample_name, 'fastq', newname)))
+      except:
+        print("Can't create symlink for {} in MIP_ANALYSIS/cust".format(sample_name))
 
-for sample in smpls.iterkeys():
-  with lims.limsconnect(params['apiuser'], params['apipass'], params['baseuri']) as lmc:
-    pure_sample = sample.rstrip('BF') # remove the reprep (B) and reception control fail (F) letters from the samplename
-    analysistype = lmc.getattribute('samples', pure_sample, "Sequencing Analysis")
-    readcounts = .75 * float(analysistype[-3:])    # Accepted readcount is 75% of ordered million reads
-  dbinfo = getsampleinfofromname(params, pure_sample)
-  rc = 0         # counter for total readcount of sample
-  fclanes = {}   # dict to keep flowcell names and lanes for a sample
-  cnt = 0        # counter used in the dict to keep folwcell/lane count
-  for info in dbinfo:
-    if (info['q30'] > 80):     # Use readcount from lane only if it satisfies QC [=80%]
-      cnt += 1
-      rc += info['M_reads']
-      fclanes[cnt] = info['fc'] + "_" + str(info['q30']) + "_" + str(info['lane'])
-  if readcounts:
-    if (rc > readcounts):        # If enough reads are obtained do
-      print pure_sample + " Passed " + str(rc) + " M reads\nUsing reads from " + str(fclanes)
-      makelinks(pure_sample, fclanes)
-    else:                        # Otherwise just present the data
-      print pure_sample + " Fail " + str(rc) + " M reads\nThese flowcells summarixed " + str(fclanes)
+def main(argv):
+
+  outputdir = '/mnt/hds/proj/bioinfo/MIP_ANALYSIS/'
+  
+  fc = None
+  if len(argv) > 0:
+    try:
+      argv[0]
+    except NameError:
+      sys.exit("Usage: {} <flowcell name>".format(__file__))
+    else:
+      fc = argv[0]
   else:
-    print pure_sample + " - no analysis parameter specified in lims"
+    sys.exit("Usage: {} <flowcell name>".format(__file__))
 
+  params = db.readconfig("non")
+  smpls = getsamplesfromflowcell(params['DEMUXDIR'], fc)
+
+  for sample in smpls.iterkeys():
+    family_id = None
+    cust_name = None
+    with lims.limsconnect(params['apiuser'], params['apipass'], params['baseuri']) as lmc:
+      analysistype = lmc.getattribute('samples', sample, "Sequencing Analysis")
+      if analysistype is None:
+        print("WARNING: Sequencing Analysis tag not defined for {}".format(sample))
+        # skip to the next sample
+        continue
+      readcounts = .75 * float(analysistype[-3:])    # Accepted readcount is 75% of ordered million reads
+      family_id = lmc.getattribute('samples', sample, 'familyID')
+      cust_name = lmc.getattribute('samples', sample, 'customer')
+      if not re.match(r'cust\d{3}', cust_name):
+        print("WARNING '{}' does not match an internal customer name".format(cust_name))
+        cust_name = None
+    dbinfo = getsampleinfofromname(params, sample)
+    rc = 0         # counter for total readcount of sample
+    fclanes = []   # list to keep flowcell names and lanes for a sample
+    for info in dbinfo:
+      if (info['q30'] > 80):     # Use readcount from lane only if it satisfies QC [=80%]
+        rc += info['M_reads']
+        fclanes.append(dict(( (key, info[key]) for key in ['fc', 'q30', 'lane'] )))
+    if readcounts:
+      if (rc > readcounts):        # If enough reads are obtained do
+        print("{sample} Passed {readcount} M reads\nUsing reads from {fclanes}".format(sample=sample, readcount=rc, fclanes=fclanes))
+
+        # try to create old dir structure
+        try:
+          os.makedirs(os.path.join(outputdir, 'exomes', sample, 'fastq'))
+        except OSError:
+          pass
+
+        # try to create new dir structure
+        try:
+          if cust_name != None and family_id != None:
+            os.makedirs(os.path.join(outputdir, cust_name, family_id, 'exomes', sample, 'fastq'))
+        except OSError:
+          pass
+
+        # create symlinks for each fastq file
+        for fclane in fclanes:
+          make_link(
+            demuxdir=params['DEMUXDIR'],
+            outputdir=outputdir,
+            family_id=family_id,
+            cust_name=cust_name,
+            sample_name=sample,
+            fclane=fclane
+          )
+      else:                        # Otherwise just present the data
+        print("{sample} Fail {readcount} M reads"
+              "These flowcells summarized {fclanes}".format(sample=sample, readcount=rc, fclanes=fclanes))
+    else:
+      print("{} - no analysis parameter specified in lims".format(sample))
+
+if __name__ == '__main__':
+  main(sys.argv[1:])
