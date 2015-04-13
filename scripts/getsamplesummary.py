@@ -36,6 +36,7 @@ def make_link(demuxdir, outputdir, family_id, cust_name, sample_name, fclane):
     "{demuxdir}*{fc}*/Unalign*/Project_*/Sample_*{sample_name}*_*/*L00{lane}*gz".format(
       demuxdir=demuxdir, fc=fclane['fc'], sample_name=sample_name, lane=fclane['lane']
     ))
+
   for fastqfile in fastqfiles:
     nameparts = fastqfile.split("/")[-1].split("_")
     rundir = fastqfile.split("/")[6]
@@ -50,14 +51,12 @@ def make_link(demuxdir, outputdir, family_id, cust_name, sample_name, fclane):
       readdirection=nameparts[4][-1:]
     )
 
-    # link in old structure
     try:
       os.symlink(fastqfile, os.path.join(outputdir, 'exomes', sample_name, 'fastq', newname))
     except:
       pass
       print("Can't create symlink for {}".format(sample_name))
 
-    # link in new structure
     if cust_name != None and family_id != None:
       try:
         os.symlink(fastqfile, os.path.join(os.path.join(outputdir, cust_name, family_id, 'exomes', sample_name, 'fastq', newname)))
@@ -115,11 +114,15 @@ def main(argv):
           pass
 
         # try to create new dir structure
-        try:
-          if cust_name != None and family_id != None:
+        if cust_name != None and family_id != None:
+          try:
             os.makedirs(os.path.join(outputdir, cust_name, family_id, 'exomes', sample, 'fastq'))
-        except OSError:
-          pass
+          except OSError:
+            pass
+          try:
+            os.makedirs(os.path.join(outputdir, cust_name, family_id, 'exomes', family_id))
+          except OSError:
+            pass
 
         # create symlinks for each fastq file
         for fclane in fclanes:
