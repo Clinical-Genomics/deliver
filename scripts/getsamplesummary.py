@@ -96,6 +96,11 @@ def main(argv):
       if not re.match(r'cust\d{3}', cust_name):
         print("WARNING '{}' does not match an internal customer name".format(cust_name))
         cust_name = None
+      if cust_name == None:
+        print("WARNING '{}' internal customer name is not set".format(sample))
+      if family_id == None:
+        print("WARNING '{}' family_id is not set".format(sample))
+
     dbinfo = getsampleinfofromname(params, sample)
     rc = 0         # counter for total readcount of sample
     fclanes = []   # list to keep flowcell names and lanes for a sample
@@ -135,8 +140,9 @@ def main(argv):
             fclane=fclane
           )
       else:                        # Otherwise just present the data
-        print("{sample} Fail {readcount} M reads"
-              "These flowcells summarized {fclanes}".format(sample=sample, readcount=rc, fclanes=fclanes))
+        print("{sample} FAIL with {readcount} M reads.\n"
+              "Requested with {reqreadcount} M reads.\n"
+              "These flowcells summarized {fclanes}".format(sample=sample, readcount=rc, fclanes=fclanes, reqreadcount=readcounts))
     else:
       print("{} - no analysis parameter specified in lims".format(sample))
 
