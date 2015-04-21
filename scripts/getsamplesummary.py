@@ -33,9 +33,13 @@ def getsampleinfofromname(pars, sample):
 
 def make_link(demuxdir, outputdir, family_id, cust_name, sample_name, fclane):
   fastqfiles = glob.glob(
-    "{demuxdir}*{fc}*/Unalign*/Project_*/Sample_*{sample_name}*_*/*L00{lane}*gz".format(
+    "{demuxdir}*{fc}*/Unalign*/Project_*/Sample_{sample_name}_*/*L00{lane}*gz".format(
       demuxdir=demuxdir, fc=fclane['fc'], sample_name=sample_name, lane=fclane['lane']
     ))
+  fastqfiles.extend(glob.glob(
+    "{demuxdir}*{fc}*/Unalign*/Project_*/Sample_{sample_name}[BF]_*/*L00{lane}*gz".format(
+      demuxdir=demuxdir, fc=fclane['fc'], sample_name=sample_name, lane=fclane['lane']
+    )))
 
   for fastqfile in fastqfiles:
     nameparts = fastqfile.split("/")[-1].split("_")
@@ -54,7 +58,6 @@ def make_link(demuxdir, outputdir, family_id, cust_name, sample_name, fclane):
     try:
       os.symlink(fastqfile, os.path.join(outputdir, 'exomes', sample_name, 'fastq', newname))
     except:
-      pass
       print("Can't create symlink for {}".format(sample_name))
 
     if cust_name != None and family_id != None:
