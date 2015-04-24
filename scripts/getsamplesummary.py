@@ -64,7 +64,7 @@ def make_link(demuxdir, outputdir, family_id, cust_name, sample_name, fclane):
       try:
         os.symlink(fastqfile, os.path.join(os.path.join(outputdir, cust_name, family_id, 'exomes', sample_name, 'fastq', newname)))
       except:
-        print("Can't create symlink for {} in MIP_ANALYSIS/cust".format(sample_name))
+        print("Can't create symlink for {} in {}".format(sample_name, os.path.join(os.path.join(outputdir, cust_name, family_id, 'exomes', sample_name, 'fastq', newname))))
 
 def main(argv):
 
