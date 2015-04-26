@@ -36,7 +36,7 @@ def get_sample_paths(rundir):
     samples[sample] = sample_path
   return samples
 
-def launch_trim(indir, outdir):
+def launch_trim(indir, outdir, base_path):
     """TODO: Docstring for launch_trim
 
     Args:
@@ -51,10 +51,17 @@ def launch_trim(indir, outdir):
     except OSError: pass
     for f1 in glob.glob('{}/*_R1_*.fastq.gz'.format(indir)):
       f2 = f1.replace('_R1_', '_R2_')
-      outfile = '{}/{}'.format(outdir, f1.split('/')[-1].replace('.fastq.gz', ''))
+      f1_filename = os.path.basename(f1)
+      f2_filename = os.path.basename(f2)
+      outfile = '{}/{}'.format(outdir, os.path.basename(f1).replace('.fastq.gz', ''))
       with tempfile.NamedTemporaryFile(delete=False, dir=script_dir) as sbatch_file:
-        sbatch_file.write('#!/bin/bash')
-        sbatch_file.write('java -jar /mnt/hds/proj/bioinfo/SCRIPTS/AgilentReadTrimmer.jar -m1 {f1} -m2 {f2} -o {outfile} -qxt && gzip {outfile}*'.format(f1=f1, f2=f2, outfile=outfile))
+        sbatch_file.write('#!/bin/bash\n')
+        sbatch_file.write('java -jar /mnt/hds/proj/bioinfo/SCRIPTS/AgilentReadTrimmer.jar -m1 {f1} -m2 {f2} -o {outfile} -qxt && gzip {outfile}*\n'.format(f1=f1, f2=f2, outfile=outfile))
+        sbatch_file.write('mv {outfile}_1.fastq.gz {f1}\n'.format(outfile=outfile, f1=os.path.join(outdir, f1_filename)))
+        sbatch_file.write('mv {outfile}_2.fastq.gz {f2}\n'.format(outfile=outfile, f2=os.path.join(outdir, f2_filename)))
+        sbatch_file.write('ln -s {f1} {indir}\n'.format(f1=os.path.join(outdir, f1_filename), indir=indir))
+        sbatch_file.write('ln -s {f2} {indir}\n'.format(f2=os.path.join(outdir, f2_filename), indir=indir))
+        sbatch_file.write('date +"%Y%m%d%H%M%S" > {}/trimmed.txt\n')
         sbatch_file.flush()
         try:
           cmd = 'sbatch -A prod001 -t 12:00:00 -J fastqTrimming -c 1 -o {sbatch_output} -e {sbatch_error}'.\
@@ -95,8 +102,9 @@ def main(argv):
 
         # move the samples to a totrim dir so they don't get picked up by next steps ...
         sample_path_split = sample_path.split('/')
-        trim_dir = '/'.join(sample_path_split[0:-1]) + '/totrim'
-        outdir   = '/'.join(sample_path_split[0:-1]) + '/trimmed'
+        sample_base_path = '/'.join(sample_path_split[0:-1]) 
+        trim_dir = sample_base_path + '/totrim'
+        outdir   = sample_base_path + '/trimmed'
         fastq_dir = sample_path_split[-1]
         fastq_trim_dir = os.path.join(trim_dir, fastq_dir)
         fastq_outdir   = os.path.join(outdir, fastq_dir)
@@ -130,7 +138,7 @@ def main(argv):
         os.rename(sample_path, fastq_trim_dir)
 
         # lauch trim!
-        launch_trim(fastq_trim_dir, fastq_outdir)
+        launch_trim(fastq_trim_dir, fastq_outdir, sample_base_path)
 
   # mv original samples away
   # mv trimmed samples back, append _trimmed to name
