@@ -33,9 +33,14 @@ def getsampleinfofromname(pars, sample):
 
 def make_link(demuxdir, outputdir, family_id, cust_name, sample_name, fclane):
   fastqfiles = glob.glob(
-    "{demuxdir}*{fc}*/Unalign*/Project_*/Sample_*{sample_name}*_*/*L00{lane}*gz".format(
+    "{demuxdir}*{fc}*/Unalign*/Project_*/Sample_{sample_name}_*/*L00{lane}*gz".format(
       demuxdir=demuxdir, fc=fclane['fc'], sample_name=sample_name, lane=fclane['lane']
     ))
+  fastqfiles.extend(glob.glob(
+    "{demuxdir}*{fc}*/Unalign*/Project_*/Sample_{sample_name}[BF]_*/*L00{lane}*gz".format(
+      demuxdir=demuxdir, fc=fclane['fc'], sample_name=sample_name, lane=fclane['lane']
+    )))
+
   for fastqfile in fastqfiles:
     nameparts = fastqfile.split("/")[-1].split("_")
     rundir = fastqfile.split("/")[6]
@@ -50,19 +55,16 @@ def make_link(demuxdir, outputdir, family_id, cust_name, sample_name, fclane):
       readdirection=nameparts[4][-1:]
     )
 
-    # link in old structure
     try:
       os.symlink(fastqfile, os.path.join(outputdir, 'exomes', sample_name, 'fastq', newname))
     except:
-      pass
       print("Can't create symlink for {}".format(sample_name))
 
-    # link in new structure
     if cust_name != None and family_id != None:
       try:
         os.symlink(fastqfile, os.path.join(os.path.join(outputdir, cust_name, family_id, 'exomes', sample_name, 'fastq', newname)))
       except:
-        print("Can't create symlink for {} in MIP_ANALYSIS/cust".format(sample_name))
+        print("Can't create symlink for {} in {}".format(sample_name, os.path.join(os.path.join(outputdir, cust_name, family_id, 'exomes', sample_name, 'fastq', newname))))
 
 def main(argv):
 
@@ -97,6 +99,11 @@ def main(argv):
       if not re.match(r'cust\d{3}', cust_name):
         print("WARNING '{}' does not match an internal customer name".format(cust_name))
         cust_name = None
+      if cust_name == None:
+        print("WARNING '{}' internal customer name is not set".format(sample))
+      if family_id == None:
+        print("WARNING '{}' family_id is not set".format(sample))
+
     dbinfo = getsampleinfofromname(params, sample)
     rc = 0         # counter for total readcount of sample
     fclanes = []   # list to keep flowcell names and lanes for a sample
@@ -115,11 +122,15 @@ def main(argv):
           pass
 
         # try to create new dir structure
-        try:
-          if cust_name != None and family_id != None:
+        if cust_name != None and family_id != None:
+          try:
             os.makedirs(os.path.join(outputdir, cust_name, family_id, 'exomes', sample, 'fastq'))
-        except OSError:
-          pass
+          except OSError:
+            pass
+          try:
+            os.makedirs(os.path.join(outputdir, cust_name, family_id, 'exomes', family_id))
+          except OSError:
+            pass
 
         # create symlinks for each fastq file
         for fclane in fclanes:
@@ -132,8 +143,9 @@ def main(argv):
             fclane=fclane
           )
       else:                        # Otherwise just present the data
-        print("{sample} Fail {readcount} M reads"
-              "These flowcells summarized {fclanes}".format(sample=sample, readcount=rc, fclanes=fclanes))
+        print("{sample} FAIL with {readcount} M reads.\n"
+              "Requested with {reqreadcount} M reads.\n"
+              "These flowcells summarized {fclanes}".format(sample=sample, readcount=rc, fclanes=fclanes, reqreadcount=readcounts))
     else:
       print("{} - no analysis parameter specified in lims".format(sample))
 
