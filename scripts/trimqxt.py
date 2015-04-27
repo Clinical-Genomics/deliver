@@ -36,7 +36,7 @@ def get_sample_paths(rundir):
     samples[sample] = sample_path
   return samples
 
-def launch_trim(indir, outdir, base_path):
+def launch_trim(indir, outdir, base_dir):
     """TODO: Docstring for launch_trim
 
     Args:
@@ -49,6 +49,7 @@ def launch_trim(indir, outdir, base_path):
     try:
       os.makedirs(script_dir)
     except OSError: pass
+    sbatch_ids = []
     for f1 in glob.glob('{}/*_R1_*.fastq.gz'.format(indir)):
       f2 = f1.replace('_R1_', '_R2_')
       f1_filename = os.path.basename(f1)
@@ -59,9 +60,8 @@ def launch_trim(indir, outdir, base_path):
         sbatch_file.write('java -jar /mnt/hds/proj/bioinfo/SCRIPTS/AgilentReadTrimmer.jar -m1 {f1} -m2 {f2} -o {outfile} -qxt && gzip {outfile}*\n'.format(f1=f1, f2=f2, outfile=outfile))
         sbatch_file.write('mv {outfile}_1.fastq.gz {f1}\n'.format(outfile=outfile, f1=os.path.join(outdir, f1_filename)))
         sbatch_file.write('mv {outfile}_2.fastq.gz {f2}\n'.format(outfile=outfile, f2=os.path.join(outdir, f2_filename)))
-        sbatch_file.write('ln -s {f1} {indir}\n'.format(f1=os.path.join(outdir, f1_filename), indir=indir))
-        sbatch_file.write('ln -s {f2} {indir}\n'.format(f2=os.path.join(outdir, f2_filename), indir=indir))
-        sbatch_file.write('date +"%Y%m%d%H%M%S" > {}/trimmed.txt\n')
+        sbatch_file.write('ln -s {f1} {base_dir}/\n'.format(f1=os.path.join(outdir, f1_filename), base_dir=base_dir))
+        sbatch_file.write('ln -s {f2} {base_dir}/\n'.format(f2=os.path.join(outdir, f2_filename), base_dir=base_dir))
         sbatch_file.flush()
         try:
           cmd = 'sbatch -A prod001 -t 12:00:00 -J fastqTrimming -c 1 -o {sbatch_output} -e {sbatch_error}'.\
@@ -72,10 +72,34 @@ def launch_trim(indir, outdir, base_path):
           cl = cmd.split(' ')
           cl.append(sbatch_file.name)
           print(' '.join(cl))
-          subprocess.Popen(cl)
+          sbatch_output = subprocess.check_output(cl)
+          sbatch_ids.append(sbatch_output.rstrip().split(' ')[-1])
         except subprocess.CalledProcessError, e:
           e.message = "The command {} failed.".format(' '.join(cl))
           raise e
+
+    # once all the jobs succesfully finish, symlink the files back
+    with tempfile.NamedTemporaryFile(delete=False, dir=script_dir) as finished_file:
+      finished_file.write('#!/bin/bash\n')
+      finished_file.write('date +"%Y%m%d%H%M%S" > {}/trimmed.txt\n'.format(base_dir))
+      finished_file.flush()
+      
+      try:
+        cmd = "sbatch -A prod001 -t 00:01:00 -J trimmingFinished -c 1 " +\
+              "-o {sbatch_output} -e {sbatch_error} --dependency=afterok:{dependencies}".\
+                format(
+                  sbatch_output='/mnt/hds/proj/bioinfo/LOG/trimmingFinished.%j.out',
+                  sbatch_error='/mnt/hds/proj/bioinfo/LOG/trimmingFinished.%j.err',
+                  dependencies=':'.join(sbatch_ids)
+                )
+        cl = cmd.split(' ')
+        cl.append(finished_file.name)
+        print(' '.join(cl))
+        subprocess.check_output(cl)
+      except subprocess.CalledProcessError, e:
+        e.message = "The command {} failed.".format(' '.join(cl))
+        raise e
+
     pass
 
 def main(argv):
@@ -101,11 +125,11 @@ def main(argv):
         # TODO check in clinstatsdb if this sample is trimmed already ...
 
         # move the samples to a totrim dir so they don't get picked up by next steps ...
-        sample_path_split = sample_path.split('/')
-        sample_base_path = '/'.join(sample_path_split[0:-1]) 
+        sample_base_path = os.path.dirname(sample_path)
         trim_dir = sample_base_path + '/totrim'
         outdir   = sample_base_path + '/trimmed'
-        fastq_dir = sample_path_split[-1]
+
+        fastq_dir = os.path.basename(sample_path)
         fastq_trim_dir = os.path.join(trim_dir, fastq_dir)
         fastq_outdir   = os.path.join(outdir, fastq_dir)
 
