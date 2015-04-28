@@ -6,6 +6,7 @@ import glob
 import os
 import subprocess
 import tempfile
+import datetime
 from access import db, lims
 
 def get_sample_names(rundir):
@@ -93,6 +94,7 @@ def launch_trim(trim_indir, trim_outdir, link_dir, base_dir):
     with tempfile.NamedTemporaryFile(delete=False, dir=script_dir) as finished_file:
       finished_file.write('#!/bin/bash\n')
       finished_file.write('date +"%Y%m%d%H%M%S" > {}/trimmed.txt\n'.format(base_dir))
+      finished_file.write('rm {}/trimming.txt\n'.format(base_dir))
       finished_file.flush()
       
       try:
@@ -177,6 +179,11 @@ def main(argv):
           print('mkdir {}'.format(sample_path))
           os.makedirs(sample_path)
         except OSError: pass
+
+        # indicate that we are trimming, let other steps in the data flow wait
+        # will be removed on succesful finishing trimming
+        with open('{}/trimming.txt'.format(rundir), 'w') as t_file:
+          t_file.write(datetime.datetime.now().strftime('%Y%m%d%H%M%S'))
 
         # lauch trim!
         launch_trim(trim_indir=fastq_trim_dir, trim_outdir=fastq_outdir, link_dir=sample_path, base_dir=rundir)
