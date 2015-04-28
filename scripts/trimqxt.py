@@ -9,20 +9,26 @@ import tempfile
 from access import db, lims
 
 def get_sample_names(rundir):
-  """TODO: Docstring for getsamplesfromrun.
+  """Gets all the names of the samples from a run dir.
+  All sample names have been cleaned:
+  * library prep has been removed
+  * B (reprep), F (fail) suffixes have been removed
 
   Args:
-      rundir (TODO): TODO
+      rundir (str): FQ path to the run
 
-  Returns: TODO
+  Returns (list): a list of sample names
   """
   return get_sample_paths(rundir).keys()
 
 def get_sample_paths(rundir):
-  """TODO: Docstring for get_sample_paths.
+  """Associates the samples with their path.
+  All sample names have been cleaned:
+  * library prep has been removed
+  * B (reprep), F (fail) suffixes have been removed
 
   Args:
-      rundir (TODO): TODO
+      rundir (str): FQ path to the run
 
   Returns (dict): sample: path
 
@@ -31,7 +37,7 @@ def get_sample_paths(rundir):
     format(rundir=rundir))
   samples = {}
   for sample_path in sample_paths:
-    sample = sample_path.split("/")[-1].split("_")[1]
+    sample = os.path.basename(sample_path).split("_")[1]
     sample = sample.rstrip('BF') # remove the reprep (B) and reception control fail (F) letters from the samplename
     samples[sample] = sample_path
   return samples
@@ -161,8 +167,14 @@ def main(argv):
         print('mv {} {}'.format(sample_path, trim_dir))
         os.rename(sample_path, fastq_trim_dir)
 
+        # create the original sample dirtory
+        try:
+          print('mkdir {}'.format(sample_path))
+          os.makedirs(sample_path)
+        except OSError: pass
+
         # lauch trim!
-        launch_trim(fastq_trim_dir, fastq_outdir, sample_base_path)
+        launch_trim(fastq_trim_dir, fastq_outdir, sample_path)
 
   # mv original samples away
   # mv trimmed samples back, append _trimmed to name
