@@ -43,12 +43,16 @@ def get_sample_paths(rundir):
   return samples
 
 def launch_trim(trim_indir, trim_outdir, link_dir, base_dir):
-    """TODO: Docstring for launch_trim
+    """Creates sbatch scripts and launches them.
+    Last sbatch script will create the 'trimmed.txt' file denoting a succesful run.
 
     Args:
-        arg1 (TODO): TODO
+        trim_indir (str): path to fastq files in need of trimming
+        trim_outdir (str): path to output directory
+        link_dir (str): path to where trimmed fastq files should be linked to
+        base_dir (str): path to where the trimmed.txt file should be written to
 
-    Returns: TODO
+    Returns: pass
 
     """
     script_dir = os.path.join(trim_indir, 'scripts')
@@ -175,7 +179,7 @@ def main(argv):
         except OSError: pass
 
         # lauch trim!
-        launch_trim(fastq_trim_dir, fastq_outdir, sample_path)
+        launch_trim(trim_indir=fastq_trim_dir, trim_outdir=fastq_outdir, link_dir=sample_path, base_dir=rundir)
 
   # mv original samples away
   # mv trimmed samples back, append _trimmed to name
