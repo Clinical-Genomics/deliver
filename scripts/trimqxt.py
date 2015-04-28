@@ -42,7 +42,7 @@ def get_sample_paths(rundir):
     samples[sample] = sample_path
   return samples
 
-def launch_trim(indir, outdir, base_dir):
+def launch_trim(trim_indir, trim_outdir, link_dir, base_dir):
     """TODO: Docstring for launch_trim
 
     Args:
@@ -51,23 +51,24 @@ def launch_trim(indir, outdir, base_dir):
     Returns: TODO
 
     """
-    script_dir = os.path.join(indir, 'scripts')
+    script_dir = os.path.join(trim_indir, 'scripts')
     try:
       os.makedirs(script_dir)
     except OSError: pass
     sbatch_ids = []
-    for f1 in glob.glob('{}/*_R1_*.fastq.gz'.format(indir)):
+    for f1 in glob.glob('{}/*_R1_*.fastq.gz'.format(trim_indir)):
       f2 = f1.replace('_R1_', '_R2_')
       f1_filename = os.path.basename(f1)
       f2_filename = os.path.basename(f2)
-      outfile = '{}/{}'.format(outdir, os.path.basename(f1).replace('.fastq.gz', ''))
+      outfile = '{}/{}'.format(trim_outdir, os.path.basename(f1).replace('.fastq.gz', ''))
       with tempfile.NamedTemporaryFile(delete=False, dir=script_dir) as sbatch_file:
         sbatch_file.write('#!/bin/bash\n')
+        sbatch_file.write('set -e\n')
         sbatch_file.write('java -jar /mnt/hds/proj/bioinfo/SCRIPTS/AgilentReadTrimmer.jar -m1 {f1} -m2 {f2} -o {outfile} -qxt && gzip {outfile}*\n'.format(f1=f1, f2=f2, outfile=outfile))
-        sbatch_file.write('mv {outfile}_1.fastq.gz {f1}\n'.format(outfile=outfile, f1=os.path.join(outdir, f1_filename)))
-        sbatch_file.write('mv {outfile}_2.fastq.gz {f2}\n'.format(outfile=outfile, f2=os.path.join(outdir, f2_filename)))
-        sbatch_file.write('ln -s {f1} {base_dir}/\n'.format(f1=os.path.join(outdir, f1_filename), base_dir=base_dir))
-        sbatch_file.write('ln -s {f2} {base_dir}/\n'.format(f2=os.path.join(outdir, f2_filename), base_dir=base_dir))
+        sbatch_file.write('mv {outfile}_1.fastq.gz {f1}\n'.format(outfile=outfile, f1=os.path.join(trim_outdir, f1_filename)))
+        sbatch_file.write('mv {outfile}_2.fastq.gz {f2}\n'.format(outfile=outfile, f2=os.path.join(trim_outdir, f2_filename)))
+        sbatch_file.write('ln -s {f1} {link_dir}/\n'.format(f1=os.path.join(trim_outdir, f1_filename), link_dir=link_dir))
+        sbatch_file.write('ln -s {f2} {link_dir}/\n'.format(f2=os.path.join(trim_outdir, f2_filename), link_dir=link_dir))
         sbatch_file.flush()
         try:
           cmd = 'sbatch -A prod001 -t 12:00:00 -J fastqTrimming -c 1 -o {sbatch_output} -e {sbatch_error}'.\
