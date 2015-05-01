@@ -131,6 +131,7 @@ def main(argv):
         print("FATAL: Sequencing application tag not defined for {}".format(sample))
         # skip to the next sample
         continue
+      print('Application Tag: {} -> {}'.format(sample, application_tag))
       kit_type = application_tag[3:6]
       if kit_type == 'QXT':
         print('Sample {} is QXT! Trimming ...'.format(sample))
