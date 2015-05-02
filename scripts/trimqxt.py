@@ -53,7 +53,7 @@ def launch_trim(trim_indir, trim_outdir, link_dir, base_dir):
         link_dir (str): path to where trimmed fastq files should be linked to
         base_dir (str): path to where the trimmed.txt file should be written to
 
-    Returns: pass
+    Returns (list): list of launched sbatch ids
 
     """
     script_dir = os.path.join(trim_indir, 'scripts')
@@ -90,6 +90,13 @@ def launch_trim(trim_indir, trim_outdir, link_dir, base_dir):
           e.message = "The command {} failed.".format(' '.join(cl))
           raise e
 
+    return sbatch_ids
+
+
+def launch_end(trim_indir, base_dir, sbatch_ids):
+
+    script_dir = os.path.join(trim_indir, 'scripts')
+
     # once all the jobs succesfully finish, symlink the files back
     with tempfile.NamedTemporaryFile(delete=False, dir=script_dir) as finished_file:
       finished_file.write('#!/bin/bash\n')
@@ -113,7 +120,6 @@ def launch_trim(trim_indir, trim_outdir, link_dir, base_dir):
         e.message = "The command {} failed.".format(' '.join(cl))
         raise e
 
-    pass
 
 def main(argv):
   """Takes one param: the run dir"""
@@ -124,6 +130,7 @@ def main(argv):
   print('Found {} samples: {}'.format(len(samples), samples))
   # determine which samples are QXT
   params = db.readconfig("non")
+  sbatch_ids = []
   for sample, sample_path in samples.items():
     with lims.limsconnect(params['apiuser'], params['apipass'], params['baseuri']) as lmc:
       application_tag = lmc.getattribute('samples', sample, "Sequencing Analysis")
@@ -187,7 +194,13 @@ def main(argv):
           t_file.write(datetime.datetime.now().strftime('%Y%m%d%H%M%S'))
 
         # lauch trim!
-        launch_trim(trim_indir=fastq_trim_dir, trim_outdir=fastq_outdir, link_dir=sample_path, base_dir=rundir)
+        sbatch_ids.extend(
+	  launch_trim(trim_indir=fastq_trim_dir, trim_outdir=fastq_outdir, link_dir=sample_path, base_dir=rundir)
+        )
+  
+  # if we have launched jobs, wait      for them before creating a simple trimmed.txt file
+  if sbatch_ids:
+    launch_end(trim_indir=fastq_trim_dir, base_dir=rundir, sbatch_ids=sbatch_ids)
 
   # mv original samples away
   # mv trimmed samples back, append _trimmed to name
