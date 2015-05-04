@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
+__version__ = '0.1.4'
+
 import sys
 import glob
 import os
@@ -124,6 +126,8 @@ def launch_end(trim_indir, base_dir, sbatch_ids):
 def main(argv):
   """Takes one param: the run dir"""
   rundir = argv[0]
+
+  print(__version__)
 
   # get all samples of this run
   samples = get_sample_paths(rundir)

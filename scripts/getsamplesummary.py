@@ -1,6 +1,8 @@
 #!/usr/bin/python
 #
 
+__version__ = '0.1.4'
+
 from __future__ import print_function
 import sys
 import glob
@@ -67,6 +69,8 @@ def make_link(demuxdir, outputdir, family_id, cust_name, sample_name, fclane):
         print("Can't create symlink for {} in {}".format(sample_name, os.path.join(os.path.join(outputdir, cust_name, family_id, 'exomes', sample_name, 'fastq', newname))))
 
 def main(argv):
+
+  print(__version__)
 
   outputdir = '/mnt/hds/proj/bioinfo/MIP_ANALYSIS/'
   
