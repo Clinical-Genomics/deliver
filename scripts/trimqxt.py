@@ -9,7 +9,7 @@ import tempfile
 import datetime
 from access import db, lims
 
-__version__ = '0.1.6'
+__version__ = '0.2.0'
 
 def get_sample_names(rundir):
   """Gets all the names of the samples from a run dir.
