@@ -1,14 +1,14 @@
 #!/usr/bin/python
 #
 
-__version__ = '0.1.5'
-
 from __future__ import print_function
 import sys
 import glob
 import re
 import os
 from access import db, lims
+
+__version__ = '0.1.6'
 
 def getsamplesfromflowcell(demuxdir, flwc):
   samples = glob.glob("{demuxdir}*{flowcell}*/Unalign*/Project_*/Sample_*".\
@@ -21,52 +21,52 @@ def getsamplesfromflowcell(demuxdir, flwc):
   return fc_samples
 
 def getsampleinfofromname(pars, sample):
-  query = (" SELECT sample.sample_id AS id, samplename, flowcellname AS fc, " + 
-           " lane, ROUND(readcounts/2000000,2) AS M_reads, " +
-           " ROUND(q30_bases_pct,2) AS q30, ROUND(mean_quality_score,2) AS score " + 
-           " FROM sample, unaligned, flowcell " + 
-           " WHERE sample.sample_id = unaligned.sample_id AND unaligned.flowcell_id = flowcell.flowcell_id " +
-           " AND (samplename LIKE '{sample}_%' OR samplename = '{sample}')".format(sample=sample))
-  with db.create_tunnel(pars['TUNNELCMD']):
-    with db.dbconnect(pars['CLINICALDBHOST'], pars['CLINICALDBPORT'], pars['STATSDB'], 
-                   pars['CLINICALDBUSER'], pars['CLINICALDBPASSWD']) as dbc:
-      replies = dbc.generalquery( query )
-  return replies
+    query = (" SELECT sample.sample_id AS id, samplename, flowcellname AS fc, " + 
+             " lane, ROUND(readcounts/2000000,2) AS M_reads, " +
+             " ROUND(q30_bases_pct,2) AS q30, ROUND(mean_quality_score,2) AS score " + 
+             " FROM sample, unaligned, flowcell " + 
+             " WHERE sample.sample_id = unaligned.sample_id AND unaligned.flowcell_id = flowcell.flowcell_id " +
+             " AND (samplename LIKE '{sample}_%' OR samplename = '{sample}')".format(sample=sample))
+    with db.create_tunnel(pars['TUNNELCMD']):
+        with db.dbconnect(pars['CLINICALDBHOST'], pars['CLINICALDBPORT'], pars['STATSDB'], 
+                       pars['CLINICALDBUSER'], pars['CLINICALDBPASSWD']) as dbc:
+            replies = dbc.generalquery( query )
+    return replies
 
 def make_link(demuxdir, outputdir, family_id, cust_name, sample_name, fclane):
-  fastqfiles = glob.glob(
-    "{demuxdir}*{fc}*/Unalign*/Project_*/Sample_{sample_name}_*/*L00{lane}*gz".format(
-      demuxdir=demuxdir, fc=fclane['fc'], sample_name=sample_name, lane=fclane['lane']
-    ))
-  fastqfiles.extend(glob.glob(
-    "{demuxdir}*{fc}*/Unalign*/Project_*/Sample_{sample_name}[BF]_*/*L00{lane}*gz".format(
-      demuxdir=demuxdir, fc=fclane['fc'], sample_name=sample_name, lane=fclane['lane']
-    )))
-
-  for fastqfile in fastqfiles:
-    nameparts = fastqfile.split("/")[-1].split("_")
-    rundir = fastqfile.split("/")[6]
-    date = rundir.split("_")[0]
-    fc = rundir[-9:]
-    newname = "{lane}_{date}_{fc}_{sample_name}_{index}_{readdirection}.fastq.gz".format(
-      lane=nameparts[3][-1:],
-      date=date,
-      fc=fc,
-      sample_name=sample_name,
-      index=nameparts[2],
-      readdirection=nameparts[4][-1:]
-    )
-
-    try:
-      os.symlink(fastqfile, os.path.join(outputdir, 'exomes', sample_name, 'fastq', newname))
-    except:
-      print("Can't create symlink for {}".format(sample_name))
-
-    if cust_name != None and family_id != None:
-      try:
-        os.symlink(fastqfile, os.path.join(os.path.join(outputdir, cust_name, family_id, 'exomes', sample_name, 'fastq', newname)))
-      except:
-        print("Can't create symlink for {} in {}".format(sample_name, os.path.join(os.path.join(outputdir, cust_name, family_id, 'exomes', sample_name, 'fastq', newname))))
+    fastqfiles = glob.glob(
+        "{demuxdir}*{fc}*/Unalign*/Project_*/Sample_{sample_name}_*/*L00{lane}*gz".format(
+          demuxdir=demuxdir, fc=fclane['fc'], sample_name=sample_name, lane=fclane['lane']
+        ))
+    fastqfiles.extend(glob.glob(
+        "{demuxdir}*{fc}*/Unalign*/Project_*/Sample_{sample_name}[BF]_*/*L00{lane}*gz".format(
+          demuxdir=demuxdir, fc=fclane['fc'], sample_name=sample_name, lane=fclane['lane']
+        )))
+  
+    for fastqfile in fastqfiles:
+        nameparts = fastqfile.split("/")[-1].split("_")
+        rundir = fastqfile.split("/")[6]
+        date = rundir.split("_")[0]
+        fc = rundir[-9:]
+        newname = "{lane}_{date}_{fc}_{sample_name}_{index}_{readdirection}.fastq.gz".format(
+          lane=nameparts[3][-1:],
+          date=date,
+          fc=fc,
+          sample_name=sample_name,
+          index=nameparts[2],
+          readdirection=nameparts[4][-1:]
+        )
+  
+        try:
+            os.symlink(fastqfile, os.path.join(outputdir, 'exomes', sample_name, 'fastq', newname))
+        except:
+            print("Can't create symlink for {}".format(sample_name))
+  
+        if cust_name != None and family_id != None:
+            try:
+                os.symlink(fastqfile, os.path.join(os.path.join(outputdir, cust_name, family_id, 'exomes', sample_name, 'fastq', newname)))
+            except:
+                print("Can't create symlink for {} in {}".format(sample_name, os.path.join(os.path.join(outputdir, cust_name, family_id, 'exomes', sample_name, 'fastq', newname))))
 
 def main(argv):
 
