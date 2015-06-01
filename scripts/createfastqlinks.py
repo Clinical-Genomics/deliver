@@ -70,7 +70,7 @@ def make_link(demuxdir, outputdir, family_id, cust_name, sample_name, fclane):
 
 def main(argv):
 
-  print(__version__)
+  print('Version: {} {}'.format(__file__, __version__))
 
   outputdir = '/mnt/hds/proj/bioinfo/MIP_ANALYSIS/'
   
@@ -89,14 +89,19 @@ def main(argv):
   smpls = getsamplesfromflowcell(params['DEMUXDIR'], fc)
 
   for sample in smpls.iterkeys():
+    print('Sample: {}'.format(sample))
     family_id = None
     cust_name = None
     with lims.limsconnect(params['apiuser'], params['apipass'], params['baseuri']) as lmc:
       analysistype = lmc.getattribute('samples', sample, "Sequencing Analysis")
+      print('Application tag: {}'.format(analysistype))
       if analysistype is None:
         print("WARNING: Sequencing Analysis tag not defined for {}".format(sample))
         # skip to the next sample
         continue
+      if analysistype == 'RML': # skip Ready Made Libraries
+	print("WARNING: Ready Made Library. Skipping link creation for {}".format(sample))
+	continue
       readcounts = .75 * float(analysistype[-3:])    # Accepted readcount is 75% of ordered million reads
       family_id = lmc.getattribute('samples', sample, 'familyID')
       cust_name = lmc.getattribute('samples', sample, 'customer')
