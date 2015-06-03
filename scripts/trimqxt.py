@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-# encoding: utf-8
-
+# -*- coding: utf-8 -*-
 import sys
 import glob
+import logging
 import os
 import subprocess
 import tempfile
@@ -11,41 +11,51 @@ from access import db, lims
 
 __version__ = '0.2.1'
 
-def get_sample_names(rundir):
-  """Gets all the names of the samples from a run dir.
-  All sample names have been cleaned:
-  * library prep has been removed
-  * B (reprep), F (fail) suffixes have been removed
+logger = logging.getLogger(__name__)
 
-  Args:
+
+def get_sample_names(rundir):
+    """Get all sample names from a RUN directory.
+
+    All sample names have been cleaned:
+    * library prep has been removed
+    * B (reprep), F (fail) suffixes have been removed
+
+    Args:
       rundir (str): FQ path to the run
 
-  Returns (list): a list of sample names
-  """
-  return get_sample_paths(rundir).keys()
+    Returns:
+        list: a list of sample names
+    """
+    return get_sample_paths(rundir).keys()
+
 
 def get_sample_paths(rundir):
-  """Associates the samples with their path.
-  All sample names have been cleaned:
-  * library prep has been removed
-  * B (reprep), F (fail) suffixes have been removed
+    """Associate samples with their path.
 
-  Args:
+    All sample names have been cleaned:
+    * library prep has been removed
+    * B (reprep), F (fail) suffixes have been removed
+
+    Args:
       rundir (str): FQ path to the run
 
-  Returns (dict): sample: path
+    Returns:
+    dict: ``{sample: path}``
+    """
+    sample_paths = glob.glob("{}/Unalign*/Project_*/Sample_*".format(rundir))
+    samples = {}
+    for sample_path in sample_paths:
+        sample_id = os.path.basename(sample_path).split('_')[1]
+        # remove the reprep (B) and reception control fail (F) indicators
+        # from the sample name
+        clean_sample_id = sample_id.rstrip('BF')
+        samples[clean_sample_id] = sample_path
 
-  """
-  sample_paths = glob.glob("{rundir}/Unalign*/Project_*/Sample_*".\
-    format(rundir=rundir))
-  samples = {}
-  for sample_path in sample_paths:
-    sample = os.path.basename(sample_path).split("_")[1]
-    sample = sample.rstrip('BF') # remove the reprep (B) and reception control fail (F) letters from the samplename
-    samples[sample] = sample_path
-  return samples
+    return samples
 
-def launch_trim(trim_indir, trim_outdir, link_dir, base_dir):
+
+def launch_trim(trim_indir, trim_outdir, link_dir):
     """Creates sbatch scripts and launches them.
     Last sbatch script will create the 'trimmed.txt' file denoting a succesful run.
 
@@ -53,161 +63,201 @@ def launch_trim(trim_indir, trim_outdir, link_dir, base_dir):
         trim_indir (str): path to fastq files in need of trimming
         trim_outdir (str): path to output directory
         link_dir (str): path to where trimmed fastq files should be linked to
-        base_dir (str): path to where the trimmed.txt file should be written to
 
-    Returns (list): list of launched sbatch ids
-
+    Returns:
+        list: launched sbatch ids
     """
     script_dir = os.path.join(trim_indir, 'scripts')
     try:
-      os.makedirs(script_dir)
-    except OSError: pass
+        os.makedirs(script_dir)
+    except OSError:
+        pass
+
     sbatch_ids = []
-    for f1 in glob.glob('{}/*_R1_*.fastq.gz'.format(trim_indir)):
-      f2 = f1.replace('_R1_', '_R2_')
-      f1_filename = os.path.basename(f1)
-      f2_filename = os.path.basename(f2)
-      outfile = '{}/{}'.format(trim_outdir, os.path.basename(f1).replace('.fastq.gz', ''))
-      with tempfile.NamedTemporaryFile(delete=False, dir=script_dir) as sbatch_file:
-        sbatch_file.write('#!/bin/bash\n')
-        sbatch_file.write('set -e\n')
-        sbatch_file.write('java -jar /mnt/hds/proj/bioinfo/SCRIPTS/AgilentReadTrimmer.jar -m1 {f1} -m2 {f2} -o {outfile} -qxt && gzip {outfile}*\n'.format(f1=f1, f2=f2, outfile=outfile))
-        sbatch_file.write('mv {outfile}_1.fastq.gz {f1}\n'.format(outfile=outfile, f1=os.path.join(trim_outdir, f1_filename)))
-        sbatch_file.write('mv {outfile}_2.fastq.gz {f2}\n'.format(outfile=outfile, f2=os.path.join(trim_outdir, f2_filename)))
-        sbatch_file.write('ln -s {f1} {link_dir}/\n'.format(f1=os.path.join(trim_outdir, f1_filename), link_dir=link_dir))
-        sbatch_file.write('ln -s {f2} {link_dir}/\n'.format(f2=os.path.join(trim_outdir, f2_filename), link_dir=link_dir))
-        sbatch_file.flush()
-        try:
-          cmd = 'sbatch -A prod001 -t 12:00:00 -J fastqTrimming -c 1 -o {sbatch_output} -e {sbatch_error}'.\
-            format(
-              sbatch_output='/mnt/hds/proj/bioinfo/LOG/fastqTrimming.%j.out',
-              sbatch_error='/mnt/hds/proj/bioinfo/LOG/fastqTrimming.%j.err'
-            )
-          cl = cmd.split(' ')
-          cl.append(sbatch_file.name)
-          print(' '.join(cl))
-          sbatch_output = subprocess.check_output(cl)
-          sbatch_ids.append(sbatch_output.rstrip().split(' ')[-1])
-        except subprocess.CalledProcessError, e:
-          e.message = "The command {} failed.".format(' '.join(cl))
-          raise e
+    read1_fastq_paths = glob.glob('{}/*_R1_*.fastq.gz'.format(trim_indir))
+    for read1_path in read1_fastq_paths:
+        read2_path = read1_path.replace('_R1_', '_R2_')
+        read1_file = os.path.basename(read1_path)
+        read2_file = os.path.basename(read2_path)
+        outfile = os.path.join(trim_outdir, read1_file.replace('.fastq.gz', ''))
+        read1_out = os.path.join(trim_outdir, read1_file)
+        read2_out = os.path.join(trim_outdir, read2_file)
+
+        with tempfile.NamedTemporaryFile(dir=script_dir, delete=False) as sbatch_file:
+            file_content = """#!/bin/bash
+            set -e
+
+            java -jar /mnt/hds/proj/bioinfo/SCRIPTS/AgilentReadTrimmer.jar -m1 {read1} -m2 {read2} -o {outfile} -qxt && gzip {outfile}*
+
+            mv {outfile}_1.fastq.gz {read1_out}
+            mv {outfile}_2.fastq.gz {read2_out}
+
+            ln -s {read1_out} {link_dir}/
+            ln -s {read2_out} {link_dir}/
+            """.format(read1=read1_path, read2=read2_path, outfile=outfile,
+                       read1_out=read1_out, read2_out=read2_out, link_dir=link_dir)
+
+            sbatch_file.write(file_content)
+            sbatch_file.flush()
+
+            try:
+                out_path = "/mnt/hds/proj/bioinfo/LOG/fastqTrimming.%j.out"
+                err_path = "/mnt/hds/proj/bioinfo/LOG/fastqTrimming.%j.err"
+                command = ("sbatch -A prod001 -t 12:00:00 -J fastqTrimming -c 1 -o"
+                           "{out} -e {error}".format(out=out_path, error=err_path))
+
+                command_line = command.split(' ')
+                command_line.append(sbatch_file.name)
+                logger.debug(' '.join(command_line))
+                sbatch_output = subprocess.check_output(command_line)
+                sbatch_ids.append(sbatch_output.rstrip().split(' ')[-1])
+
+            except subprocess.CalledProcessError as exception:
+                message = "The command {} failed".format(' '.join(command_line))
+                exception.message = message
+                raise exception
 
     return sbatch_ids
 
 
 def launch_end(trim_indir, base_dir, sbatch_ids):
-
     script_dir = os.path.join(trim_indir, 'scripts')
 
     # once all the jobs succesfully finish, symlink the files back
     with tempfile.NamedTemporaryFile(delete=False, dir=script_dir) as finished_file:
-      finished_file.write('#!/bin/bash\n')
-      finished_file.write('date +"%Y%m%d%H%M%S" > {}/trimmed.txt\n'.format(base_dir))
-      finished_file.write('rm {}/trimming.txt\n'.format(base_dir))
-      finished_file.flush()
-      
-      try:
-        cmd = "sbatch -A prod001 -t 00:01:00 -J trimmingFinished -c 1 " +\
-              "-o {sbatch_output} -e {sbatch_error} --dependency=afterok:{dependencies}".\
-                format(
-                  sbatch_output='/mnt/hds/proj/bioinfo/LOG/trimmingFinished.%j.out',
-                  sbatch_error='/mnt/hds/proj/bioinfo/LOG/trimmingFinished.%j.err',
-                  dependencies=':'.join(sbatch_ids)
-                )
-        cl = cmd.split(' ')
-        cl.append(finished_file.name)
-        print(' '.join(cl))
-        subprocess.check_output(cl)
-      except subprocess.CalledProcessError, e:
-        e.message = "The command {} failed.".format(' '.join(cl))
-        raise e
+        content = """#!/bin/bash
+        date +"%Y%m%d%H%M%S" > {base}/trimmed.txt
+        rm {base}/trimming.txt
+        """.format(base=base_dir)
+        finished_file.write(content)
+        finished_file.flush()
+
+    try:
+        output = '/mnt/hds/proj/bioinfo/LOG/trimmingFinished.%j.out'
+        error = '/mnt/hds/proj/bioinfo/LOG/trimmingFinished.%j.err'
+        dependencies = ':'.join(sbatch_ids)
+        command = ("sbatch -A prod001 -t 00:01:00 -J trimmingFinished -c 1 "
+                   "-o {out} -e {error} --dependency=afterok:{deps}"
+                   .format(out=output, error=error, deps=dependencies))
+
+        command_line = command.split(' ')
+        command_line.append(finished_file.name)
+        logger.debug(' '.join(command_line))
+        subprocess.check_output(command_line)
+
+    except subprocess.CalledProcessError as exception:
+        exception.message = "The command {} failed.".format(' '.join(command_line))
+        raise exception
 
 
 def main(argv):
-  """Takes one param: the run dir"""
-  rundir = argv[0]
+    """Takes one param: the run dir"""
+    logger.info(__version__)
+    rundir = argv[0]
 
-  print(__version__)
+    # get all samples of this run
+    samples = get_sample_paths(rundir)
+    logger.info("Found %s samples: %s", len(samples), samples)
+    # determine which samples are QXT
+    params = db.readconfig('non')
+    
+    sbatch_ids = []
+    for sample, sample_path in samples.items():
+        with lims.limsconnect(params['apiuser'], params['apipass'],
+                              params['baseuri']) as lmc:
 
-  # get all samples of this run
-  samples = get_sample_paths(rundir)
-  print('Found {} samples: {}'.format(len(samples), samples))
-  # determine which samples are QXT
-  params = db.readconfig("non")
-  sbatch_ids = []
-  for sample, sample_path in samples.items():
-    with lims.limsconnect(params['apiuser'], params['apipass'], params['baseuri']) as lmc:
-      application_tag = lmc.getattribute('samples', sample, "Sequencing Analysis")
-      if application_tag is None:
-        print("FATAL: Sequencing application tag not defined for {}".format(sample))
-        # skip to the next sample
-        continue
-      print('Application Tag: {} -> {}'.format(sample, application_tag))
-      kit_type = application_tag[3:6]
-      if kit_type == 'QXT':
-        print('Sample {} is QXT! Trimming ...'.format(sample))
+            application_tag = lmc.getattribute('samples', sample, 'Sequencing Analysis')
+            if application_tag is None:
+                logger.warning("Application tag not defined for %s", sample)
+                # skip to the next sample
+                continue
 
-        # TODO check in clinstatsdb if this sample is trimmed already ...
+            logger.info("Application Tag: %s -> %s", sample, application_tag)
 
-        # move the samples to a totrim dir so they don't get picked up by next steps ...
-        sample_base_path = os.path.dirname(sample_path)
-        trim_dir = sample_base_path + '/totrim'
-        outdir   = sample_base_path + '/trimmed'
+            kit_type = application_tag[3:6]
+            if kit_type == 'QXT':
+                logger.info("Sample %s is QXT! Trimming ...", sample)
+                # TODO: check clinstatsdb if sample is trimmed already
+                # move the samples to a totrim dir so they don't get picked up by next steps ...
+                sample_base_path = os.path.dirname(sample_path)
+                trim_dir = os.path.join(sample_base_path, 'totrim')
+                outdir = os.path.join(sample_base_path, 'trimmed')
 
-        fastq_dir = os.path.basename(sample_path)
-        fastq_trim_dir = os.path.join(trim_dir, fastq_dir)
-        fastq_outdir   = os.path.join(outdir, fastq_dir)
+                fastq_dir = os.path.basename(sample_path)
+                fastq_trim_dir = os.path.join(trim_dir, fastq_dir)
+                fastq_outdir = os.path.join(outdir, fastq_dir)
 
-        # skip this sample if the input dir exists
-        if os.path.exists(fastq_trim_dir):
-          print('{} exists, skipping!'.format(fastq_trim_dir))
-          continue
-        # skip the sample if output dir not empty
-        if os.path.exists(fastq_outdir):
-          for dir_path, dir_names, files in os.walk(fastq_outdir):
-            if files:
-              print('{} not empty, skipping!'.format(fastq_outdir))
-              continue
+                # skip this sample if the input dir exists
+                if os.path.exists(fastq_trim_dir):
+                    logger.info("%s exists, skipping!", fastq_trim_dir)
+                    continue
 
-        # create input dir
-        try:
-          # only create trim_dir, the fastq_dir will me moved in here
-          print('mkdir {}'.format(trim_dir))
-          os.makedirs(trim_dir)
-        except OSError: pass
+                # skip the sample if output dir not empty
+                if os.path.exists(fastq_outdir):
+                    for _, _, files in os.walk(fastq_outdir):
+                        if files:
+                            logger.info("%s not empty, skipping!", fastq_outdir)
+                            continue
 
-        # create the output dir
-        try:
-          print('mkdir {}'.format(fastq_outdir))
-          os.makedirs(fastq_outdir)
-        except OSError: pass
+                # create input dir
+                try:
+                    # only create trim_dir, the fastq_dir will me moved in here
+                    logger.debug("mkdir %s", trim_dir)
+                    os.makedirs(trim_dir)
+                except OSError:
+                    pass
 
-        # move the fastq files to the totrim dir
-        print('mv {} {}'.format(sample_path, trim_dir))
-        os.rename(sample_path, fastq_trim_dir)
+                # create the output dir
+                try:
+                    logger.debug("mkdir %s", fastq_outdir)
+                    os.makedirs(fastq_outdir)
+                except OSError:
+                    pass
 
-        # create the original sample dirtory
-        try:
-          print('mkdir {}'.format(sample_path))
-          os.makedirs(sample_path)
-        except OSError: pass
+                # move the fastq files to the totrim dir
+                logger.debug("mv %s %s", sample_path, trim_dir)
+                os.rename(sample_path, fastq_trim_dir)
 
-        # indicate that we are trimming, let other steps in the data flow wait
-        # will be removed on succesful finishing trimming
-        with open('{}/trimming.txt'.format(rundir), 'w') as t_file:
-          t_file.write(datetime.datetime.now().strftime('%Y%m%d%H%M%S'))
+                # create the original sample dirtory
+                try:
+                    logger.debug("mkdir %s", sample_path)
+                    os.makedirs(sample_path)
+                except OSError:
+                    pass
 
-        # lauch trim!
-        sbatch_ids.extend(
-	  launch_trim(trim_indir=fastq_trim_dir, trim_outdir=fastq_outdir, link_dir=sample_path, base_dir=rundir)
-        )
-  
-  # if we have launched jobs, wait      for them before creating a simple trimmed.txt file
-  if sbatch_ids:
-    launch_end(trim_indir=fastq_trim_dir, base_dir=rundir, sbatch_ids=sbatch_ids)
+                # indicate that we are trimming, let other steps in the data flow
+                # wait will be removed on succesful finishing trimming
+                with open("{}/trimming.txt".format(rundir), 'w') as t_file:
+                    t_file.write(datetime.datetime.now().strftime('%Y%m%d%H%M%S'))
 
-  # mv original samples away
-  # mv trimmed samples back, append _trimmed to name
+                # lauch trim!
+                new_sbatch_ids = launch_trim(trim_indir=fastq_trim_dir,
+                                             trim_outdir=fastq_outdir,
+                                             link_dir=sample_path)
+                sbatch_ids.extend(new_sbatch_ids)
+
+    # if we have launched jobs, wait for them before creating a simple
+    # trimmed.txt file
+    if sbatch_ids:
+        launch_end(trim_indir=fastq_trim_dir, base_dir=rundir, sbatch_ids=sbatch_ids)
+
+def setup_logging(level='INFO'):
+    root_logger = logging.getLogger()
+    root_logger.setLevel(level)
+
+    # customize formatter, align each column
+    template = "[%(asctime)s] %(name)-25s %(levelname)-8s %(message)s"
+    formatter = logging.Formatter(template)
+
+    # add a basic STDERR handler to the logger
+    console = logging.StreamHandler()
+    console.setLevel(level)
+    console.setFormatter(formatter)
+
+    root_logger.addHandler(console)
+    return root_logger
+
 
 if __name__ == '__main__':
+    setup_logging()
     main(sys.argv[1:])
