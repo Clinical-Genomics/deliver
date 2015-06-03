@@ -87,14 +87,14 @@ def launch_trim(trim_indir, trim_outdir, link_dir):
             file_content = """#!/bin/bash
             set -e
 
-            java -jar /mnt/hds/proj/bioinfo/SCRIPTS/AgilentReadTrimmer.jar -m1 {read1} -m2 {read2} -o {outfile} -qxt && gzip {out}*
+            java -jar /mnt/hds/proj/bioinfo/SCRIPTS/AgilentReadTrimmer.jar -m1 {read1} -m2 {read2} -o {outfile} -qxt && gzip {outfile}*
 
             mv {outfile}_1.fastq.gz {read1_out}
             mv {outfile}_2.fastq.gz {read2_out}
 
             ln -s {read1_out} {link_dir}/
             ln -s {read2_out} {link_dir}/
-            """.format(read1=read1_path, read2=read2_path, out=outfile,
+            """.format(read1=read1_path, read2=read2_path, outfile=outfile,
                        read1_out=read1_out, read2_out=read2_out, link_dir=link_dir)
 
             sbatch_file.write(file_content)
@@ -176,7 +176,7 @@ def main(argv):
 
             kit_type = application_tag[3:6]
             if kit_type == 'QXT':
-                logger.info("Sample {} is QXT! Trimming ...", sample)
+                logger.info("Sample %s is QXT! Trimming ...", sample)
                 # TODO: check clinstatsdb if sample is trimmed already
                 # move the samples to a totrim dir so they don't get picked up by next steps ...
                 sample_base_path = os.path.dirname(sample_path)
