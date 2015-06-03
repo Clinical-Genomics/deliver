@@ -108,7 +108,7 @@ def launch_trim(trim_indir, trim_outdir, link_dir):
 
                 command_line = command.split(' ')
                 command_line.append(sbatch_file.name)
-                logger.info(command_line)
+                logger.debug(' '.join(command_line))
                 sbatch_output = subprocess.check_output(command_line)
                 sbatch_ids.append(sbatch_output.rstrip().split(' ')[-1])
 
@@ -142,7 +142,7 @@ def launch_end(trim_indir, base_dir, sbatch_ids):
 
         command_line = command.split(' ')
         command_line.append(finished_file.name)
-        logger.info(' '.join(command_line))
+        logger.debug(' '.join(command_line))
         subprocess.check_output(command_line)
 
     except subprocess.CalledProcessError as exception:
@@ -202,25 +202,25 @@ def main(argv):
                 # create input dir
                 try:
                     # only create trim_dir, the fastq_dir will me moved in here
-                    logger.info("mkdir %s", trim_dir)
+                    logger.debug("mkdir %s", trim_dir)
                     os.makedirs(trim_dir)
                 except OSError:
                     pass
 
                 # create the output dir
                 try:
-                    logger.info("mkdir %s", fastq_outdir)
+                    logger.debug("mkdir %s", fastq_outdir)
                     os.makedirs(fastq_outdir)
                 except OSError:
                     pass
 
                 # move the fastq files to the totrim dir
-                logger.info("mv %s %s", sample_path, trim_dir)
+                logger.debug("mv %s %s", sample_path, trim_dir)
                 os.rename(sample_path, fastq_trim_dir)
 
                 # create the original sample dirtory
                 try:
-                    logger.info("mkdir %s", sample_path)
+                    logger.debug("mkdir %s", sample_path)
                     os.makedirs(sample_path)
                 except OSError:
                     pass
@@ -240,10 +240,6 @@ def main(argv):
     # trimmed.txt file
     if sbatch_ids:
         launch_end(trim_indir=fastq_trim_dir, base_dir=rundir, sbatch_ids=sbatch_ids)
-
-    # mv original samples away
-    # mv trimmed samples back, append _trimmed to name
-
 
 def setup_logging(level='INFO'):
     root_logger = logging.getLogger()
