@@ -133,8 +133,8 @@ def launch_end(trim_indir, base_dir, sbatch_ids):
         finished_file.flush()
 
     try:
-        output = '/mnt/hds/proj/bioinfo/LOG/trimmingFinished.%j.out',
-        error = '/mnt/hds/proj/bioinfo/LOG/trimmingFinished.%j.err',
+        output = '/mnt/hds/proj/bioinfo/LOG/trimmingFinished.%j.out'
+        error = '/mnt/hds/proj/bioinfo/LOG/trimmingFinished.%j.err'
         dependencies = ':'.join(sbatch_ids)
         command = ("sbatch -A prod001 -t 00:01:00 -J trimmingFinished -c 1 "
                    "-o {out} -e {error} --dependency=afterok:{deps}"
