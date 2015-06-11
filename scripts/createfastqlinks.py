@@ -100,12 +100,12 @@ def main(argv):
         # skip to the next sample
         continue
       if analysistype == 'RML': # skip Ready Made Libraries
-	print("WARNING: Ready Made Library. Skipping link creation for {}".format(sample))
-	continue
+        print("WARNING: Ready Made Library. Skipping link creation for {}".format(sample))
+        continue
       readcounts = .75 * float(analysistype[-3:])    # Accepted readcount is 75% of ordered million reads
       family_id = lmc.getattribute('samples', sample, 'familyID')
       cust_name = lmc.getattribute('samples', sample, 'customer')
-      if not re.match(r'cust\d{3}', cust_name):
+      if cust_name is None or not re.match(r'cust\d{3}', cust_name):
         print("WARNING '{}' does not match an internal customer name".format(cust_name))
         cust_name = None
       if cust_name == None:
