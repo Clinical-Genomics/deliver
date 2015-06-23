@@ -6,7 +6,9 @@ import sys
 import glob
 import re
 import os
-from access import db, lims
+from access import db
+from genologics.lims import *
+from genologics.config import BASEURI, USERNAME, PASSWORD
 
 __version__ = '0.3.1'
 
@@ -60,8 +62,8 @@ def make_link(demuxdir, outputdir, family_id, cust_name, sample_name, fclane):
         try:
             os.symlink(fastqfile, os.path.join(outputdir, 'exomes', sample_name, 'fastq', newname))
         except:
-            print("Can't create symlink for {}".format(sample_name))
-  
+            print("Can't create symlink for {} in {}".format(sample_name, os.path.join(os.path.join(outputdir, 'exomes', sample_name, 'fastq', newname))))
+
         if cust_name != None and family_id != None:
             try:
                 os.symlink(fastqfile, os.path.join(os.path.join(outputdir, cust_name, family_id, 'exomes', sample_name, 'fastq', newname)))
@@ -86,34 +88,46 @@ def main(argv):
     sys.exit("Usage: {} <flowcell name>".format(__file__))
 
   params = db.readconfig("non")
-  smpls = getsamplesfromflowcell(params['DEMUXDIR'], fc)
+  lims = Lims(BASEURI, USERNAME, PASSWORD)
+  samples = getsamplesfromflowcell(params['DEMUXDIR'], fc)
 
-  for sample in smpls.iterkeys():
-    print('Sample: {}'.format(sample))
+  for sample_id in samples.iterkeys():
+    print('Sample: {}'.format(sample_id))
     family_id = None
     cust_name = None
-    with lims.limsconnect(params['apiuser'], params['apipass'], params['baseuri']) as lmc:
-      analysistype = lmc.getattribute('samples', sample, "Sequencing Analysis")
-      print('Application tag: {}'.format(analysistype))
-      if analysistype is None:
-        print("WARNING: Sequencing Analysis tag not defined for {}".format(sample))
-        # skip to the next sample
-        continue
-      if analysistype == 'RML': # skip Ready Made Libraries
-        print("WARNING: Ready Made Library. Skipping link creation for {}".format(sample))
-        continue
-      readcounts = .75 * float(analysistype[-3:])    # Accepted readcount is 75% of ordered million reads
-      family_id = lmc.getattribute('samples', sample, 'familyID')
-      cust_name = lmc.getattribute('samples', sample, 'customer')
-      if cust_name is None or not re.match(r'cust\d{3}', cust_name):
-        print("WARNING '{}' does not match an internal customer name".format(cust_name))
-        cust_name = None
-      if cust_name == None:
-        print("WARNING '{}' internal customer name is not set".format(sample))
-      if family_id == None:
-        print("WARNING '{}' family_id is not set".format(sample))
 
-    dbinfo = getsampleinfofromname(params, sample)
+    try:
+      sample = Sample(lims, id=sample_id)
+      analysistype = sample.udf["Sequencing Analysis"]
+    except:
+      try:
+        # maybe it's an old CG ID
+        sample = lims.get_samples(udf={'Clinical Genomics ID': sample_id})[0]
+        analysistype = sample.udf["Sequencing Analysis"]
+      except:
+        print("WARNING: Sample {} not found in LIMS!".format(sample_id))
+        continue
+
+    print('Application tag: {}'.format(analysistype))
+    if analysistype is None:
+      print("WARNING: Sequencing Analysis tag not defined for {}".format(sample_id))
+      # skip to the next sample
+      continue
+    if analysistype == 'RML': # skip Ready Made Libraries
+      print("WARNING: Ready Made Library. Skipping link creation for {}".format(sample_id))
+      continue
+    readcounts = .75 * float(analysistype[-3:])    # Accepted readcount is 75% of ordered million reads
+    family_id = sample.udf['familyID']
+    cust_name = sample.udf['customer']
+    if cust_name is None or not re.match(r'cust\d{3}', cust_name):
+      print("WARNING '{}' does not match an internal customer name".format(cust_name))
+      cust_name = None
+    if cust_name == None:
+      print("WARNING '{}' internal customer name is not set".format(sample_id))
+    if family_id == None:
+      print("WARNING '{}' family_id is not set".format(sample_id))
+
+    dbinfo = getsampleinfofromname(params, sample_id)
     rc = 0         # counter for total readcount of sample
     fclanes = []   # list to keep flowcell names and lanes for a sample
     for info in dbinfo:
@@ -122,18 +136,18 @@ def main(argv):
         fclanes.append(dict(( (key, info[key]) for key in ['fc', 'q30', 'lane'] )))
     if readcounts:
       if (rc > readcounts):        # If enough reads are obtained do
-        print("{sample} Passed {readcount} M reads\nUsing reads from {fclanes}".format(sample=sample, readcount=rc, fclanes=fclanes))
+        print("{sample_id} Passed {readcount} M reads\nUsing reads from {fclanes}".format(sample_id=sample_id, readcount=rc, fclanes=fclanes))
 
         # try to create old dir structure
         try:
-          os.makedirs(os.path.join(outputdir, 'exomes', sample, 'fastq'))
+          os.makedirs(os.path.join(outputdir, 'exomes', sample_id, 'fastq'))
         except OSError:
           pass
 
         # try to create new dir structure
         if cust_name != None and family_id != None:
           try:
-            os.makedirs(os.path.join(outputdir, cust_name, family_id, 'exomes', sample, 'fastq'))
+            os.makedirs(os.path.join(outputdir, cust_name, family_id, 'exomes', sample_id, 'fastq'))
           except OSError:
             pass
           try:
@@ -148,15 +162,15 @@ def main(argv):
             outputdir=outputdir,
             family_id=family_id,
             cust_name=cust_name,
-            sample_name=sample,
+            sample_name=sample_id,
             fclane=fclane
           )
       else:                        # Otherwise just present the data
-        print("{sample} FAIL with {readcount} M reads.\n"
+        print("{sample_id} FAIL with {readcount} M reads.\n"
               "Requested with {reqreadcount} M reads.\n"
-              "These flowcells summarized {fclanes}".format(sample=sample, readcount=rc, fclanes=fclanes, reqreadcount=readcounts))
+              "These flowcells summarized {fclanes}".format(sample_id=sample_id, readcount=rc, fclanes=fclanes, reqreadcount=readcounts))
     else:
-      print("{} - no analysis parameter specified in lims".format(sample))
+      print("{} - no analysis parameter specified in lims".format(sample_id))
 
 if __name__ == '__main__':
   main(sys.argv[1:])
