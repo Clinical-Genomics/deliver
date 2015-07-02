@@ -17,7 +17,7 @@ for run in ${runs[@]}; do
         log ${run} 'trimming already finished'
       else
         NOW=$(date +"%Y%m%d%H%M%S")
-      	/home/hiseq.clinical/miniconda/envs/prod/bin/python /mnt/hds/proj/bioinfo/SCRIPTS/trimqxt.py ${UNABASE}${run} 2>&1 > ${UNABASE}${run}/trimQXT.${NOW}.log
+      	/home/hiseq.clinical/miniconda/envs/prod/bin/python /mnt/hds/proj/bioinfo/SCRIPTS/trimqxt.py ${UNABASE}${run} &> ${UNABASE}${run}/trimQXT.${NOW}.log
       fi
       if [ -f ${UNABASE}${run}/trimming.txt ]; then
         log ${run} 'trimming is in progress'
@@ -25,7 +25,7 @@ for run in ${runs[@]}; do
         log ${run} 'copy is complete delivery is started' > ${UNABASE}${run}/delivery.txt 
         FC=$(echo ${run} | awk 'BEGIN {FS="/"} {split($(NF-1),arr,"_");print substr(arr[4],2,length(arr[4]))}')
         NOW=$(date +"%Y%m%d%H%M%S")
-        /home/hiseq.clinical/miniconda/envs/prod/bin/python /mnt/hds/proj/bioinfo/SCRIPTS/createfastqlinks.py ${FC} 2>&1 > ${UNABASE}${run}/createfastqlinks.${FC}.${NOW}.log
+        /home/hiseq.clinical/miniconda/envs/prod/bin/python /mnt/hds/proj/bioinfo/SCRIPTS/createfastqlinks.py ${FC} &> ${UNABASE}${run}/createfastqlinks.${FC}.${NOW}.log
         sbatch /mnt/hds/proj/bioinfo/SCRIPTS/getfastq.batch ${UNABASE}${run}
       fi
     fi
