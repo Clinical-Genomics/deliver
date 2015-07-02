@@ -6,6 +6,7 @@ import sys
 import glob
 import re
 import os
+import os.path
 from access import db
 from genologics.lims import *
 from genologics.config import BASEURI, USERNAME, PASSWORD
@@ -59,14 +60,27 @@ def make_link(demuxdir, outputdir, family_id, cust_name, sample_name, fclane):
           readdirection=nameparts[4][-1:]
         )
   
+        # first remove the link - might be pointing to wrong file
+        dest_fastqfile = os.path.join(outputdir, 'exomes', sample_name, 'fastq', newname)
         try:
-            os.symlink(fastqfile, os.path.join(outputdir, 'exomes', sample_name, 'fastq', newname))
+            os.remove(dest_fastqfile)
+        except OSError:
+            pass
+
+        # then create it
+        try:
+            os.symlink(fastqfile, dest_fastqfile)
         except:
             print("Can't create symlink for {} in {}".format(sample_name, os.path.join(os.path.join(outputdir, 'exomes', sample_name, 'fastq', newname))))
 
         if cust_name != None and family_id != None:
+            cust_dest_fastqfile = os.path.join(os.path.join(outputdir, cust_name, family_id, 'exomes', sample_name, 'fastq', newname))
             try:
-                os.symlink(fastqfile, os.path.join(os.path.join(outputdir, cust_name, family_id, 'exomes', sample_name, 'fastq', newname)))
+                os.remove(cust_dest_fastqfile)
+            except OSError:
+                pass
+            try:
+                os.symlink(fastqfile, cust_dest_fastqfile)
             except:
                 print("Can't create symlink for {} in {}".format(sample_name, os.path.join(os.path.join(outputdir, cust_name, family_id, 'exomes', sample_name, 'fastq', newname))))
 
