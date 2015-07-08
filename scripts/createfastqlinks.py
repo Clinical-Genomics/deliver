@@ -131,13 +131,20 @@ def main(argv):
       print("WARNING: Ready Made Library. Skipping link creation for {}".format(sample_id))
       continue
     readcounts = .75 * float(analysistype[-3:])    # Accepted readcount is 75% of ordered million reads
-    family_id = sample.udf['familyID']
-    cust_name = sample.udf['customer']
-    if cust_name is None or not re.match(r'cust\d{3}', cust_name):
-      print("WARNING '{}' does not match an internal customer name".format(cust_name))
+
+    try:
+      family_id = sample.udf['familyID']
+    except KeyError:
+      family_id = None
+    try:
+      cust_name = sample.udf['customer']
+    except KeyError:
       cust_name = None
     if cust_name == None:
       print("WARNING '{}' internal customer name is not set".format(sample_id))
+    elif not re.match(r'cust\d{3}', cust_name):
+      print("WARNING '{}' does not match an internal customer name".format(cust_name))
+      cust_name = None
     if family_id == None:
       print("WARNING '{}' family_id is not set".format(sample_id))
 
