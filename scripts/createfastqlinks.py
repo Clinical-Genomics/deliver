@@ -112,15 +112,19 @@ def main(argv):
 
     try:
       sample = Sample(lims, id=sample_id)
-      analysistype = sample.udf["Sequencing Analysis"]
     except:
       try:
+        print("WARNING: Sample {} not found in LIMS! Trying as CG ID...".format(sample_id))
         # maybe it's an old CG ID
         sample = lims.get_samples(udf={'Clinical Genomics ID': sample_id})[0]
-        analysistype = sample.udf["Sequencing Analysis"]
       except:
-        print("WARNING: Sample {} not found in LIMS!".format(sample_id))
+        print("WARNING: Sample {} still not found in LIMS!".format(sample_id))
         continue
+
+    try:
+      analysistype = sample.udf["Sequencing Analysis"]
+    except KeyError:
+      analysistype = None
 
     print('Application tag: {}'.format(analysistype))
     if analysistype is None:
@@ -138,6 +142,8 @@ def main(argv):
       family_id = None
     try:
       cust_name = sample.udf['customer']
+      if cust_name is not None:
+        cust_name = cust_name.lower()
     except KeyError:
       cust_name = None
     if cust_name == None:
