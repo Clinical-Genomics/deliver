@@ -9,7 +9,7 @@ import tempfile
 import datetime
 from access import db, lims
 
-__version__ = '0.6.0'
+__version__ = '0.6.1'
 
 logger = logging.getLogger(__name__)
 
@@ -259,5 +259,5 @@ def setup_logging(level='INFO'):
 
 
 if __name__ == '__main__':
-    setup_logging()
+    setup_logging(level='DEBUG')
     main(sys.argv[1:])
