@@ -111,12 +111,13 @@ def main(argv):
     cust_name = None
 
     try:
-      sample = Sample(lims, id=sample_id)
+      sample = Sample(lims, id=sample_id, force=True)
     except:
       try:
-        print("WARNING: Sample {} not found in LIMS! Trying as CG ID...".format(sample_id))
+        print("WARNING: Sample {} not found in LIMS! Trying as CG ID...".format(sample_id), end='')
         # maybe it's an old CG ID
         sample = lims.get_samples(udf={'Clinical Genomics ID': sample_id})[0]
+        print("Got it: {}".format(sample.id))
       except:
         print("WARNING: Sample {} still not found in LIMS!".format(sample_id))
         continue
