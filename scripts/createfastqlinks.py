@@ -111,7 +111,8 @@ def main(argv):
     cust_name = None
 
     try:
-      sample = Sample(lims, id=sample_id, force=True)
+      sample = Sample(lims, id=sample_id)
+      sample.get(force=True)
     except:
       try:
         print("WARNING: Sample {} not found in LIMS! Trying as CG ID...".format(sample_id), end='')
