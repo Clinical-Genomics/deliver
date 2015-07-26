@@ -14,7 +14,7 @@ from genologics.config import BASEURI, USERNAME, PASSWORD
 __version__ = '0.6.2'
 
 def getsamplesfromflowcell(demuxdir, flwc):
-  samples = glob.glob("{demuxdir}*{flowcell}*/Unalign*/Project_*/Sample_*".\
+  samples = glob.glob("{demuxdir}*{flowcell}/Unalign*/Project_*/Sample_*".\
     format(demuxdir=demuxdir, flowcell=flwc))
   fc_samples = {}
   for sample in samples:
@@ -38,11 +38,11 @@ def getsampleinfofromname(pars, sample):
 
 def make_link(demuxdir, outputdir, family_id, cust_name, sample_name, fclane):
     fastqfiles = glob.glob(
-        "{demuxdir}*{fc}*/Unalign*/Project_*/Sample_{sample_name}_*/*L00{lane}*gz".format(
+        "{demuxdir}*{fc}/Unalign*/Project_*/Sample_{sample_name}_*/*L00{lane}*gz".format(
           demuxdir=demuxdir, fc=fclane['fc'], sample_name=sample_name, lane=fclane['lane']
         ))
     fastqfiles.extend(glob.glob(
-        "{demuxdir}*{fc}*/Unalign*/Project_*/Sample_{sample_name}[BF]_*/*L00{lane}*gz".format(
+        "{demuxdir}*{fc}/Unalign*/Project_*/Sample_{sample_name}[BF]_*/*L00{lane}*gz".format(
           demuxdir=demuxdir, fc=fclane['fc'], sample_name=sample_name, lane=fclane['lane']
         )))
   
@@ -50,14 +50,13 @@ def make_link(demuxdir, outputdir, family_id, cust_name, sample_name, fclane):
         nameparts = fastqfile.split("/")[-1].split("_")
         rundir = fastqfile.split("/")[6]
         date = rundir.split("_")[0]
-        fc = rundir[-9:]
         newname = "{lane}_{date}_{fc}_{sample_name}_{index}_{readdirection}.fastq.gz".format(
-          lane=nameparts[3][-1:],
+          lane=fclane['lane'],
           date=date,
-          fc=fc,
+          fc=fclane['fc'],
           sample_name=sample_name,
-          index=nameparts[2],
-          readdirection=nameparts[4][-1:]
+          index=nameparts[-4],
+          readdirection=nameparts[-2][-1:]
         )
   
         # first remove the link - might be pointing to wrong file
