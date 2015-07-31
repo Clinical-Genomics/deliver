@@ -89,6 +89,9 @@ chmod g+x ${sfil}
 namepairs=$(awk 'BEGIN {FS=","} {if (NF>1) {cgout=$3;if (substr($3, length($3))=="B") {cgout=substr($3,1,length($3)-1)};if (substr($3, length($3))=="F") {cgout=substr($3,1,length($3)-1)}}; if ($1 != "Project") print cgout"KLISTERKLISTER"$2}' ${slist})
 fastqfiles=$(ls | grep ".fastq.gz$")
 for fil in ${fastqfiles[@]};do
+  if [[ $fil =~ 'Undetermined' ]]; then
+      continue
+  fi
   for pair in ${namepairs[@]};do 
     cgname=$(echo ${pair} | awk 'BEGIN {FS="KLISTERKLISTER"} {print $1}')
     cuname=$(echo ${pair} | awk 'BEGIN {FS="KLISTERKLISTER"} {print $2}')
@@ -134,10 +137,7 @@ for pair in ${namepairs[@]};do
   echo renaming sample ${cgname}[FB] to ${cuname} in ${sfil} and ${meta}
 done
 
-prj=$(ls | grep meOLDta | awk BEGIN {FS="-"} {print $2})
-flc=$(ls | grep meOLDta | awk BEGIN {FS="-"} {print $3} | sed 's/.txt//')
-echo copying ${renaminglog} to /mnt/hds/proj/bioinfo/OUTBOX/${flc}/Project_${prj}/
-cp ${renaminglog} /mnt/hds/proj/bioinfo/OUTBOX/${flc}/Project_${prj}/
-
-
-
+prj=$(ls | grep meOLDta | awk 'BEGIN {FS="-"} {print $2}')
+flc=$(ls | grep meOLDta | awk 'BEGIN {FS="-"} {print $3}' | sed 's/.txt//')
+echo copying ${renaminglog} to /mnt/hds/proj/bioinfo/OUTBOX/Project_${prj}/${flc}/
+cp ${renaminglog} /mnt/hds/proj/bioinfo/OUTBOX/Project_${prj}/${flc}/
