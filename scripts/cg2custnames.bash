@@ -31,7 +31,7 @@ if [ -f "sampleList.csv" ] ; then
   rm sampleList.csv
 fi
 for list in ${slist[@]}; do
-  head -1 ${list} > sampleList.csv 
+  head -1 ${list} > sampleList.csv
 done
 for list in ${slist[@]}; do
   tail -n +2 ${list} >> sampleList.csv
@@ -43,7 +43,7 @@ meta=$(ls | grep meta)
 sfil=$(ls | grep stats | grep txt)
 slist=$(ls | grep sampleList)
 if [ ! -f "${meta}" ] ; then
-  echo meta: ${meta} no such file, will exit 
+  echo meta: ${meta} no such file, will exit
   echo meta: ${meta} no such file, will exit >> ${renaminglog}
   exit 9
 else
@@ -69,7 +69,7 @@ fi
 
 #     remove 'Sample_' from sample name in meta file
 cp ${meta} ${meta}.bak
-awk '{split($1,arr,"_");if (arr[1]=="Sample") {out=arr[2]} else {out=arr[1]};print out,$2,$3,$4,$5,$6,$7}' ${meta} > metatext
+awk '{split($1,arr,"_");if (arr[1]=="Sample") {out=arr[2]} else {out=arr[1]};printf out "\t"; {for (i=2; i<NF; i++) printf $i "\t"; print $NF}}' ${meta} > metatext
 mv metatext ${meta}
 chmod g+w ${meta}
 chmod g+x ${meta}
@@ -78,13 +78,13 @@ echo cp ${meta} ${meta}.bak >> ${renaminglog}
 #     remove 'Sample_' from sample name in stats file if present
 cp ${sfil} ${sfil}.bak
 echo cp ${sfil} ${sfil}.bak >> ${renaminglog}
-awk 'BEGIN {OFS="\t"} {split($1,arr,"_");if (arr[1]=="Sample") {out=arr[2]} else {out=arr[1]};print out,$2,$3,$4,$5,$6,$7,$8,$9}' ${sfil} > wo${sfil}
+awk 'BEGIN {OFS="\t"} {out=$1; if ($1 ~ /Sample_/) {split($1,arr,"_"); out=arr[2]};print out,$2,$3,$4,$5,$6,$7,$8,$9}' ${sfil} > wo${sfil}
 mv wo${sfil} ${sfil}
 chmod g+w ${sfil}
 chmod g+x ${sfil}
 
 #     change internal sample name to customer sample name in fastq file names as shown in 'sampleList'
-# awk 'BEGIN {FS=","} {if (substr($2, length($2))=="B") {$2=substr($2,1,length($2)-1)};if ($1 != "Project") print $3"KLISTERKLISTER"$2}' sampleList.csv 
+# awk 'BEGIN {FS=","} {if (substr($2, length($2))=="B") {$2=substr($2,1,length($2)-1)};if ($1 != "Project") print $3"KLISTERKLISTER"$2}' sampleList.csv
 #awk 'BEGIN {FS=","} {if ($1 != "Project") print $3"KLISTERKLISTER"$2}' ${slist})
 namepairs=$(awk 'BEGIN {FS=","} {if (NF>1) {cgout=$3;if (substr($3, length($3))=="B") {cgout=substr($3,1,length($3)-1)};if (substr($3, length($3))=="F") {cgout=substr($3,1,length($3)-1)}}; if ($1 != "Project") print cgout"KLISTERKLISTER"$2}' ${slist})
 fastqfiles=$(ls | grep ".fastq.gz$")
@@ -92,16 +92,16 @@ for fil in ${fastqfiles[@]};do
   if [[ $fil =~ 'Undetermined' ]]; then
       continue
   fi
-  for pair in ${namepairs[@]};do 
+  for pair in ${namepairs[@]};do
     cgname=$(echo ${pair} | awk 'BEGIN {FS="KLISTERKLISTER"} {print $1}')
     cuname=$(echo ${pair} | awk 'BEGIN {FS="KLISTERKLISTER"} {print $2}')
-    if [[ ${fil} == *${cgname}* ]]; then 
+    if [[ ${fil} == *${cgname}* ]]; then
       newname=$(echo ${fil} | sed "s/_${cgname}_/_${cuname}_/")
     fi
-    if [[ ${fil} == *${cgname}F* ]]; then 
+    if [[ ${fil} == *${cgname}F* ]]; then
       newname=$(echo ${fil} | sed "s/_${cgname}F_/_${cuname}_/")
     fi
-    if [[ ${fil} == *${cgname}B* ]]; then 
+    if [[ ${fil} == *${cgname}B* ]]; then
       newname=$(echo ${fil} | sed "s/_${cgname}B_/_${cuname}_/")
     fi
     newname=$(echo ${newname} | sed 's/Sample_//g' | sed 's/_R1/_1/g' | sed 's/_R2/_2/g')
@@ -112,11 +112,11 @@ for fil in ${fastqfiles[@]};do
   done
   sed -i "s/${fil}/${newname}/g" ${meta}
   echo sed -i "s/${fil}/${newname}/g" ${meta} >> ${renaminglog}
-  echo renaming ${fil} to ${newname} in ${meta} 
-  mv ${fil} ${newname} 
+  echo renaming ${fil} to ${newname} in ${meta}
+  mv ${fil} ${newname}
   chmod g+x ${newname}
   echo mv ${fil} ${newname} >> ${renaminglog}
-  echo renaming file ${fil} to ${newname} 
+  echo renaming file ${fil} to ${newname}
 done
 
 #     change internal sample name to customer sample name in meta and stats files as shown in 'sampleList'
