@@ -119,13 +119,16 @@ for fil in ${fastqfiles[@]};do
   echo renaming file ${fil} to ${newname}
 done
 
+head -1 ${sfil} > wo${sfil}
+
 #     change internal sample name to customer sample name in meta and stats files as shown in 'sampleList'
 for pair in ${namepairs[@]};do
   cgname=$(echo ${pair} | awk 'BEGIN {FS="KLISTERKLISTER"} {print $1}')
   cuname=$(echo ${pair} | awk 'BEGIN {FS="KLISTERKLISTER"} {print $2}')
-  sed -i "s/${cgname}F/${cuname}/g" ${sfil}
-  sed -i "s/${cgname}B/${cuname}/g" ${sfil}
-  sed -i "s/${cgname}/${cuname}/g" ${sfil}
+  grep ${cgname} ${sfil} >> wo${sfil}
+  sed -i "s/${cgname}F/${cuname}/g" wo${sfil}
+  sed -i "s/${cgname}B/${cuname}/g" wo${sfil}
+  sed -i "s/${cgname}/${cuname}/g" wo${sfil}
   echo sed -i "s/${cgname}[FB]/${cuname}/g" ${sfil} >> ${renaminglog}
 #  sed -i "s/_${cgname}F_/_${cuname}_/g" ${meta}
 #  sed -i "s/_${cgname}B_/_${cuname}_/g" ${meta}
@@ -136,6 +139,8 @@ for pair in ${namepairs[@]};do
   echo sed -i "s/_${cgname}[FB]_/_${cuname}_/g" ${meta} >> ${renaminglog}
   echo renaming sample ${cgname}[FB] to ${cuname} in ${sfil} and ${meta}
 done
+
+mv wo${sfil} ${sfil}
 
 prj=$(ls | grep meOLDta | awk 'BEGIN {FS="-"} {print $2}')
 flc=$(ls | grep meOLDta | awk 'BEGIN {FS="-"} {print $3}' | sed 's/.txt//')
