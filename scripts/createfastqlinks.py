@@ -24,11 +24,12 @@ def getsamplesfromflowcell(demuxdir, flwc):
   return fc_samples
 
 def getsampleinfofromname(pars, sample):
-    query = (" SELECT sample.sample_id AS id, samplename, flowcellname AS fc, " + 
+    query = (" SELECT sample.sample_id AS id, samplename, flowcellname AS fc, " +
              " lane, ROUND(readcounts/2000000,2) AS M_reads, " +
-             " ROUND(q30_bases_pct,2) AS q30, ROUND(mean_quality_score,2) AS score " + 
-             " FROM sample, unaligned, flowcell " + 
-             " WHERE sample.sample_id = unaligned.sample_id AND unaligned.flowcell_id = flowcell.flowcell_id " +
+             " ROUND(q30_bases_pct,2) AS q30, ROUND(mean_quality_score,2) AS score " +
+             " FROM sample, unaligned, flowcell, demux " +
+             " WHERE sample.sample_id = unaligned.sample_id AND unaligned.demux_id = demux.demux_id " +
+             " AND demux.flowcell_id = flowcell.flowcell_id " +
              " AND (samplename LIKE '{sample}_%' OR samplename = '{sample}')".format(sample=sample))
     with db.create_tunnel(pars['TUNNELCMD']):
         with db.dbconnect(pars['CLINICALDBHOST'], pars['CLINICALDBPORT'], pars['STATSDB'], 
