@@ -215,7 +215,7 @@ def main(argv):
                     pass
 
                 # move the fastq files to the totrim dir
-                logger.debug("mv %s %s", sample_path, trim_dir)
+                logger.debug("mv %s %s", sample_path, fastq_trim_dir)
                 os.rename(sample_path, fastq_trim_dir)
 
                 # create the original sample dirtory
