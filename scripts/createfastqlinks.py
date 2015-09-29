@@ -11,7 +11,7 @@ from access import db
 from genologics.lims import *
 from genologics.config import BASEURI, USERNAME, PASSWORD
 
-__version__ = '0.8.0'
+__version__ = '0.8.1'
 
 def getsamplesfromflowcell(demuxdir, flwc):
   samples = glob.glob("{demuxdir}*{flowcell}/Unalign*/Project_*/Sample_*".\
