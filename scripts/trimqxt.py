@@ -81,7 +81,7 @@ def launch_trim(trim_indir, trim_outdir, link_dir):
         read2_file = os.path.basename(read2_path)
         outfile = os.path.join(trim_outdir, read1_file.replace('.fastq.gz', '')) 
         read1_out = os.path.join(trim_outdir, read1_file.replace('.fastq.gz', '.trimmed.fastq.gz'))
-        read1_out = os.path.join(trim_outdir, read2_file.replace('.fastq.gz', '.trimmed.fastq.gz'))
+        read2_out = os.path.join(trim_outdir, read2_file.replace('.fastq.gz', '.trimmed.fastq.gz'))
 
         with tempfile.NamedTemporaryFile(dir=script_dir, delete=False) as sbatch_file:
             file_content = """#!/bin/bash
