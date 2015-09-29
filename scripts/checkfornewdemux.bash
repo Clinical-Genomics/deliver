@@ -12,12 +12,12 @@ for run in ${runs[@]}; do
     if [ -f ${UNABASE}${run}/delivery.txt ]; then
       log ${run} 'copy is complete and delivery has already started'
     else
-      log ${run} 'copy is complete delivery has not started'
       if [ -f ${UNABASE}${run}/trimmed.txt ]; then
         log ${run} 'trimming already finished'
-      elif [ -f {$UNABASE}${run}/trimming.txt ]; then
+      elif [ -f ${UNABASE}${run}/trimming.txt ]; then
         log ${run} 'trimming is in progress'
       else
+        log ${run} 'start trimming ...'
         NOW=$(date +"%Y%m%d%H%M%S")
       	/home/hiseq.clinical/miniconda/envs/prod/bin/python /mnt/hds/proj/bioinfo/SCRIPTS/trimqxt.py ${UNABASE}${run} &> ${UNABASE}${run}/trimQXT.${NOW}.log
       fi
