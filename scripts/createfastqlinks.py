@@ -11,7 +11,7 @@ from access import db
 from genologics.lims import *
 from genologics.config import BASEURI, USERNAME, PASSWORD
 
-__version__ = '0.7.0'
+__version__ = '0.7.1'
 
 def getsamplesfromflowcell(demuxdir, flwc):
   samples = glob.glob("{demuxdir}*{flowcell}/Unalign*/Project_*/Sample_*".\
@@ -88,7 +88,7 @@ def main(argv):
 
   print('Version: {} {}'.format(__file__, __version__))
 
-  outputdir = '/mnt/hds/proj/bioinfo/MIP_ANALYSIS/'
+  outputdir = '/mnt/hds/proj/bioinfo/tmp/MIP_ANALYSIS/'
   
   fc = None
   if len(argv) > 0:

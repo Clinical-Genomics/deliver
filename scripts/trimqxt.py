@@ -9,7 +9,7 @@ import tempfile
 import datetime
 from access import db, lims
 
-__version__ = '0.7.0'
+__version__ = '0.7.1'
 
 logger = logging.getLogger(__name__)
 
