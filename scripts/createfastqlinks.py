@@ -37,7 +37,7 @@ def getsampleinfofromname(pars, sample):
             replies = dbc.generalquery( query )
     return replies
 
-def make_link(demuxdir, outputdir, family_id, cust_name, sample_name, fclane):
+def get_fastq_files(demuxdir, fclane, sample_name):
     fastqfiles = glob.glob(
         "{demuxdir}*{fc}/Unalign*/Project_*/Sample_{sample_name}_*/*L00{lane}*gz".format(
           demuxdir=demuxdir, fc=fclane['fc'], sample_name=sample_name, lane=fclane['lane']
@@ -46,22 +46,27 @@ def make_link(demuxdir, outputdir, family_id, cust_name, sample_name, fclane):
         "{demuxdir}*{fc}/Unalign*/Project_*/Sample_{sample_name}[BF]_*/*L00{lane}*gz".format(
           demuxdir=demuxdir, fc=fclane['fc'], sample_name=sample_name, lane=fclane['lane']
         )))
+
+    return fastqfiles
+
+def make_link(fastqfiles, outputdir, sample_name, fclane):
   
     for fastqfile in fastqfiles:
         nameparts = fastqfile.split("/")[-1].split("_")
         rundir = fastqfile.split("/")[6]
         date = rundir.split("_")[0]
         newname = "{lane}_{date}_{fc}_{sample_name}_{index}_{readdirection}.fastq.gz".format(
-          lane=fclane['lane'],
-          date=date,
-          fc=fclane['fc'],
-          sample_name=sample_name,
-          index=nameparts[-4],
-          readdirection=nameparts[-2][-1:]
+            lane=fclane['lane'],
+            date=date,
+            fc=fclane['fc'],
+            sample_name=sample_name,
+            index=nameparts[-4],
+            readdirection=nameparts[-2][-1:]
         )
+        print("Creating {}/{} ...".format(outputdir, newname))
   
         # first remove the link - might be pointing to wrong file
-        dest_fastqfile = os.path.join(outputdir, 'exomes', sample_name, 'fastq', newname)
+        dest_fastqfile = os.path.join(outputdir, newname)
         try:
             os.remove(dest_fastqfile)
         except OSError:
@@ -71,24 +76,14 @@ def make_link(demuxdir, outputdir, family_id, cust_name, sample_name, fclane):
         try:
             os.symlink(fastqfile, dest_fastqfile)
         except:
-            print("Can't create symlink for {} in {}".format(sample_name, os.path.join(os.path.join(outputdir, 'exomes', sample_name, 'fastq', newname))))
-
-        if cust_name != None and family_id != None:
-            cust_dest_fastqfile = os.path.join(os.path.join(outputdir, cust_name, family_id, 'exomes', sample_name, 'fastq', newname))
-            try:
-                os.remove(cust_dest_fastqfile)
-            except OSError:
-                pass
-            try:
-                os.symlink(fastqfile, cust_dest_fastqfile)
-            except:
-                print("Can't create symlink for {} in {}".format(sample_name, os.path.join(os.path.join(outputdir, cust_name, family_id, 'exomes', sample_name, 'fastq', newname))))
+            print("Can't create symlink for {} in {}".format(sample_name, os.path.join(outputdir, newname)))
 
 def main(argv):
 
   print('Version: {} {}'.format(__file__, __version__))
 
-  outputdir = '/mnt/hds/proj/bioinfo/tmp/MIP_ANALYSIS/'
+  outbasedir = '/mnt/hds/proj/'
+  outputdir = 'bioinfo/MIP_ANALYSIS/'
   
   fc = None
   if len(argv) > 0:
@@ -149,12 +144,19 @@ def main(argv):
     except KeyError:
       cust_name = None
     if cust_name == None:
-      print("WARNING '{}' internal customer name is not set".format(sample_id))
+      print("ERROR '{}' internal customer name is not set".format(sample_id))
+      continue
     elif not re.match(r'cust\d{3}', cust_name):
-      print("WARNING '{}' does not match an internal customer name".format(cust_name))
-      cust_name = None
+      print("ERROR '{}' does not match an internal customer name".format(cust_name))
+      continue
     if family_id == None:
       print("WARNING '{}' family_id is not set".format(sample_id))
+
+    try:
+      cust_sample_name=sample.name
+    except AttributeError:
+      print("WARNING '{}' does not have a customer sample name".format(sample_id))
+      cust_sample_name=sample_id
 
     dbinfo = getsampleinfofromname(params, sample_id)
     rc = 0         # counter for total readcount of sample
@@ -174,25 +176,40 @@ def main(argv):
           pass
 
         # try to create new dir structure
-        if cust_name != None and family_id != None:
-          try:
-            os.makedirs(os.path.join(outputdir, cust_name, family_id, 'exomes', sample_id, 'fastq'))
-          except OSError:
-            pass
-          try:
-            os.makedirs(os.path.join(outputdir, cust_name, family_id, 'exomes', family_id))
-          except OSError:
-            pass
+        try:
+          os.makedirs(os.path.join(outputdir, cust_name, family_id, 'exomes', sample_id, 'fastq'))
+        except OSError:
+          pass
+        try:
+          os.makedirs(os.path.join(outputdir, cust_name, family_id, 'exomes', family_id))
+        except OSError:
+          pass
 
         # create symlinks for each fastq file
         for fclane in fclanes:
+          # try to create delivery dir structure
+          try:
+            os.makedirs(os.path.join(outbasedir, cust_name, 'INBOX', fclane['fc']))
+          except OSError:
+            pass
+
+	  fastqfiles = get_fastq_files(params['DEMUXDIR'], fclane, sample_id)
+          destdirs = (
+            os.path.join(outbasedir, outputdir, cust_name, family_id, 'exomes', sample_id, 'fastq'),
+            os.path.join(outbasedir, outputdir, 'exomes', sample_id, 'fastq')
+          )
+          for destdir in destdirs:
+            make_link(
+	      fastqfiles=fastqfiles,
+              outputdir=destdir,
+              fclane=fclane,
+              sample_name=sample_id
+            )
           make_link(
-            demuxdir=params['DEMUXDIR'],
-            outputdir=outputdir,
-            family_id=family_id,
-            cust_name=cust_name,
-            sample_name=sample_id,
-            fclane=fclane
+	    fastqfiles=fastqfiles,
+            outputdir=os.path.join(outbasedir, cust_name, 'INBOX', fclane['fc']),
+            fclane=fclane,
+            sample_name=cust_sample_name
           )
       else:                        # Otherwise just present the data
         print("{sample_id} FAIL with {readcount} M reads.\n"
