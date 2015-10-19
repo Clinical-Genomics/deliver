@@ -1,0 +1,3 @@
+docopt
+genologics
+requests
