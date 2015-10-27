@@ -7,6 +7,7 @@ import os
 import subprocess
 import tempfile
 import datetime
+import shutil
 from access import db, lims
 
 __version__ = '0.10.0'
@@ -216,7 +217,7 @@ def main(argv):
 
                 # move the fastq files to the totrim dir
                 logger.debug("mv %s %s", sample_path, fastq_trim_dir)
-                os.rename(sample_path, fastq_trim_dir)
+                shutil.move(sample_path, fastq_trim_dir)
 
                 # create the original sample dirtory
                 try:
