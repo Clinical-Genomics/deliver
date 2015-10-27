@@ -173,17 +173,17 @@ def main(argv):
         try:
           os.makedirs(os.path.join(outputdir, 'exomes', sample_id, 'fastq'))
         except OSError:
-          pass
+          print('WARNING: Failed to create {}'.format(os.path.join(outputdir, 'exomes', sample_id, 'fastq')))
 
         # try to create new dir structure
         try:
           os.makedirs(os.path.join(outputdir, cust_name, family_id, 'exomes', sample_id, 'fastq'))
         except OSError:
-          pass
+          print('WARNING: Failed to create {}'.format(os.path.join(outputdir, cust_name, family_id, 'exomes', sample_id, 'fastq')))
         try:
           os.makedirs(os.path.join(outputdir, cust_name, family_id, 'exomes', family_id))
         except OSError:
-          pass
+          print('WARNING: Failed to create {}'.format(os.path.join(outputdir, cust_name, family_id, 'exomes', family_id)))
 
         # create symlinks for each fastq file
         for fclane in fclanes:
