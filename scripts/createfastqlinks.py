@@ -32,7 +32,7 @@ def getsampleinfofromname(pars, sample):
              " AND demux.flowcell_id = flowcell.flowcell_id " +
              " AND (samplename LIKE '{sample}_%' OR samplename = '{sample}')".format(sample=sample))
     with db.create_tunnel(pars['TUNNELCMD']):
-        with db.dbconnect(pars['CLINICALDBHOST'], pars['CLINICALDBPORT'], pars['STATSDB'], 
+        with db.dbconnect(pars['CLINICALDBHOST'], pars['CLINICALDBPORT'], pars['STATSDB'],
                        pars['CLINICALDBUSER'], pars['CLINICALDBPASSWD']) as dbc:
             replies = dbc.generalquery( query )
     return replies
@@ -50,21 +50,33 @@ def get_fastq_files(demuxdir, fclane, sample_name):
     return fastqfiles
 
 def make_link(fastqfiles, outputdir, sample_name, fclane):
-  
     for fastqfile in fastqfiles:
         nameparts = fastqfile.split("/")[-1].split("_")
+
+        # X stuff
+        undetermined = ''
+        if nameparts[1] == 'Undetermined':
+          undetermined = '-Undetermined'
+
+        tile = ''
+        if '-' in nameparts[0]:
+          tile = nameparts[0].split('-')[1].split('t')[1] # H2V2YCCXX-l2t21
+          tile = '-' + tile
+
         rundir = fastqfile.split("/")[6]
         date = rundir.split("_")[0]
-        newname = "{lane}_{date}_{fc}_{sample_name}_{index}_{readdirection}.fastq.gz".format(
+        newname = "{lane}_{date}_{fc}{tile}{undetermined}_{sample_name}_{index}_{readdirection}.fastq.gz".format(
             lane=fclane['lane'],
             date=date,
             fc=fclane['fc'],
             sample_name=sample_name,
             index=nameparts[-4],
-            readdirection=nameparts[-2][-1:]
+            readdirection=nameparts[-2][-1:],
+            undetermined=undetermined,
+            tile=tile
         )
         print("Creating {}/{} ...".format(outputdir, newname))
-  
+
         # first remove the link - might be pointing to wrong file
         dest_fastqfile = os.path.join(outputdir, newname)
         try:
@@ -84,7 +96,7 @@ def main(argv):
 
   outbasedir = '/mnt/hds/proj/'
   outputdir = 'bioinfo/MIP_ANALYSIS/'
-  
+
   fc = None
   if len(argv) > 0:
     try:
@@ -96,7 +108,7 @@ def main(argv):
   else:
     sys.exit("Usage: {} <flowcell name>".format(__file__))
 
-  params = db.readconfig("non")
+  params = db.readconfig("/home/hiseq.clinical/.scilifelabrc_test")
   lims = Lims(BASEURI, USERNAME, PASSWORD)
   samples = getsamplesfromflowcell(params['DEMUXDIR'], fc)
 
@@ -153,10 +165,20 @@ def main(argv):
       print("WARNING '{}' family_id is not set".format(sample_id))
 
     try:
-      cust_sample_name=sample.name
+      cust_sample_name = sample.name
     except AttributeError:
       print("WARNING '{}' does not have a customer sample name".format(sample_id))
       cust_sample_name=sample_id
+
+    seq_type = analysistype[0:3]
+    seq_type_dir = ''
+    if seq_type == 'EXO':
+        seq_type_dir = 'exomes'
+    elif seq_type == 'WGS':
+        seq_type_dir = 'genomes'
+    else:
+        print("ERROR '{}': unrecognized sequencing type '{}'".format(sample_id, seq_type))
+        continue
 
     dbinfo = getsampleinfofromname(params, sample_id)
     rc = 0         # counter for total readcount of sample
@@ -171,17 +193,17 @@ def main(argv):
 
         # try to create old dir structure
         try:
-          os.makedirs(os.path.join(outputdir, 'exomes', sample_id, 'fastq'))
+          print('mkdir -p ' + os.path.join(outputdir, seq_type_dir, sample_id, 'fastq'))
+          os.makedirs(os.path.join(outbasedir, outputdir, seq_type_dir, sample_id, 'fastq'))
         except OSError:
           print('WARNING: Failed to create {}'.format(os.path.join(outputdir, 'exomes', sample_id, 'fastq')))
 
         # try to create new dir structure
         try:
-          os.makedirs(os.path.join(outputdir, cust_name, family_id, 'exomes', sample_id, 'fastq'))
-        except OSError:
-          print('WARNING: Failed to create {}'.format(os.path.join(outputdir, cust_name, family_id, 'exomes', sample_id, 'fastq')))
-        try:
-          os.makedirs(os.path.join(outputdir, cust_name, family_id, 'exomes', family_id))
+          print('mkdir -p ' + os.path.join(outputdir, cust_name, family_id, seq_type_dir, sample_id, 'fastq'))
+          os.makedirs(os.path.join(outbasedir, outputdir, cust_name, family_id, seq_type_dir, sample_id, 'fastq'))
+          print('mkdir -p ' + os.path.join(outputdir, cust_name, family_id, seq_type_dir, family_id))
+          os.makedirs(os.path.join(outbasedir, outputdir, cust_name, family_id, seq_type_dir, family_id))
         except OSError:
           print('WARNING: Failed to create {}'.format(os.path.join(outputdir, cust_name, family_id, 'exomes', family_id)))
 
@@ -193,20 +215,20 @@ def main(argv):
           except OSError:
             pass
 
-	  fastqfiles = get_fastq_files(params['DEMUXDIR'], fclane, sample_id)
+          fastqfiles = get_fastq_files(params['DEMUXDIR'], fclane, sample_id)
           destdirs = (
-            os.path.join(outbasedir, outputdir, cust_name, family_id, 'exomes', sample_id, 'fastq'),
-            os.path.join(outbasedir, outputdir, 'exomes', sample_id, 'fastq')
+            os.path.join(outbasedir, outputdir, cust_name, family_id, seq_type_dir, sample_id, 'fastq'),
+            os.path.join(outbasedir, outputdir, seq_type_dir, sample_id, 'fastq')
           )
           for destdir in destdirs:
             make_link(
-	      fastqfiles=fastqfiles,
+              fastqfiles=fastqfiles,
               outputdir=destdir,
               fclane=fclane,
               sample_name=sample_id
             )
           make_link(
-	    fastqfiles=fastqfiles,
+            fastqfiles=fastqfiles,
             outputdir=os.path.join(outbasedir, cust_name, 'INBOX', fclane['fc']),
             fclane=fclane,
             sample_name=cust_sample_name
