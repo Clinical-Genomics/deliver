@@ -62,7 +62,7 @@ def sanitize_sample(sample):
     Return (str): a sanitized sample name
 
     """
-    return sample.split('_')[0]
+    return sample.split('_')[0].rstrip('BF')
 
 def get_flowcell(lines):
     """Gets the flowcell from a stats file
