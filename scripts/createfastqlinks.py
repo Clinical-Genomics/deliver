@@ -11,7 +11,7 @@ from access import db
 from genologics.lims import *
 from genologics.config import BASEURI, USERNAME, PASSWORD
 
-__version__ = '0.11.0'
+__version__ = '0.11.1'
 
 def getsamplesfromflowcell(demuxdir, flwc):
   samples = glob.glob("{demuxdir}*{flowcell}/Unalign*/Project_*/Sample_*".\
@@ -173,17 +173,17 @@ def main(argv):
         try:
           os.makedirs(os.path.join(outputdir, 'exomes', sample_id, 'fastq'))
         except OSError:
-          pass
+          print('WARNING: Failed to create {}'.format(os.path.join(outputdir, 'exomes', sample_id, 'fastq')))
 
         # try to create new dir structure
         try:
           os.makedirs(os.path.join(outputdir, cust_name, family_id, 'exomes', sample_id, 'fastq'))
         except OSError:
-          pass
+          print('WARNING: Failed to create {}'.format(os.path.join(outputdir, cust_name, family_id, 'exomes', sample_id, 'fastq')))
         try:
           os.makedirs(os.path.join(outputdir, cust_name, family_id, 'exomes', family_id))
         except OSError:
-          pass
+          print('WARNING: Failed to create {}'.format(os.path.join(outputdir, cust_name, family_id, 'exomes', family_id)))
 
         # create symlinks for each fastq file
         for fclane in fclanes:
