@@ -207,13 +207,14 @@ def main(argv):
         except OSError:
           print('WARNING: Failed to create {}'.format(os.path.join(outputdir, cust_name, family_id, 'exomes', family_id)))
 
+        # try to create delivery dir structure
+        try:
+          os.makedirs(os.path.join(outbasedir, cust_name, 'INBOX', seq_type_dir, cust_sample_name))
+        except OSError:
+          pass
+
         # create symlinks for each fastq file
         for fclane in fclanes:
-          # try to create delivery dir structure
-          try:
-            os.makedirs(os.path.join(outbasedir, cust_name, 'INBOX', fclane['fc']))
-          except OSError:
-            pass
 
           fastqfiles = get_fastq_files(params['DEMUXDIR'], fclane, sample_id)
           destdirs = (
@@ -229,7 +230,7 @@ def main(argv):
             )
           make_link(
             fastqfiles=fastqfiles,
-            outputdir=os.path.join(outbasedir, cust_name, 'INBOX', fclane['fc']),
+            outputdir=os.path.join(outbasedir, cust_name, 'INBOX', seq_type_dir, cust_sample_name),
             fclane=fclane,
             sample_name=cust_sample_name
           )
