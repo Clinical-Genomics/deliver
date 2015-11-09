@@ -27,15 +27,8 @@ for run in ${runs[@]}; do
         FC=$(echo ${run} | awk 'BEGIN {FS="/"} {split($(NF-1),arr,"_");print substr(arr[4],2,length(arr[4]))}')
         NOW=$(date +"%Y%m%d%H%M%S")
         /home/hiseq.clinical/miniconda/envs/prod/bin/python /mnt/hds/proj/bioinfo/SCRIPTS/createfastqlinks.py ${FC} &> ${UNABASE}${run}/createfastqlinks.${FC}.${NOW}.log
-        sbatch /mnt/hds/proj/bioinfo/SCRIPTS/getfastq.batch ${UNABASE}${run}
       fi
     fi
-#    if [ -d ${ALIBASE}${run}/Aligned ]; then
-#      log [${run}] copy is complete and alignment has already started 
-#    else
-#      log [${run}] copy is complete alignment has not started
-#      sbatch /mnt/hds/proj/bioinfo/SCRIPTS/align.batch ${UNABASE}${run}
-#    fi
   else
     log ${run} 'is not yet completely copied'
   fi
