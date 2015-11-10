@@ -12,7 +12,7 @@ from access import db
 from genologics.lims import *
 from genologics.config import BASEURI, USERNAME, PASSWORD
 
-__version__ = '1.0.1'
+__version__ = '1.1.1'
 
 def getsamplesfromflowcell(demuxdir, flwc):
   samples = glob.glob("{demuxdir}*{flowcell}/Unalign*/Project_*/Sample_*".\
@@ -201,19 +201,19 @@ def main(argv):
 
         # try to create old dir structure
         try:
-          print('mkdir -p ' + os.path.join(outputdir, seq_type_dir, sample_id, 'fastq'))
+          print('mkdir -p ' + os.path.join(outbasedir, outputdir, seq_type_dir, sample_id, 'fastq'))
           os.makedirs(os.path.join(outbasedir, outputdir, seq_type_dir, sample_id, 'fastq'))
         except OSError:
-          print('WARNING: Failed to create {}'.format(os.path.join(outputdir, 'exomes', sample_id, 'fastq')))
+          print('WARNING: Failed to create {}'.format(os.path.join(outbasedir, outputdir, 'exomes', sample_id, 'fastq')))
 
         # try to create new dir structure
         try:
-          print('mkdir -p ' + os.path.join(outputdir, cust_name, family_id, seq_type_dir, sample_id, 'fastq'))
+          print('mkdir -p ' + os.path.join(outbasedir, outputdir, cust_name, family_id, seq_type_dir, sample_id, 'fastq'))
           os.makedirs(os.path.join(outbasedir, outputdir, cust_name, family_id, seq_type_dir, sample_id, 'fastq'))
-          print('mkdir -p ' + os.path.join(outputdir, cust_name, family_id, seq_type_dir, family_id))
+          print('mkdir -p ' + os.path.join(outbasedir, outputdir, cust_name, family_id, seq_type_dir, family_id))
           os.makedirs(os.path.join(outbasedir, outputdir, cust_name, family_id, seq_type_dir, family_id))
         except OSError:
-          print('WARNING: Failed to create {}'.format(os.path.join(outputdir, cust_name, family_id, 'exomes', family_id)))
+          print('WARNING: Failed to create {}'.format(os.path.join(outbasedir, outputdir, cust_name, family_id, 'exomes', family_id)))
 
         # try to create delivery dir structure
         try:
