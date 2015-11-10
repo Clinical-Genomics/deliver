@@ -7,6 +7,7 @@ import glob
 import re
 import os
 import os.path
+import grp
 from access import db
 from genologics.lims import *
 from genologics.config import BASEURI, USERNAME, PASSWORD
@@ -49,7 +50,7 @@ def get_fastq_files(demuxdir, fclane, sample_name):
 
     return fastqfiles
 
-def make_link(fastqfiles, outputdir, sample_name, fclane):
+def make_link(fastqfiles, outputdir, sample_name, fclane, link_type='soft'):
     for fastqfile in fastqfiles:
         nameparts = fastqfile.split("/")[-1].split("_")
 
@@ -75,7 +76,6 @@ def make_link(fastqfiles, outputdir, sample_name, fclane):
             undetermined=undetermined,
             tile=tile
         )
-        print("Creating {}/{} ...".format(outputdir, newname))
 
         # first remove the link - might be pointing to wrong file
         dest_fastqfile = os.path.join(outputdir, newname)
@@ -86,7 +86,15 @@ def make_link(fastqfiles, outputdir, sample_name, fclane):
 
         # then create it
         try:
-            os.symlink(fastqfile, dest_fastqfile)
+            if link_type == 'soft':
+                print("ln -s {} {} ...".format(fastqfile, dest_fastqfile))
+                os.symlink(fastqfile, dest_fastqfile)
+            else:
+                print("ln {} {} ...".format(os.path.realpath(fastqfile), dest_fastqfile))
+                os.link(os.path.realpath(fastqfile), dest_fastqfile)
+                os.chmod(dest_fastqfile, 0o644)
+                gid = grp.getgrnam("users").gr_gid
+                os.chown(dest_fastqfile, -1, gid)
         except:
             print("Can't create symlink for {} in {}".format(sample_name, os.path.join(outputdir, newname)))
 
@@ -108,7 +116,7 @@ def main(argv):
   else:
     sys.exit("Usage: {} <flowcell name>".format(__file__))
 
-  params = db.readconfig("/home/hiseq.clinical/.scilifelabrc_test")
+  params = db.readconfig("/home/hiseq.clinical/.scilifelabrc")
   lims = Lims(BASEURI, USERNAME, PASSWORD)
   samples = getsamplesfromflowcell(params['DEMUXDIR'], fc)
 
@@ -232,7 +240,8 @@ def main(argv):
             fastqfiles=fastqfiles,
             outputdir=os.path.join(outbasedir, cust_name, 'INBOX', seq_type_dir, cust_sample_name),
             fclane=fclane,
-            sample_name=cust_sample_name
+            sample_name=cust_sample_name,
+            link_type='hard'
           )
       else:                        # Otherwise just present the data
         print("{sample_id} FAIL with {readcount} M reads.\n"
