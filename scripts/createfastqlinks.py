@@ -12,7 +12,7 @@ from access import db
 from genologics.lims import *
 from genologics.config import BASEURI, USERNAME, PASSWORD
 
-__version__ = '1.2.0'
+__version__ = '1.3.0'
 
 def getsamplesfromflowcell(demuxdir, flwc):
   samples = glob.glob("{demuxdir}*{flowcell}/Unalign*/Project_*/Sample_*".\
@@ -180,21 +180,26 @@ def main(argv):
 
     seq_type = analysistype[0:3]
     seq_type_dir = ''
+    q30_cutoff = 80
     if seq_type == 'EXO':
         seq_type_dir = 'exomes'
     elif seq_type == 'WGS':
         seq_type_dir = 'genomes'
+        q30_cutoff = 75
     else:
         print("ERROR '{}': unrecognized sequencing type '{}'".format(sample_id, seq_type))
         continue
 
     dbinfo = getsampleinfofromname(params, sample_id)
+    print(dbinfo)
     rc = 0         # counter for total readcount of sample
     fclanes = []   # list to keep flowcell names and lanes for a sample
     for info in dbinfo:
-      if (info['q30'] > 80):     # Use readcount from lane only if it satisfies QC [=80%]
+      if (info['q30'] > q30_cutoff):     # Use readcount from lane only if it satisfies QC [=80%]
         rc += info['M_reads']
         fclanes.append(dict(( (key, info[key]) for key in ['fc', 'q30', 'lane'] )))
+      else:
+        print("WARNING: '{sample_id}' did not reach Q30 > {cut_off} for {flowcell}".format(sample_id=sample_id, cut_off=q30_cutoff, flowcell=info['fc']))
     if readcounts:
       if (rc > readcounts):        # If enough reads are obtained do
         print("{sample_id} Passed {readcount} M reads\nUsing reads from {fclanes}".format(sample_id=sample_id, readcount=rc, fclanes=fclanes))
