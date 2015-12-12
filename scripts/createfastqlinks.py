@@ -170,7 +170,8 @@ def main(argv):
       print("ERROR '{}' does not match an internal customer name".format(cust_name))
       continue
     if family_id == None:
-      print("WARNING '{}' family_id is not set".format(sample_id))
+      print("ERROR '{}' family_id is not set".format(sample_id))
+      continue
 
     try:
       cust_sample_name = sample.name
