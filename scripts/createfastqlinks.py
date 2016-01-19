@@ -192,18 +192,24 @@ def main(argv):
         continue
 
     dbinfo = getsampleinfofromname(params, sample_id)
+    dbinfo = [
+       {'fc': 'H2VK3CCXX', 'q30': 80, 'lane': 1},
+       {'fc': 'H2VK3CCXX', 'q30': 80, 'lane': 2},
+       {'fc': 'H2VK3CCXX', 'q30': 80, 'lane': 3},
+       {'fc': 'H2VK3CCXX', 'q30': 80, 'lane': 4},
+       {'fc': 'H2VK3CCXX', 'q30': 80, 'lane': 5},
+       {'fc': 'H2VK3CCXX', 'q30': 80, 'lane': 6},
+       {'fc': 'H2VK3CCXX', 'q30': 80, 'lane': 7},
+       {'fc': 'H2VK3CCXX', 'q30': 80, 'lane': 8},
+    ]
     print(dbinfo)
-    rc = 0         # counter for total readcount of sample
     fclanes = []   # list to keep flowcell names and lanes for a sample
     for info in dbinfo:
       if (info['q30'] > q30_cutoff):     # Use readcount from lane only if it satisfies QC [=80%]
-        rc += info['M_reads']
         fclanes.append(dict(( (key, info[key]) for key in ['fc', 'q30', 'lane'] )))
       else:
         print("WARNING: '{sample_id}' did not reach Q30 > {cut_off} for {flowcell}".format(sample_id=sample_id, cut_off=q30_cutoff, flowcell=info['fc']))
     if readcounts:
-      if (rc > readcounts):        # If enough reads are obtained do
-        print("{sample_id} Passed {readcount} M reads\nUsing reads from {fclanes}".format(sample_id=sample_id, readcount=rc, fclanes=fclanes))
 
         # try to create old dir structure
         try:
@@ -228,6 +234,7 @@ def main(argv):
           pass
 
         # create symlinks for each fastq file
+        print(fclanes)
         for fclane in fclanes:
 
           fastqfiles = get_fastq_files(params['DEMUXDIR'], fclane, sample_id)
@@ -249,10 +256,6 @@ def main(argv):
             sample_name=cust_sample_name,
             link_type='hard'
           )
-      else:                        # Otherwise just present the data
-        print("{sample_id} FAIL with {readcount} M reads.\n"
-              "Requested with {reqreadcount} M reads.\n"
-              "These flowcells summarized {fclanes}".format(sample_id=sample_id, readcount=rc, fclanes=fclanes, reqreadcount=readcounts))
     else:
       print("{} - no analysis parameter specified in lims".format(sample_id))
 
