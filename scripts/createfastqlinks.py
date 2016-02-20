@@ -12,7 +12,7 @@ from access import db
 from genologics.lims import *
 from genologics.config import BASEURI, USERNAME, PASSWORD
 
-__version__ = '1.5.0'
+__version__ = '1.6.0'
 
 def getsamplesfromflowcell(demuxdir, flwc):
   samples = glob.glob("{demuxdir}*{flowcell}/Unalign*/Project_*/Sample_*".\
@@ -146,12 +146,24 @@ def main(argv):
     print('Application tag: {}'.format(analysistype))
     if analysistype is None:
       print("WARNING: Sequencing Analysis tag not defined for {}".format(sample_id))
-      # skip to the next sample
-      continue
+      seq_type_dir = 'exomes'
+      readcounts = None
+    else:
+      readcounts = .75 * float(analysistype[-3:])    # Accepted readcount is 75% of ordered million reads
+      seq_type = analysistype[0:3]
+      seq_type_dir = ''
+      q30_cutoff = 80
+      if seq_type == 'EXO':
+          seq_type_dir = 'exomes'
+      elif seq_type == 'WGS':
+          seq_type_dir = 'genomes'
+          q30_cutoff = 75
+      else:
+          print("ERROR '{}': unrecognized sequencing type '{}'".format(sample_id, seq_type))
+          continue
     if analysistype == 'RML': # skip Ready Made Libraries
       print("WARNING: Ready Made Library. Skipping link creation for {}".format(sample_id))
       continue
-    readcounts = .75 * float(analysistype[-3:])    # Accepted readcount is 75% of ordered million reads
 
     try:
       family_id = sample.udf['familyID']
@@ -169,7 +181,7 @@ def main(argv):
     elif not re.match(r'cust\d{3}', cust_name):
       print("ERROR '{}' does not match an internal customer name".format(cust_name))
       continue
-    if family_id == None:
+    if family_id == None and analysistype != None:
       print("ERROR '{}' family_id is not set".format(sample_id))
       continue
 
@@ -179,28 +191,34 @@ def main(argv):
       print("WARNING '{}' does not have a customer sample name".format(sample_id))
       cust_sample_name=sample_id
 
-    seq_type = analysistype[0:3]
-    seq_type_dir = ''
-    q30_cutoff = 80
-    if seq_type == 'EXO':
-        seq_type_dir = 'exomes'
-    elif seq_type == 'WGS':
-        seq_type_dir = 'genomes'
-        q30_cutoff = 75
-    else:
-        print("ERROR '{}': unrecognized sequencing type '{}'".format(sample_id, seq_type))
-        continue
-
     dbinfo = getsampleinfofromname(params, sample_id)
     print(dbinfo)
     rc = 0         # counter for total readcount of sample
     fclanes = []   # list to keep flowcell names and lanes for a sample
     for info in dbinfo:
-      if (info['q30'] > q30_cutoff):     # Use readcount from lane only if it satisfies QC [=80%]
+      if analysistype == None or info['q30'] > q30_cutoff:     # Use readcount from lane only if it satisfies QC [=80%]
         rc += info['M_reads']
         fclanes.append(dict(( (key, info[key]) for key in ['fc', 'q30', 'lane'] )))
       else:
         print("WARNING: '{sample_id}' did not reach Q30 > {cut_off} for {flowcell}".format(sample_id=sample_id, cut_off=q30_cutoff, flowcell=info['fc']))
+
+    # create the customer folders and links regardless of the QC
+    try:
+      os.makedirs(os.path.join(outbasedir, cust_name, 'INBOX', seq_type_dir, cust_sample_name))
+    except OSError:
+      pass
+    # create symlinks for each fastq file
+    for fclane in fclanes:
+      fastqfiles = get_fastq_files(params['DEMUXDIR'], fclane, sample_id)
+      make_link(
+        fastqfiles=fastqfiles,
+        outputdir=os.path.join(outbasedir, cust_name, 'INBOX', seq_type_dir, cust_sample_name),
+        fclane=fclane,
+        sample_name=cust_sample_name,
+        link_type='hard'
+      )
+
+    # create the links for the analysis
     if readcounts:
       if (rc > readcounts):        # If enough reads are obtained do
         print("{sample_id} Passed {readcount} M reads\nUsing reads from {fclanes}".format(sample_id=sample_id, readcount=rc, fclanes=fclanes))
@@ -221,15 +239,8 @@ def main(argv):
         except OSError:
           print('WARNING: Failed to create {}'.format(os.path.join(outbasedir, outputdir, cust_name, family_id, 'exomes', family_id)))
 
-        # try to create delivery dir structure
-        try:
-          os.makedirs(os.path.join(outbasedir, cust_name, 'INBOX', seq_type_dir, cust_sample_name))
-        except OSError:
-          pass
-
         # create symlinks for each fastq file
         for fclane in fclanes:
-
           fastqfiles = get_fastq_files(params['DEMUXDIR'], fclane, sample_id)
           destdirs = (
             os.path.join(outbasedir, outputdir, cust_name, family_id, seq_type_dir, sample_id, 'fastq'),
@@ -242,13 +253,6 @@ def main(argv):
               fclane=fclane,
               sample_name=sample_id
             )
-          make_link(
-            fastqfiles=fastqfiles,
-            outputdir=os.path.join(outbasedir, cust_name, 'INBOX', seq_type_dir, cust_sample_name),
-            fclane=fclane,
-            sample_name=cust_sample_name,
-            link_type='hard'
-          )
       else:                        # Otherwise just present the data
         print("{sample_id} FAIL with {readcount} M reads.\n"
               "Requested with {reqreadcount} M reads.\n"
