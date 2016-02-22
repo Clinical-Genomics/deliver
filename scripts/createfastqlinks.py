@@ -145,10 +145,13 @@ def main(argv):
 
     print('Application tag: {}'.format(analysistype))
     if analysistype is None:
-      print("WARNING: Sequencing Analysis tag not defined for {}".format(sample_id))
+      print("WARNING: Application tag not defined for {}".format(sample_id))
       seq_type_dir = 'exomes'
       readcounts = None
     else:
+      if len(analysistype) != 10:
+        print("ERROR: Application tag '{}' is wrong for {}".format(analysistype, sample_id))
+        continue
       readcounts = .75 * float(analysistype[-3:])    # Accepted readcount is 75% of ordered million reads
       seq_type = analysistype[0:3]
       seq_type_dir = ''
