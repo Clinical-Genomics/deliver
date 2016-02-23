@@ -1,6 +1,4 @@
 #!/usr/bin/python
-#
-
 from __future__ import print_function
 import sys
 import glob
@@ -11,6 +9,7 @@ import grp
 from access import db
 from genologics.lims import *
 from genologics.config import BASEURI, USERNAME, PASSWORD
+import requests
 
 __version__ = '1.6.1'
 
@@ -98,6 +97,28 @@ def make_link(fastqfiles, outputdir, sample_name, fclane, link_type='soft'):
         except:
             print("Can't create symlink for {} in {}".format(sample_name, os.path.join(outputdir, newname)))
 
+
+def add_sample(sample_id):
+  """Add sample to the status database."""
+  data = {'sample_id': sample_id}
+  res = requests.post('localhost:6003/api/v1/samples', data=data)
+  return res
+
+
+def add_flowcell(flowcell_id):
+  """Add flowcell to the status database."""
+  data = {'flowcell_id': flowcell_id}
+  res = requests.post('localhost:6003/api/v1/flowcells', data=data)
+  return res
+
+
+def make_symlinks(flowcell_id, sample_id):
+  """Create symlinks for a sample on the flowcell."""
+  url_template = "localhost:6003/api/v1/spofs/symlink/{}/{}"
+  res = requests.post(url_template.format(flowcell_id, sample_id))
+  return res
+
+
 def main(argv):
 
   print('Version: {} {}'.format(__file__, __version__))
@@ -119,8 +140,9 @@ def main(argv):
   params = db.readconfig("/home/hiseq.clinical/.scilifelabrc")
   lims = Lims(BASEURI, USERNAME, PASSWORD)
   samples = getsamplesfromflowcell(params['DEMUXDIR'], fc)
+  sample_ids = samples.keys()
 
-  for sample_id in samples.iterkeys():
+  for sample_id in sample_ids:
     print('Sample: {}'.format(sample_id))
     family_id = None
     cust_name = None
@@ -262,6 +284,12 @@ def main(argv):
               "These flowcells summarized {fclanes}".format(sample_id=sample_id, readcount=rc, fclanes=fclanes, reqreadcount=readcounts))
     else:
       print("{} - no analysis parameter specified in lims".format(sample_id))
+
+  # call microservices
+  sample_responses = [add_sample(sample_id) for sample_id in sample_ids]
+  fc_response = add_flowcell(fc)
+  spof_responses = [make_symlinks(fc, sample_id) for sample_id in sample_ids]
+
 
 if __name__ == '__main__':
   main(sys.argv[1:])
