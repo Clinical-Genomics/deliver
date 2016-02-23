@@ -40,11 +40,11 @@ def getsampleinfofromname(pars, sample):
 
 def get_fastq_files(demuxdir, fclane, sample_name):
     fastqfiles = glob.glob(
-        "{demuxdir}*{fc}/Unalign*/Project_*/Sample_{sample_name}_*/*L00{lane}*gz".format(
+        "{demuxdir}*{fc}/Unalign*/Project_539323/Sample_{sample_name}_*/*L00{lane}*gz".format(
           demuxdir=demuxdir, fc=fclane['fc'], sample_name=sample_name, lane=fclane['lane']
         ))
     fastqfiles.extend(glob.glob(
-        "{demuxdir}*{fc}/Unalign*/Project_*/Sample_{sample_name}[BF]_*/*L00{lane}*gz".format(
+        "{demuxdir}*{fc}/Unalign*/Project_539323/Sample_{sample_name}[BF]_*/*L00{lane}*gz".format(
           demuxdir=demuxdir, fc=fclane['fc'], sample_name=sample_name, lane=fclane['lane']
         )))
 
@@ -122,7 +122,6 @@ def main(argv):
 
   for sample_id in samples.iterkeys():
     print('Sample: {}'.format(sample_id))
-    family_id = None
     cust_name = None
 
     try:
@@ -148,24 +147,14 @@ def main(argv):
     q30_cutoff = 80
 
     try:
-      family_id = sample.udf['familyID']
-    except KeyError:
-      family_id = None
-    try:
       cust_name = sample.udf['customer']
       if cust_name is not None:
         cust_name = cust_name.lower()
     except KeyError:
       cust_name = 'cust000'
-    if family_id == None and analysistype != None:
-      print("ERROR '{}' family_id is not set".format(sample_id))
-      continue
+      print('WARNING: default to cust000')
 
-    try:
-      cust_sample_name = sample.name
-    except AttributeError:
-      print("WARNING '{}' does not have a customer sample name".format(sample_id))
-      cust_sample_name=sample_id
+    cust_sample_name = sample_id
 
     dbinfo = getsampleinfofromname(params, sample_id)
     print(dbinfo)
@@ -177,6 +166,8 @@ def main(argv):
         fclanes.append(dict(( (key, info[key]) for key in ['fc', 'q30', 'lane'] )))
       else:
         print("WARNING: '{sample_id}' did not reach Q30 > {cut_off} for {flowcell}".format(sample_id=sample_id, cut_off=q30_cutoff, flowcell=info['fc']))
+        rc += info['M_reads']
+        fclanes.append(dict(( (key, info[key]) for key in ['fc', 'q30', 'lane'] )))
 
     # create the customer folders and links regardless of the QC
     try:
