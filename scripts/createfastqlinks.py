@@ -144,29 +144,8 @@ def main(argv):
       analysistype = None
 
     print('Application tag: {}'.format(analysistype))
-    if analysistype is None:
-      print("WARNING: Application tag not defined for {}".format(sample_id))
-      seq_type_dir = 'exomes'
-      readcounts = None
-    else:
-      if len(analysistype) != 10:
-        print("ERROR: Application tag '{}' is wrong for {}".format(analysistype, sample_id))
-        continue
-      readcounts = .75 * float(analysistype[-3:])    # Accepted readcount is 75% of ordered million reads
-      seq_type = analysistype[0:3]
-      seq_type_dir = ''
-      q30_cutoff = 80
-      if seq_type == 'EXO':
-          seq_type_dir = 'exomes'
-      elif seq_type == 'WGS':
-          seq_type_dir = 'genomes'
-          q30_cutoff = 75
-      else:
-          print("ERROR '{}': unrecognized sequencing type '{}'".format(sample_id, seq_type))
-          continue
-    if analysistype == 'RML': # skip Ready Made Libraries
-      print("WARNING: Ready Made Library. Skipping link creation for {}".format(sample_id))
-      continue
+    seq_type_dir = 'exomes'
+    q30_cutoff = 80
 
     try:
       family_id = sample.udf['familyID']
@@ -177,13 +156,7 @@ def main(argv):
       if cust_name is not None:
         cust_name = cust_name.lower()
     except KeyError:
-      cust_name = None
-    if cust_name == None:
-      print("ERROR '{}' internal customer name is not set".format(sample_id))
-      continue
-    elif not re.match(r'cust\d{3}', cust_name):
-      print("ERROR '{}' does not match an internal customer name".format(cust_name))
-      continue
+      cust_name = 'cust000'
     if family_id == None and analysistype != None:
       print("ERROR '{}' family_id is not set".format(sample_id))
       continue
@@ -220,48 +193,6 @@ def main(argv):
         sample_name=cust_sample_name,
         link_type='hard'
       )
-
-    # create the links for the analysis
-    if readcounts:
-      if (rc > readcounts):        # If enough reads are obtained do
-        print("{sample_id} Passed {readcount} M reads\nUsing reads from {fclanes}".format(sample_id=sample_id, readcount=rc, fclanes=fclanes))
-
-        # try to create old dir structure
-        try:
-          print('mkdir -p ' + os.path.join(outbasedir, outputdir, seq_type_dir, sample_id, 'fastq'))
-          os.makedirs(os.path.join(outbasedir, outputdir, seq_type_dir, sample_id, 'fastq'))
-        except OSError:
-          print('WARNING: Failed to create {}'.format(os.path.join(outbasedir, outputdir, 'exomes', sample_id, 'fastq')))
-
-        # try to create new dir structure
-        try:
-          print('mkdir -p ' + os.path.join(outbasedir, outputdir, cust_name, family_id, seq_type_dir, sample_id, 'fastq'))
-          os.makedirs(os.path.join(outbasedir, outputdir, cust_name, family_id, seq_type_dir, sample_id, 'fastq'))
-          print('mkdir -p ' + os.path.join(outbasedir, outputdir, cust_name, family_id, seq_type_dir, family_id))
-          os.makedirs(os.path.join(outbasedir, outputdir, cust_name, family_id, seq_type_dir, family_id))
-        except OSError:
-          print('WARNING: Failed to create {}'.format(os.path.join(outbasedir, outputdir, cust_name, family_id, 'exomes', family_id)))
-
-        # create symlinks for each fastq file
-        for fclane in fclanes:
-          fastqfiles = get_fastq_files(params['DEMUXDIR'], fclane, sample_id)
-          destdirs = (
-            os.path.join(outbasedir, outputdir, cust_name, family_id, seq_type_dir, sample_id, 'fastq'),
-            os.path.join(outbasedir, outputdir, seq_type_dir, sample_id, 'fastq')
-          )
-          for destdir in destdirs:
-            make_link(
-              fastqfiles=fastqfiles,
-              outputdir=destdir,
-              fclane=fclane,
-              sample_name=sample_id
-            )
-      else:                        # Otherwise just present the data
-        print("{sample_id} FAIL with {readcount} M reads.\n"
-              "Requested with {reqreadcount} M reads.\n"
-              "These flowcells summarized {fclanes}".format(sample_id=sample_id, readcount=rc, fclanes=fclanes, reqreadcount=readcounts))
-    else:
-      print("{} - no analysis parameter specified in lims".format(sample_id))
 
 if __name__ == '__main__':
   main(sys.argv[1:])
