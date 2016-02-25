@@ -12,7 +12,7 @@ from access import db
 from genologics.lims import *
 from genologics.config import BASEURI, USERNAME, PASSWORD
 
-__version__ = '1.7.0'
+__version__ = '1.8.0'
 
 def getsamplesfromflowcell(demuxdir, flwc):
   samples = glob.glob("{demuxdir}*{flowcell}/Unalign*/Project_*/Sample_*".\
@@ -32,10 +32,8 @@ def getsampleinfofromname(pars, sample):
              " WHERE sample.sample_id = unaligned.sample_id AND unaligned.demux_id = demux.demux_id " +
              " AND demux.flowcell_id = flowcell.flowcell_id " +
              " AND (samplename LIKE '{sample}_%' OR samplename = '{sample}')".format(sample=sample))
-    with db.create_tunnel(pars['TUNNELCMD']):
-        with db.dbconnect(pars['CLINICALDBHOST'], pars['CLINICALDBPORT'], pars['STATSDB'],
-                       pars['CLINICALDBUSER'], pars['CLINICALDBPASSWD']) as dbc:
-            replies = dbc.generalquery( query )
+    with db.dbconnect(pars['CLINICALDBHOST'], pars['CLINICALDBPORT'], pars['STATSDB'], pars['CLINICALDBUSER'], pars['CLINICALDBPASSWD']) as dbc:
+       replies = dbc.generalquery( query )
     return replies
 
 def get_fastq_files(demuxdir, fclane, sample_name):
