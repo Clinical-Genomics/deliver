@@ -11,7 +11,7 @@ from access import db
 from genologics.lims import *
 from genologics.config import BASEURI, USERNAME, PASSWORD
 
-__version__ = '1.5.0'
+__version__ = '1.6.1'
 
 logger = logging.getLogger(__name__)
 
@@ -87,6 +87,8 @@ def setup_logging(level='INFO'):
 def main(argv):
     qc_sample_info_file = argv[0] # needs one argument, the qc_sample_info.yaml
     out_dir = '/mnt/hds/proj/{cust}/INBOX/genomes/{cust_sample_name}/'
+
+    logger.info('Version: {} {}'.format(__file__, __version__))
 
     params = db.readconfig("/home/hiseq.clinical/.scilifelabrc")
     lims = Lims(BASEURI, USERNAME, PASSWORD)
