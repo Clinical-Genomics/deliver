@@ -65,24 +65,24 @@ def get_seq_type_dir(sample):
 
     logging.info('Application tag: {}'.format(application_tag))
     if application_tag is None:
-        logging.warning("Application tag not defined for {}".format(sample_id))
+        logging.warning("Application tag not defined for {}".format(sample.id))
         seq_type_dir = 'exomes'
     else:
       if len(application_tag) != 10:
-          logging.error("Application tag '{}' is wrong for {}".format(applitcation_tag, sample_id))
+          logging.error("Application tag '{}' is wrong for {}".format(applitcation_tag, sample.id))
           return None
 
       seq_type = application_tag[0:3]
-      if seq_type == 'EXX':
+      if seq_type == 'EXX' or seq_type == 'EXO':
           seq_type_dir = 'exomes'
-      elif seq_type == 'WGx':
+      elif seq_type == 'WGX' or seq_type == 'WGS':
           seq_type_dir = 'genomes'
       else:
-          logging.error("'{}': unrecognized sequencing type '{}'".format(sample_id, seq_type))
+          logging.error("'{}': unrecognized sequencing type '{}'".format(sample.id, seq_type))
           return None
 
     if application_tag == 'RML': # skip Ready Made Libraries
-        logging.warning("Ready Made Library. Skipping link creation for {}".format(sample_id))
+        logging.warning("Ready Made Library. Skipping link creation for {}".format(sample.id))
         return None
 
     return seq_type_dir
@@ -101,7 +101,7 @@ def get_cust_name(sample):
         if cust_name is not None:
             cust_name = cust_name.lower()
     except KeyError:
-        logging.error("'{}' internal customer name is not set".format(sample_id))
+        logging.error("'{}' internal customer name is not set".format(sample.id))
         return None
 
     if not re.match(r'cust\d{3}', cust_name):
@@ -156,11 +156,13 @@ def main(argv):
         fastq_file_name = os.path.basename(fastq_full_file_name)
         fastq_file_name_split = fastq_file_name.split('_')
 
-        # get info frmo the sample file name
+        # get info from the sample file name
         lane = fastq_file_name_split[0]
-        # make the external id more idiot proof by slicing off lane and direction
-        sample_id = fastq_file_name_split[1:-1][0]
         direction = fastq_file_name_split[-1] # will also have the ext
+        sample_id = fastq_file_name_split[3]
+        FC = fastq_file_name_split[2]
+        if FC == '0':
+            FC = 'EXTERNALX'
 
         # get info from LIMS
         sample = get_sample(sample_id)
@@ -171,7 +173,6 @@ def main(argv):
 
         # some more info
         index = get_index(fastq_full_file_name)
-        FC = 'EXTERNALX' # ok, 9 letters long to emulate a FC name
         
         # create dest dir
         complete_outdir = os.path.join(outdir, cust_name, family_id, seq_type_dir, sample_id, 'fastq')
