@@ -8,7 +8,7 @@ from access import db
 from genologics.lims import *
 from genologics.config import BASEURI, USERNAME, PASSWORD
 
-__version__ = '1.8.0'
+__version__ = '1.9.0'
 
 logger = logging.getLogger(__name__)
 
