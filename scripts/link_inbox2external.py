@@ -45,13 +45,13 @@ def make_link(source, dest, link_type='hard'):
     # then create it
     try:
         if link_type == 'soft':
-            logging.info("ln -s {} {} ...".format(source, dest))
+            logger.info("ln -s {} {} ...".format(source, dest))
             os.symlink(source, dest)
         else:
-            logging.info("ln {} {} ...".format(os.path.realpath(source), dest))
+            logger.info("ln {} {} ...".format(os.path.realpath(source), dest))
             os.link(os.path.realpath(source), dest)
     except:
-        logging.error("Can't create symlink from {} to {}".format(source, dest))
+        logger.error("Can't create symlink from {} to {}".format(source, dest))
 
 def setup_logging(level='INFO'):
     root_logger = logging.getLogger()
@@ -91,7 +91,7 @@ def main(argv):
     # three formats: external-id_direction, lane_external-id_direction, and LANE_DATE_FC_SAMPLE_INDEX_DIRECTION
     FC = None
     if len(fastq_file_name_split) == 2:
-        logging.info('Found SAMPLE_DIRECTION format: {}'.format(fastq_file_name))
+        logger.info('Found SAMPLE_DIRECTION format: {}'.format(fastq_file_name))
 
         lane  = '1'
         date  = '0'
@@ -100,7 +100,7 @@ def main(argv):
 
         external_id = fastq_file_name_split[:-1]
     elif len(fastq_file_name_split) == 3:
-        logging.info('Found LANE_SAMPLE_DIRECTION format: {}'.format(fastq_file_name))
+        logger.info('Found LANE_SAMPLE_DIRECTION format: {}'.format(fastq_file_name))
 
         date  = '0'
         FC    = '0'
@@ -109,7 +109,7 @@ def main(argv):
         lane  = fastq_file_name_split[0]
         external_id = fastq_file_name_split[1:-1]
     elif len(fastq_file_name_split) == 6:
-        logging.info('Found LANE_DATE_FC_SAMPLE_INDEX_DIRECTION format: {}'.format(fastq_file_name))
+        logger.info('Found LANE_DATE_FC_SAMPLE_INDEX_DIRECTION format: {}'.format(fastq_file_name))
 
         date  = fastq_file_name_split[1]
         FC    = fastq_file_name_split[2]
@@ -117,18 +117,18 @@ def main(argv):
         lane  = fastq_file_name_split[0]
         external_id = fastq_file_name_split[3]
 
-    direction = fastq_file_name_split[-1] # will also have the ext
-    internal_id = get_internal_id(external_id)
-    out_file_name = '_'.join( [lane, date, FC, internal_id, index, direction ])
+    direction     = fastq_file_name_split[-1] # will also hold the extension
+    internal_id   = get_internal_id(external_id)
+    out_file_name = '_'.join([lane, date, FC, internal_id, index, direction])
 
     # make out dir
     complete_outdir = os.path.join(outdir, internal_id)
     if not os.path.isdir(complete_outdir):
         try:
-            logging.info('mkdir -p ' + complete_outdir)
+            logger.info('mkdir -p ' + complete_outdir)
             os.makedirs(complete_outdir)
         except OSError:
-            logging.error('Failed to create {}'.format(complete_outdir))
+            logger.error('Failed to create {}'.format(complete_outdir))
             exit()
 
     # link!

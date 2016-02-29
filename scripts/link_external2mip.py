@@ -46,13 +46,13 @@ def make_link(source, dest, link_type='hard'):
     # then create it
     try:
         if link_type == 'soft':
-            logging.info("ln -s {} {} ...".format(source, dest))
+            logger.info("ln -s {} {} ...".format(source, dest))
             os.symlink(source, dest)
         else:
-            logging.info("ln {} {} ...".format(os.path.realpath(source), dest))
+            logger.info("ln {} {} ...".format(os.path.realpath(source), dest))
             os.link(os.path.realpath(source), dest)
     except:
-        logging.error("Can't create symlink from {} to {}".format(source, dest))
+        logger.error("Can't create symlink from {} to {}".format(source, dest))
 
 def get_seq_type_dir(sample):
 
@@ -63,13 +63,13 @@ def get_seq_type_dir(sample):
     except KeyError:
         application_tag = None
 
-    logging.info('Application tag: {}'.format(application_tag))
+    logger.info('Application tag: {}'.format(application_tag))
     if application_tag is None:
-        logging.warning("Application tag not defined for {}".format(sample.id))
+        logger.warning("Application tag not defined for {}".format(sample.id))
         seq_type_dir = 'exomes'
     else:
       if len(application_tag) != 10:
-          logging.error("Application tag '{}' is wrong for {}".format(applitcation_tag, sample.id))
+          logger.error("Application tag '{}' is wrong for {}".format(applitcation_tag, sample.id))
           return None
 
       seq_type = application_tag[0:3]
@@ -78,11 +78,11 @@ def get_seq_type_dir(sample):
       elif seq_type == 'WGX' or seq_type == 'WGS':
           seq_type_dir = 'genomes'
       else:
-          logging.error("'{}': unrecognized sequencing type '{}'".format(sample.id, seq_type))
+          logger.error("'{}': unrecognized sequencing type '{}'".format(sample.id, seq_type))
           return None
 
     if application_tag == 'RML': # skip Ready Made Libraries
-        logging.warning("Ready Made Library. Skipping link creation for {}".format(sample.id))
+        logger.warning("Ready Made Library. Skipping link creation for {}".format(sample.id))
         return None
 
     return seq_type_dir
@@ -101,11 +101,11 @@ def get_cust_name(sample):
         if cust_name is not None:
             cust_name = cust_name.lower()
     except KeyError:
-        logging.error("'{}' internal customer name is not set".format(sample.id))
+        logger.error("'{}' internal customer name is not set".format(sample.id))
         return None
 
     if not re.match(r'cust\d{3}', cust_name):
-        logging.error("'{}' does not match an internal customer name".format(cust_name))
+        logger.error("'{}' does not match an internal customer name".format(cust_name))
         return None
 
     return cust_name
@@ -176,13 +176,13 @@ def main(argv):
         
         # create dest dir
         complete_outdir = os.path.join(outdir, cust_name, family_id, seq_type_dir, sample_id, 'fastq')
-        logging.info(complete_outdir)
+        logger.info(complete_outdir)
         if not os.path.isdir(complete_outdir):
             try:
-                logging.info('mkdir -p ' + complete_outdir)
+                logger.info('mkdir -p ' + complete_outdir)
                 os.makedirs(complete_outdir)
             except OSError:
-                logging.warning('Failed to create {}'.format(complete_outdir))
+                logger.warning('Failed to create {}'.format(complete_outdir))
                 exit()
 
         # link!
