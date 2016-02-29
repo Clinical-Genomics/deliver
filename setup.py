@@ -55,7 +55,7 @@ setup(
     include_package_data=True,
     zip_safe=False,
 
-    install_requires=required
+    install_requires=required,
     cmdclass=dict(test=PyTest),
 
     # To provide executable scripts, use entry points in preference to the
