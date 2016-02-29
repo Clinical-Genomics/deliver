@@ -64,7 +64,7 @@ setup(
     # target platform.
     entry_points={
         'console_scripts': [
-            'createlinks = createlinks.cli:links',
+            'createlinks = createlinks.cli:link',
         ],
         'createlinks.subcommands.3': [
             'bam = createlinks.cli:bam',
