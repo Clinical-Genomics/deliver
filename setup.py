@@ -64,9 +64,9 @@ setup(
     # target platform.
     entry_points={
         'console_scripts': [
-            'chanjo = chanjo.__main__:root_command',
+            '= createlinks.cli:links',
         ],
-        'chanjo.subcommands.3': [
+        'createlinks.subcommands.3': [
             'bam = createlinks.cli:bam',
             'cust = createlinks.cli:cust',
             'demux = createlinks.cli:demux',
