@@ -8,6 +8,8 @@ from .modules.cust  import cust_links
 
 logger = logging.getLogger(__name__)
 
+__version__ = '1.10.0'
+
 @click.group()
 def link():
     """Make linking of FASTQ/BAM files easier!"""
