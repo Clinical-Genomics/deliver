@@ -8,7 +8,7 @@ from .modules.cust  import cust_links
 
 logger = logging.getLogger(__name__)
 
-__version__ = '1.10.6'
+__version__ = '1.10.7'
 
 @click.group()
 def link():
