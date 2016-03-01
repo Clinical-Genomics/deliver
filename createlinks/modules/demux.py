@@ -31,7 +31,7 @@ def getsampleinfofromname(pars, sample):
              " FROM sample, unaligned, flowcell, demux " +
              " WHERE sample.sample_id = unaligned.sample_id AND unaligned.demux_id = demux.demux_id " +
              " AND demux.flowcell_id = flowcell.flowcell_id " +
-             " AND (samplename LIKE '{sample}_%' OR samplename = '{sample}')".format(sample=sample))
+             " AND (samplename LIKE '{sample}\_%' OR samplename = '{sample}')".format(sample=sample))
     with db.dbconnect(pars['CLINICALDBHOST'], pars['CLINICALDBPORT'], pars['STATSDB'], pars['CLINICALDBUSER'], pars['CLINICALDBPASSWD']) as dbc:
        replies = dbc.generalquery( query )
     return replies
