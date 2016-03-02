@@ -159,12 +159,12 @@ def main(argv):
       elif seq_type == 'WGS':
           seq_type_dir = 'genomes'
           q30_cutoff = 75
+      elif seq_type == 'RML': # skip Ready Made Libraries
+        seq_type_dir = 'exomes'
+        q30_cutoff = 0
       else:
           print("ERROR '{}': unrecognized sequencing type '{}'".format(sample_id, seq_type))
           continue
-    if analysistype == 'RML': # skip Ready Made Libraries
-      print("WARNING: Ready Made Library. Skipping link creation for {}".format(sample_id))
-      continue
 
     try:
       family_id = sample.udf['familyID']
@@ -182,7 +182,7 @@ def main(argv):
     elif not re.match(r'cust\d{3}', cust_name):
       print("ERROR '{}' does not match an internal customer name".format(cust_name))
       continue
-    if family_id == None and analysistype != None:
+    if family_id == None and analysistype != None and seq_type != 'RML':
       print("ERROR '{}' family_id is not set".format(sample_id))
       continue
 
