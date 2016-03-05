@@ -1,3 +1,5 @@
 click
 access==0.0.22
 genologics==v0.2.3-776-gb6575ec-r0
+yaml
+psutils
