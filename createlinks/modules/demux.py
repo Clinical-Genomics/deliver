@@ -14,6 +14,8 @@ from genologics.config import BASEURI, USERNAME, PASSWORD
 
 __version__ = '1.9.0'
 
+db_params = []
+
 def getsamplesfromflowcell(demuxdir, flwc):
   samples = glob.glob("{demuxdir}*{flowcell}/Unalign*/Project_*/Sample_*".\
     format(demuxdir=demuxdir, flowcell=flwc))
@@ -24,7 +26,8 @@ def getsamplesfromflowcell(demuxdir, flwc):
     fc_samples[sample] = ''
   return fc_samples
 
-def getsampleinfofromname(pars, sample):
+def getsampleinfofromname(sample):
+    global db_params
     query = (" SELECT sample.sample_id AS id, samplename, flowcellname AS fc, " +
              " lane, ROUND(readcounts/2000000,2) AS M_reads, " +
              " ROUND(q30_bases_pct,2) AS q30, ROUND(mean_quality_score,2) AS score " +
@@ -32,9 +35,22 @@ def getsampleinfofromname(pars, sample):
              " WHERE sample.sample_id = unaligned.sample_id AND unaligned.demux_id = demux.demux_id " +
              " AND demux.flowcell_id = flowcell.flowcell_id " +
              " AND (samplename LIKE '{sample}\_%' OR samplename = '{sample}')".format(sample=sample))
-    with db.dbconnect(pars['CLINICALDBHOST'], pars['CLINICALDBPORT'], pars['STATSDB'], pars['CLINICALDBUSER'], pars['CLINICALDBPASSWD']) as dbc:
+    with db.dbconnect(db_params['CLINICALDBHOST'], db_params['CLINICALDBPORT'], db_params['STATSDB'], db_params['CLINICALDBUSER'], db_params['CLINICALDBPASSWD']) as dbc:
        replies = dbc.generalquery( query )
     return replies
+
+def is_pooled_sample(flowcell, lane):
+    global db_params
+    q = ("SELECT count(samplename) AS sample_count " 
+        "FROM sample "
+        "JOIN unaligned ON sample.sample_id = unaligned.sample_id "
+        "JOIN demux ON unaligned.demux_id = demux.demux_id "
+        "JOIN flowcell ON demux.flowcell_id = flowcell.flowcell_id "
+        "WHERE "
+        "lane = {lane} and flowcell.flowcellname = '{flowcell}'".format(lane=lane, flowcell=flowcell))
+    with db.dbconnect(db_params['CLINICALDBHOST'], db_params['CLINICALDBPORT'], db_params['STATSDB'], db_params['CLINICALDBUSER'], db_params['CLINICALDBPASSWD']) as dbc:
+       replies = dbc.generalquery(q)
+    return True if int(replies[0]['sample_count']) > 1 else False
 
 def get_fastq_files(demuxdir, fclane, sample_name):
     fastqfiles = glob.glob(
@@ -55,12 +71,16 @@ def make_link(fastqfiles, outputdir, sample_name, fclane, link_type='soft'):
         # X stuff
         undetermined = ''
         if nameparts[1] == 'Undetermined':
-          undetermined = '-Undetermined'
+            # skip undeermined for pooled samples
+            if is_pooled_sample(fclane['fc'], fclane['lane']):
+                print('WARNING: Skipping pooled undetermined indexes!')
+                continue 
+            undetermined = '-Undetermined'
 
         tile = ''
         if '-' in nameparts[0]:
-          tile = nameparts[0].split('-')[1].split('t')[1] # H2V2YCCXX-l2t21
-          tile = '-' + tile
+            tile = nameparts[0].split('-')[1].split('t')[1] # H2V2YCCXX-l2t21
+            tile = '-' + tile
 
         rundir = fastqfile.split("/")[6]
         date = rundir.split("_")[0]
@@ -102,7 +122,7 @@ def demux_links(fc, custoutdir, mipoutdir):
 
   params = db.readconfig("/home/hiseq.clinical/.scilifelabrc")
   lims = Lims(BASEURI, USERNAME, PASSWORD)
-  samples = getsamplesfromflowcell(params['DEMUXDIR'], fc)
+  samples = getsamplesfromflowcell(db_params['DEMUXDIR'], fc)
 
   for sample_id in samples.iterkeys():
     print('Sample: {}'.format(sample_id))
@@ -145,12 +165,12 @@ def demux_links(fc, custoutdir, mipoutdir):
       elif seq_type == 'WGS':
           seq_type_dir = 'genomes'
           q30_cutoff = 75
+      elif seq_type == 'RML': # skip Ready Made Libraries
+        seq_type_dir = 'exomes'
+        q30_cutoff = 0
       else:
           print("ERROR '{}': unrecognized sequencing type '{}'".format(sample_id, seq_type))
           continue
-    if analysistype == 'RML': # skip Ready Made Libraries
-      print("WARNING: Ready Made Library. Skipping link creation for {}".format(sample_id))
-      continue
 
     try:
       family_id = sample.udf['familyID']
@@ -168,7 +188,7 @@ def demux_links(fc, custoutdir, mipoutdir):
     elif not re.match(r'cust\d{3}', cust_name):
       print("ERROR '{}' does not match an internal customer name".format(cust_name))
       continue
-    if family_id == None and analysistype != None:
+    if family_id == None and analysistype != None and seq_type != 'RML':
       print("ERROR '{}' family_id is not set".format(sample_id))
       continue
 
@@ -178,7 +198,7 @@ def demux_links(fc, custoutdir, mipoutdir):
       print("WARNING '{}' does not have a customer sample name".format(sample_id))
       cust_sample_name=sample_id
 
-    dbinfo = getsampleinfofromname(params, sample_id)
+    dbinfo = getsampleinfofromname(sample_id)
     print(dbinfo)
     rc = 0         # counter for total readcount of sample
     fclanes = []   # list to keep flowcell names and lanes for a sample
@@ -196,7 +216,7 @@ def demux_links(fc, custoutdir, mipoutdir):
       pass
     # create symlinks for each fastq file
     for fclane in fclanes:
-      fastqfiles = get_fastq_files(params['DEMUXDIR'], fclane, sample_id)
+      fastqfiles = get_fastq_files(db_params['DEMUXDIR'], fclane, sample_id)
       make_link(
         fastqfiles=fastqfiles,
         outputdir=os.path.join(custoutdir, cust_name, 'INBOX', seq_type_dir, cust_sample_name),
@@ -209,14 +229,6 @@ def demux_links(fc, custoutdir, mipoutdir):
     if readcounts:
       if (rc > readcounts):        # If enough reads are obtained do
         print("{sample_id} Passed {readcount} M reads\nUsing reads from {fclanes}".format(sample_id=sample_id, readcount=rc, fclanes=fclanes))
-
-        # try to create old dir structure
-        old_outdir = os.path.join(mipoutdir, seq_type_dir, sample_id, 'fastq')
-        try:
-          print('mkdir -p ' + old_outdir)
-          os.makedirs(old_outdir)
-        except OSError:
-          print('WARNING: Failed to create {}'.format(old_outdir))
 
         # try to create new dir structure
         sample_outdir = os.path.join(mipoutdir, cust_name, family_id, seq_type_dir, sample_id, 'fastq')
@@ -234,15 +246,13 @@ def demux_links(fc, custoutdir, mipoutdir):
 
         # create symlinks for each fastq file
         for fclane in fclanes:
-          fastqfiles = get_fastq_files(params['DEMUXDIR'], fclane, sample_id)
-          destdirs = (sample_outdir, old_outdir)
-          for destdir in destdirs:
-            make_link(
-              fastqfiles=fastqfiles,
-              outputdir=destdir,
-              fclane=fclane,
-              sample_name=sample_id
-            )
+          fastqfiles = get_fastq_files(db_params['DEMUXDIR'], fclane, sample_id)
+          make_link(
+            fastqfiles=fastqfiles,
+            outputdir=sample_outdir,
+            fclane=fclane,
+            sample_name=sample_id
+          )
       else:                        # Otherwise just present the data
         print("{sample_id} FAIL with {readcount} M reads.\n"
               "Requested with {reqreadcount} M reads.\n"
