@@ -224,13 +224,6 @@ def main(argv):
       if (rc > readcounts):        # If enough reads are obtained do
         print("{sample_id} Passed {readcount} M reads\nUsing reads from {fclanes}".format(sample_id=sample_id, readcount=rc, fclanes=fclanes))
 
-        # try to create old dir structure
-        try:
-          print('mkdir -p ' + os.path.join(outbasedir, outputdir, seq_type_dir, sample_id, 'fastq'))
-          os.makedirs(os.path.join(outbasedir, outputdir, seq_type_dir, sample_id, 'fastq'))
-        except OSError:
-          print('WARNING: Failed to create {}'.format(os.path.join(outbasedir, outputdir, 'exomes', sample_id, 'fastq')))
-
         # try to create new dir structure
         try:
           print('mkdir -p ' + os.path.join(outbasedir, outputdir, cust_name, family_id, seq_type_dir, sample_id, 'fastq'))
@@ -245,7 +238,6 @@ def main(argv):
           fastqfiles = get_fastq_files(params['DEMUXDIR'], fclane, sample_id)
           destdirs = (
             os.path.join(outbasedir, outputdir, cust_name, family_id, seq_type_dir, sample_id, 'fastq'),
-            os.path.join(outbasedir, outputdir, seq_type_dir, sample_id, 'fastq')
           )
           for destdir in destdirs:
             make_link(
