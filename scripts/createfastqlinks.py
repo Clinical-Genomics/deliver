@@ -12,7 +12,7 @@ from access import db
 from genologics.lims import *
 from genologics.config import BASEURI, USERNAME, PASSWORD
 
-__version__ = '1.11.0'
+__version__ = '1.12.0'
 
 db_params = []
 
@@ -41,7 +41,7 @@ def getsampleinfofromname(sample):
 
 def is_pooled_sample(flowcell, lane):
     global db_params
-    q = ("SELECT count(samplename) AS sample_count " 
+    q = ("SELECT count(samplename) AS sample_count "
         "FROM sample "
         "JOIN unaligned ON sample.sample_id = unaligned.sample_id "
         "JOIN demux ON unaligned.demux_id = demux.demux_id "
@@ -74,7 +74,7 @@ def make_link(fastqfiles, outputdir, sample_name, fclane, link_type='soft'):
             # skip undeermined for pooled samples
             if is_pooled_sample(fclane['fc'], fclane['lane']):
                 print('WARNING: Skipping pooled undetermined indexes!')
-                continue 
+                continue
             undetermined = '-Undetermined'
 
         tile = ''
