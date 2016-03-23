@@ -3,7 +3,7 @@
 source /mnt/hds/proj/bioinfo/SCRIPTS/log.bash
 log $(getversion)
 
-MAILTO=kenny.billiau@scilifelab.se,emma.sernstad@scilifelab.se,daniel.backman@scilifelab.se,robin.andeer@scilifelab.se,anna.zetterlund@scilifelab.se,anna.leinfelt@scilifelab.se
+MAILTO=bioinfo.clinical@scilifelab.se,anna.zetterlund@scilifelab.se,anna.leinfelt@scilifelab.se
 UNABASE=/mnt/hds/proj/bioinfo/DEMUX/
 runs=$(ls ${UNABASE})
 for run in ${runs[@]}; do
