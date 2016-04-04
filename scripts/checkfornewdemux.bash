@@ -18,7 +18,7 @@ for run in ${runs[@]}; do
       else
         log ${run} 'start trimming ...'
         NOW=$(date +"%Y%m%d%H%M%S")
-        /home/hiseq.clinical/miniconda/envs/prod/bin/python /mnt/hds/proj/bioinfo/SCRIPTS/trimqxt.py ${UNABASE}${run} &> ${UNABASE}${run}/trimQXT.${NOW}.log
+        python /mnt/hds/proj/bioinfo/SCRIPTS/trimqxt.py ${UNABASE}${run} &> ${UNABASE}${run}/trimQXT.${NOW}.log
       fi
 
       if [ ! -f ${UNABASE}${run}/trimming.txt ]; then
@@ -28,20 +28,20 @@ for run in ${runs[@]}; do
         # add an X FC to clinstatsdb - because the permanent tunnel is not active on the nodes.
         if [[ "${FC}" == *CCXX ]]; then
           log ${run} "python /mnt/hds/proj/bioinfo/SCRIPTS/xparseunaligned.py ${UNABASE}${run} &> ${UNABASE}${run}/LOG/xparseunaligned.`date +'%Y%m%d%H%M%S'`.log"
-          /home/hiseq.clinical/miniconda/envs/prod/bin/python /mnt/hds/proj/bioinfo/SCRIPTS/xparseunaligned.py ${UNABASE}${run} &> ${UNABASE}${run}/LOG/xparseunaligned.`date +'%Y%m%d%H%M%S'`.log
+          python /mnt/hds/proj/bioinfo/SCRIPTS/xparseunaligned.py ${UNABASE}${run} &> ${UNABASE}${run}/LOG/xparseunaligned.`date +'%Y%m%d%H%M%S'`.log
 
           # create stats per project
           for PROJECT in ${UNABASE}${run}/Unaligned/Project*; do
             PROJECT=$(basename $PROJECT)
             PROJECT_NR=${PROJECT##*_}
-            log ${run} "/home/hiseq.clinical/miniconda/envs/prod/bin/python /mnt/hds/proj/bioinfo/SCRIPTS/selectdemux.py $PROJECT_NR $FC &> ${UNABASE}${run}/stats-${PROJECT_NR}-${FC}.txt"
-            /home/hiseq.clinical/miniconda/envs/prod/bin/python /mnt/hds/proj/bioinfo/SCRIPTS/selectdemux.py $PROJECT_NR $FC &> ${UNABASE}${run}/stats-${PROJECT_NR}-${FC}.txt
+            log ${run} "python /mnt/hds/proj/bioinfo/SCRIPTS/selectdemux.py $PROJECT_NR $FC &> ${UNABASE}${run}/stats-${PROJECT_NR}-${FC}.txt"
+            python /mnt/hds/proj/bioinfo/SCRIPTS/selectdemux.py $PROJECT_NR $FC &> ${UNABASE}${run}/stats-${PROJECT_NR}-${FC}.txt
           done
         fi
         # end add
 
         NOW=$(date +"%Y%m%d%H%M%S")
-        /home/hiseq.clinical/miniconda/envs/prod/bin/python /mnt/hds/proj/bioinfo/SCRIPTS/createfastqlinks.py ${FC} &> ${UNABASE}${run}/createfastqlinks.${FC}.${NOW}.log
+        python /mnt/hds/proj/bioinfo/SCRIPTS/createfastqlinks.py ${FC} &> ${UNABASE}${run}/createfastqlinks.${FC}.${NOW}.log
 
         SUBJECT=${FC}
         # send an email on completion
