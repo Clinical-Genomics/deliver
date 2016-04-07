@@ -69,7 +69,7 @@ def setup_logging(level='INFO'):
     root_logger.addHandler(console)
     return root_logger
 
-def cust_links(fastq_full_file_name, out_dir):
+def cust_links(fastq_full_file_name, outdir):
 
     logger.info('Version: {} {}'.format(__file__, __version__))
     

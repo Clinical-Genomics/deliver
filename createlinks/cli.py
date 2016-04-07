@@ -32,18 +32,18 @@ def ext(sample_folder, outdir):
     ext_links(sample_folder, outdir)
 
 @link.command()
-@click.argument('qc_sample_info', nargs=1, type=click.Path(exists=True))
+@click.argument('qc_sample_info_file', nargs=1, type=click.Path(exists=True))
 @click.option('--outdir', default='/mnt/hds/proj/', show_default=True, help='path to customer folders')
-def bam(qc_sample_info, outdir):
+def bam(qc_sample_info_file, outdir):
     """links BAM files to cust/INBOX"""
-    bam_links(qc_sample_info, outdir)
+    bam_links(qc_sample_info_file, outdir)
 
 @link.command()
 @click.argument('fastq_file', nargs=1, type=click.Path(exists=True))
 @click.option('--outdir', default='/mnt/hds/proj/bioinfo/EXTERNAL/', show_default=True, help='path to EXTERNAL folder')
-def cust():
+def cust(fastq_file, outdir):
     """links FASTQ file to EXTERNAL"""
-    exit_links(fastq_file, outdir)
+    cust_links(fastq_file, outdir)
 
 if __name__ == '__main__':
     link()

@@ -35,7 +35,7 @@ def get_cust_sample_name(lims, sample_name):
     except AttributeError:
         logger.warn("'{}' does not have a customer sample name!".format(sample_name))
         return sample_name
-    
+
     return cust_sample_name
 
 def rename_file(file_name, sample_name, cust_sample_name):
@@ -66,7 +66,7 @@ def get_bam_files(qc_file_info):
     for case in qc_file_info.keys():
         for sample in qc_file:
             pass
-        
+
 
 def setup_logging(level='INFO'):
     root_logger = logging.getLogger()
@@ -84,9 +84,9 @@ def setup_logging(level='INFO'):
     root_logger.addHandler(console)
     return root_logger
 
-def bam_links(qc_sample_info, out_dir):
+def bam_links(qc_sample_info_file, outdir):
 
-    out_dir = outdir + '/{cust}/INBOX/genomes/{cust_sample_name}/'
+    outdir = outdir + '/{cust}/INBOX/genomes/{cust_sample_name}/'
 
     logger.info('Version: {} {}'.format(__file__, __version__))
 
@@ -96,7 +96,7 @@ def bam_links(qc_sample_info, out_dir):
     # parse the yaml file
     with open(qc_sample_info_file, 'r') as stream:
         qc_sample_info = yaml.load(stream)
-    
+
     for case in qc_sample_info.keys():
         for sample_name in qc_sample_info[case]:
             if sample_name == case: continue # case info, not sample info
@@ -105,7 +105,7 @@ def bam_links(qc_sample_info, out_dir):
             bam_file_name = os.path.basename(bam_file)
             cust = bam_file.split('/')[-8] # ... or extract with a regex?
             # TODO validate the name of the cust!
-            
+
             # get the customer external sample name
             cust_sample_name = get_cust_sample_name(lims, sample_name)
 
@@ -115,14 +115,14 @@ def bam_links(qc_sample_info, out_dir):
 
             # create the customer folders and links regardless of the QC
             try:
-                os.makedirs(os.path.join(out_dir.format(cust=cust, cust_sample_name=cust_sample_name)))
+                os.makedirs(os.path.join(outdir.format(cust=cust, cust_sample_name=cust_sample_name)))
             except OSError:
                 pass
 
             # link!
             make_link(
                 bam_file,
-                os.path.join(out_dir.format(cust=cust, cust_sample_name=cust_sample_name), bam_cust_file_name)
+                os.path.join(outdir.format(cust=cust, cust_sample_name=cust_sample_name), bam_cust_file_name)
             )
 
 if __name__ == '__main__':

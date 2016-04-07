@@ -20,10 +20,9 @@ def get_sample(sample_id):
     """ Looks up the internal sample ID from an external ID in LIMS
     args:
         external_id (str): external sample ID
-    
+
     return (str, None): internal sample ID or None
     """
-    
     params = db.readconfig("/home/hiseq.clinical/.scilifelabrc")
     lims = Lims(BASEURI, USERNAME, PASSWORD)
 
@@ -112,10 +111,10 @@ def get_cust_name(sample):
 
 def get_index(fastq_file_name):
     with gzip.open(fastq_file_name, 'rb') as f:
-        line = f.readline().rstrip() 
+        line = f.readline().rstrip()
         while not line.startswith('@'):
             line = f.readline().rstrip()
-        
+
         index = line.split(':')[9]
         return index
 
@@ -138,9 +137,7 @@ def setup_logging(level='INFO'):
 def ext_links(start_dir, outdir):
 
     logger.info('Version: {} {}'.format(__file__, __version__))
-    
-    #outdir = '/mnt/hds/proj/bioinfo/MIP_ANALYSIS/'
-  
+
     for fastq_full_file_name in glob(os.path.join(start_dir, '*fastq.gz')):
         fastq_file_name = os.path.basename(fastq_full_file_name)
         fastq_file_name_split = fastq_file_name.split('_')
@@ -162,7 +159,7 @@ def ext_links(start_dir, outdir):
 
         # some more info
         index = get_index(fastq_full_file_name)
-        
+
         # create dest dir
         complete_outdir = os.path.join(outdir, cust_name, family_id, seq_type_dir, sample_id, 'fastq')
         logger.info(complete_outdir)
