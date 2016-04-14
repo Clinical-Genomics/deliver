@@ -4,6 +4,7 @@ import click
 from .modules.demux import demux_links
 from .modules.ext   import ext_links
 from .modules.bam   import bam_links
+from .modules.vcf   import vcf_links
 from .modules.cust  import cust_links
 
 logger = logging.getLogger(__name__)
@@ -39,11 +40,37 @@ def bam(qc_sample_info_file, outdir):
     bam_links(qc_sample_info_file, outdir)
 
 @link.command()
+@click.argument('qc_sample_info_file', nargs=1, type=click.Path(exists=True))
+@click.option('--outdir', default='/mnt/hds/proj/', show_default=True, help='path to customer folders')
+def vcf(qc_sample_info_file, outdir):
+    """links bcf files to cust/INBOX"""
+    vcf_links(qc_sample_info_file, outdir)
+
+
+@link.command()
 @click.argument('fastq_file', nargs=1, type=click.Path(exists=True))
 @click.option('--outdir', default='/mnt/hds/proj/bioinfo/EXTERNAL/', show_default=True, help='path to EXTERNAL folder')
 def cust(fastq_file, outdir):
     """links FASTQ file to EXTERNAL"""
     cust_links(fastq_file, outdir)
 
+def setup_logging(level='INFO'):
+    root_logger = logging.getLogger()
+    root_logger.setLevel(level)
+
+    # customize formatter, align each column
+    template = "[%(asctime)s] %(name)-25s %(levelname)-8s %(message)s"
+    formatter = logging.Formatter(template)
+
+    # add a basic STDERR handler to the logger
+    console = logging.StreamHandler()
+    console.setLevel(level)
+    console.setFormatter(formatter)
+
+    root_logger.addHandler(console)
+    return root_logger
+
 if __name__ == '__main__':
+    setup_logging(level='DEBUG')
+    logger.info('Version: {} {}'.format(__file__, __version__))
     link()
