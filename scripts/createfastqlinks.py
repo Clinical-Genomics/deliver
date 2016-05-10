@@ -186,6 +186,9 @@ def main(argv):
       elif seq_type == 'MET': # whole genome metagenomics
           seq_type_dir = 'genomes'
           q30_cutoff = 75
+      elif seq_type == 'MWG': # Microbial WG
+          seq_type_dir = 'genomes'
+          q30_cutoff = 75
       else:
           print("ERROR '{}': unrecognized sequencing type '{}'".format(sample_id, seq_type))
           continue
