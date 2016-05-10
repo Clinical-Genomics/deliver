@@ -181,8 +181,11 @@ def main(argv):
           seq_type_dir = 'genomes'
           q30_cutoff = 75
       elif seq_type == 'RML': # skip Ready Made Libraries
-        seq_type_dir = 'exomes'
-        q30_cutoff = 0
+          seq_type_dir = 'exomes'
+          q30_cutoff = 0
+      elif seq_type == 'MET': # whole genome metagenomics
+          seq_type_dir = 'genomes'
+          q30_cutoff = 75
       else:
           print("ERROR '{}': unrecognized sequencing type '{}'".format(sample_id, seq_type))
           continue
