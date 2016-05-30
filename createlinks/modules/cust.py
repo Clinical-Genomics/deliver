@@ -112,7 +112,7 @@ def cust_links(fastq_full_file_name, outdir):
     elif len(fastq_file_name_split) == 5:
         m = re.match(r'(.*?)_(.*?)_L(\d+)_R(\d+)_(\d+)', fastq_file_name)
         if m:
-            logger.info('Found SAMPLE_FC_LANE_DIRECTION_PART format: {}'.format(fastq_file_name))
+            logger.info('Found SAMPLE_INDEX_LANE_DIRECTION_PART format: {}'.format(fastq_file_name))
 
             if not re.match(r'S\d', m.group(2)):
                 FC = m.group(2)
