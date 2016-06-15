@@ -12,7 +12,7 @@ from access import db
 from genologics.lims import *
 from genologics.config import BASEURI, USERNAME, PASSWORD
 
-__version__ = '1.14.0'
+__version__ = '1.14.1'
 
 db_params = []
 
@@ -210,9 +210,9 @@ def main(argv):
     elif not re.match(r'cust\d{3}', cust_name):
       print("ERROR '{}' does not match an internal customer name".format(cust_name))
       continue
-    if family_id == None and analysistype != None and seq_type != 'RML':
-      print("ERROR '{}' family_id is not set".format(sample_id))
-      continue
+    #if family_id == None and analysistype != None and seq_type != 'RML':
+    #  print("ERROR '{}' family_id is not set".format(sample_id))
+    #  continue
 
     try:
       cust_sample_name = sample.name
