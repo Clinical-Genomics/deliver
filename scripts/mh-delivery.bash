@@ -2,6 +2,12 @@
 
 FILETYPE=TUMOR
 
+if [[ ${#@} == 0 ]]; then
+    echo >&2 "USAGE: $0 [fastq files]"
+    echo >&2 ""
+    echo >&2 "Please provide only fastq files of read direction 1"
+fi
+
 for FASTQ in "$@"; do
 
     FASTQ_DIR=$(dirname $FASTQ)
