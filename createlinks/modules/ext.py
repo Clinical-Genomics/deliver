@@ -37,10 +37,10 @@ def get_sample(sample_id):
 
 def make_link(source, dest, link_type='hard'):
     # remove previous link
-    try:
-        os.remove(dest)
-    except OSError:
-        pass
+    #try:
+    #    os.remove(dest)
+    #except OSError:
+    #    pass
 
     # then create it
     try:
@@ -49,7 +49,7 @@ def make_link(source, dest, link_type='hard'):
             os.symlink(source, dest)
         else:
             logger.info("ln {} {} ...".format(os.path.realpath(source), dest))
-            os.link(os.path.realpath(source), dest)
+            os.link(os.path.realpath(source), dest) # make sure to link to orignal file, not a symlink
     except:
         logger.error("Can't create symlink from {} to {}".format(source, dest))
 
@@ -162,7 +162,16 @@ def ext_links(start_dir, outdir):
 
         # create dest dir
         complete_outdir = os.path.join(outdir, cust_name, family_id, seq_type_dir, sample_id, 'fastq')
-        logger.info(complete_outdir)
+        out_filename = '_'.join( [lane, date, FC, sample_id, index, direction ])
+        logger.debug(complete_outdir)
+        logger.debug(out_filename)
+
+        # check if file already exists
+        if os.path.isfile(os.path.join(complete_outdir, out_filename)):
+            logger.info('Skipping creation of {}. Already exists'.format(out_filename))
+            continue
+
+        # create the out dir
         if not os.path.isdir(complete_outdir):
             try:
                 logger.info('mkdir -p ' + complete_outdir)
