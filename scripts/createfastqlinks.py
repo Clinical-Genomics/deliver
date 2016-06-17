@@ -171,8 +171,7 @@ def main(argv):
       if len(analysistype) != 10:
         print("ERROR: Application tag '{}' is wrong for {}".format(analysistype, sample_id))
         continue
-      #readcounts = .75 * float(analysistype[-3:])    # Accepted readcount is 75% of ordered million reads
-      readcounts = 0
+      readcounts = .75 * float(analysistype[-3:])    # Accepted readcount is 75% of ordered million reads
       seq_type = analysistype[0:3]
       seq_type_dir = ''
       q30_cutoff = 80
