@@ -115,7 +115,7 @@ def cust_links(fastq_full_file_name, outdir):
             logger.info('Found SAMPLE_INDEX_LANE_DIRECTION_PART format: {}'.format(fastq_file_name))
 
             if not re.match(r'S\d', m.group(2)):
-                FC = m.group(2)
+                index = m.group(2)
             lane  = str(int(m.group(3)))
             external_id = m.group(1)
             direction = m.group(4)
@@ -124,8 +124,6 @@ def cust_links(fastq_full_file_name, outdir):
 
     out_file_name = '_'.join([lane, date, FC, internal_id, index, direction])
     out_file_name = '{}.{}'.format(out_file_name, extension)
-    print(out_file_name)
-    exit()
 
     # make out dir
     complete_outdir = os.path.join(outdir, internal_id)
