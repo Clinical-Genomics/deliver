@@ -194,10 +194,6 @@ def main(argv):
           continue
 
     try:
-      family_id = sample.udf['familyID']
-    except KeyError:
-      family_id = None
-    try:
       cust_name = sample.udf['customer']
       if cust_name is not None:
         cust_name = cust_name.lower()
@@ -209,9 +205,6 @@ def main(argv):
     elif not re.match(r'cust\d{3}', cust_name):
       print("ERROR '{}' does not match an internal customer name".format(cust_name))
       continue
-    #if family_id == None and analysistype != None and seq_type != 'RML':
-    #  print("ERROR '{}' family_id is not set".format(sample_id))
-    #  continue
 
     try:
       cust_sample_name = sample.name
@@ -245,6 +238,15 @@ def main(argv):
         sample_name=cust_sample_name,
         link_type='hard'
       )
+
+    # check the family id
+    try:
+      family_id = sample.udf['familyID']
+    except KeyError:
+      family_id = None
+    if family_id == None and analysistype != None and seq_type != 'RML':
+      print("ERROR '{}' family_id is not set".format(sample_id))
+      continue
 
     # create the links for the analysis
     if readcounts:
