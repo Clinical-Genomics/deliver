@@ -16,16 +16,29 @@ logger = logging.getLogger(__name__)
 class ExternalIDNotFoundException(Exception):
     pass
 
+class CustomerIDMalformedException(Exception):
+    logger.error("Customer name '{}' for '{}' was not found in LIMS".format(customer, internal_id))
+
+def _connect_lims():
+    """ Connects to LIMS and returns Lims object
+
+    Returns:
+        Lims object
+
+    """
+    params = db.readconfig("/home/hiseq.clinical/.scilifelabrc")
+    return Lims(BASEURI, USERNAME, PASSWORD)
+
 def get_internal_id(external_id):
     """ Looks up the internal sample ID from an external ID in LIMS
+
     args:
         external_id (str): external sample ID
 
-    return (str, None): internal sample ID or None
+    Returns (str, None): internal sample ID or None
     """
 
-    params = db.readconfig("/home/hiseq.clinical/.scilifelabrc")
-    lims = Lims(BASEURI, USERNAME, PASSWORD)
+    lims = _connect_lims()
 
     try:
         samples = lims.get_samples(name=external_id)
@@ -37,6 +50,32 @@ def get_internal_id(external_id):
     except:
         logger.error("External ID '{}' was not found in LIMS".format(external_id))
         raise ExternalIDNotFoundException("External ID '{}' was not found in LIMS".format(external_id))
+
+    return None
+
+def get_cust_name(internal_id):
+    """ Looks up the customer name from an external ID in LIMS
+
+    Args:
+        internal_id (str): the internal sample ID
+
+    Returns (str, None):
+        the customer name or None
+
+    """
+
+    lims = _connect_lims()
+
+    try:
+        sample = Sample(lims, id=internal_id)
+
+        customer = sample.udf('customer')
+        customer = customer.lower()
+        if re.match(r'cust\d{3}', cust_name):
+            raise CustomerIDMalformedException(customer, internal_id)
+        return customer
+    except:
+        raise CustomerIDMalformedException(customer, internal_id)
 
     return None
 
@@ -125,8 +164,10 @@ def cust_links(fastq_full_file_name, outdir):
     out_file_name = '_'.join([lane, date, FC, internal_id, index, direction])
     out_file_name = '{}.{}'.format(out_file_name, extension)
 
+    customer = get_cust_name(internal_id)
+
     # make out dir
-    complete_outdir = os.path.join(outdir, internal_id)
+    complete_outdir = os.path.join(outdir, customer, internal_id)
     if not os.path.isdir(complete_outdir):
         try:
             logger.info('mkdir -p ' + complete_outdir)
