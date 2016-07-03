@@ -17,7 +17,10 @@ class ExternalIDNotFoundException(Exception):
     pass
 
 class CustomerIDMalformedException(Exception):
-    logger.error("Customer name '{}' for '{}' was not found in LIMS".format(customer, internal_id))
+    def __init__(self, customer, sample_id):
+        self.customer = customer
+        self.sample_id = sample_id
+        logger.error("Customer name '{}' for '{}' was not found in LIMS".format(customer, sample_id))
 
 def _connect_lims():
     """ Connects to LIMS and returns Lims object
