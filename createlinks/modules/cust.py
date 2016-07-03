@@ -20,7 +20,9 @@ class CustomerIDMalformedException(Exception):
     def __init__(self, customer, sample_id):
         self.customer = customer
         self.sample_id = sample_id
-        logger.error("Customer name '{}' for '{}' was not found in LIMS".format(customer, sample_id))
+
+    def __str__(self):
+        return self.repr("Customer name '{}' for '{}' was not found in LIMS".format(self.customer, self.sample_id))
 
 def _connect_lims():
     """ Connects to LIMS and returns Lims object
