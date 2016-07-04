@@ -16,13 +16,13 @@ logger = logging.getLogger(__name__)
 class ExternalIDNotFoundException(Exception):
     pass
 
-class CustomerIDMalformedException(Exception):
+class MalformedCustomerIDException(Exception):
     def __init__(self, customer, sample_id):
         self.customer = customer
         self.sample_id = sample_id
 
     def __str__(self):
-        return self.repr("Customer name '{}' for '{}' was not found in LIMS".format(self.customer, self.sample_id))
+        return repr("Customer name '{}' for '{}' was not found in LIMS".format(self.customer, self.sample_id))
 
 def _connect_lims():
     """ Connects to LIMS and returns Lims object
@@ -77,10 +77,10 @@ def get_cust_name(internal_id):
         customer = sample.udf('customer')
         customer = customer.lower()
         if re.match(r'cust\d{3}', cust_name):
-            raise CustomerIDMalformedException(customer, internal_id)
+            raise MalformedCustomerIDException(customer, internal_id)
         return customer
     except:
-        raise CustomerIDMalformedException(customer, internal_id)
+        raise MalformedCustomerIDException(customer, internal_id)
 
     return None
 
