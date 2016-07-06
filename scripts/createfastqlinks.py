@@ -175,7 +175,9 @@ def main(argv):
       seq_type = analysistype[0:3]
       seq_type_dir = ''
       q30_cutoff = 80
-      if seq_type == 'EXO':
+      if seq_type == 'EFT':
+          seq_type_dir = 'exomes'
+      elif seq_type == 'EXO':
           seq_type_dir = 'exomes'
       elif seq_type == 'WGS':
           seq_type_dir = 'genomes'
