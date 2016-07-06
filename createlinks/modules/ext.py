@@ -115,8 +115,10 @@ def get_index(fastq_file_name):
         while not line.startswith('@'):
             line = f.readline().rstrip()
 
-        index = line.split(':')[9]
-        return index
+        line_parts = line.split(':')
+        if len(line_parts) == 10:
+            return line_parts[9]
+        return '0'
 
 def setup_logging(level='INFO'):
     root_logger = logging.getLogger()
