@@ -179,6 +179,9 @@ def main(argv):
           seq_type_dir = 'exomes'
       elif seq_type == 'EXO':
           seq_type_dir = 'exomes'
+      elif seq_type == 'WGT':
+          seq_type_dir = 'genomes'
+          q30_cutoff = 75
       elif seq_type == 'WGS':
           seq_type_dir = 'genomes'
           q30_cutoff = 75
