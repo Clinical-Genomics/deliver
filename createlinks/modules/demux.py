@@ -41,7 +41,7 @@ def getsampleinfofromname(sample):
 
 def is_pooled_sample(flowcell, lane):
     global db_params
-    q = ("SELECT count(samplename) AS sample_count " 
+    q = ("SELECT count(samplename) AS sample_count "
         "FROM sample "
         "JOIN unaligned ON sample.sample_id = unaligned.sample_id "
         "JOIN demux ON unaligned.demux_id = demux.demux_id "
@@ -74,7 +74,7 @@ def make_link(fastqfiles, outputdir, sample_name, fclane, link_type='soft'):
             # skip undeermined for pooled samples
             if is_pooled_sample(fclane['fc'], fclane['lane']):
                 print('WARNING: Skipping pooled undetermined indexes!')
-                continue 
+                continue
             undetermined = '-Undetermined'
 
         tile = ''
@@ -160,22 +160,29 @@ def demux_links(fc, custoutdir, mipoutdir):
       seq_type = analysistype[0:3]
       seq_type_dir = ''
       q30_cutoff = 80
+      if seq_type == 'EFT':
+          seq_type_dir = 'exomes'
       if seq_type == 'EXO':
           seq_type_dir = 'exomes'
+      elif seq_type == 'WGT':
+          seq_type_dir = 'genomes'
+          q30_cutoff = 75
       elif seq_type == 'WGS':
           seq_type_dir = 'genomes'
           q30_cutoff = 75
       elif seq_type == 'RML': # skip Ready Made Libraries
-        seq_type_dir = 'exomes'
-        q30_cutoff = 0
+          seq_type_dir = 'exomes'
+          q30_cutoff = 0
+      elif seq_type == 'MET': # whole genome metagenomics
+          seq_type_dir = 'genomes'
+          q30_cutoff = 75
+      elif seq_type == 'MWG': # Microbial WG
+          seq_type_dir = 'genomes'
+          q30_cutoff = 75
       else:
           print("ERROR '{}': unrecognized sequencing type '{}'".format(sample_id, seq_type))
           continue
 
-    try:
-      family_id = sample.udf['familyID']
-    except KeyError:
-      family_id = None
     try:
       cust_name = sample.udf['customer']
       if cust_name is not None:
@@ -187,9 +194,6 @@ def demux_links(fc, custoutdir, mipoutdir):
       continue
     elif not re.match(r'cust\d{3}', cust_name):
       print("ERROR '{}' does not match an internal customer name".format(cust_name))
-      continue
-    if family_id == None and analysistype != None and seq_type != 'RML':
-      print("ERROR '{}' family_id is not set".format(sample_id))
       continue
 
     try:
@@ -224,6 +228,15 @@ def demux_links(fc, custoutdir, mipoutdir):
         sample_name=cust_sample_name,
         link_type='hard'
       )
+
+    # check the family id
+    try:
+      family_id = sample.udf['familyID']
+    except KeyError:
+      family_id = None
+    if family_id == None and analysistype != None and seq_type != 'RML':
+      print("ERROR '{}' family_id is not set".format(sample_id))
+      continue
 
     # create the links for the analysis
     if readcounts:
