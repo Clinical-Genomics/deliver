@@ -14,7 +14,7 @@ for FASTQ in "$@"; do
     FASTQ_FILE=$(basename $FASTQ)
 
     IFS=_ read -ra FASTQ_PARTS <<< "$FASTQ_FILE"
-    unset $IFS # reset IFS
+    unset IFS # reset IFS
 
     LANE=${FASTQ_PARTS[0]}
     DATE=${FASTQ_PARTS[1]}
