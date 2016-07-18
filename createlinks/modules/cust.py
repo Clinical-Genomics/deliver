@@ -22,7 +22,7 @@ class MalformedCustomerIDException(Exception):
         self.sample_id = sample_id
 
     def __str__(self):
-        return repr("Customer name '{}' for '{}' was not found in LIMS".format(self.customer, self.sample_id))
+        return repr("Customer name '{}' for '{}' is not correctly formatted in LIMS".format(self.customer, self.sample_id))
 
 def _connect_lims():
     """ Connects to LIMS and returns Lims object
@@ -74,9 +74,9 @@ def get_cust_name(internal_id):
     try:
         sample = Sample(lims, id=internal_id)
 
-        customer = sample.udf('customer')
+        customer = sample.udf['customer']
         customer = customer.lower()
-        if re.match(r'cust\d{3}', cust_name):
+        if not re.match(r'cust\d{3}', customer):
             raise MalformedCustomerIDException(customer, internal_id)
         return customer
     except:
@@ -169,6 +169,7 @@ def cust_links(fastq_full_file_name, outdir):
     out_file_name = '_'.join([lane, date, FC, internal_id, index, direction])
     out_file_name = '{}.{}'.format(out_file_name, extension)
 
+    import ipdb; ipdb.set_trace()
     customer = get_cust_name(internal_id)
 
     # make out dir
