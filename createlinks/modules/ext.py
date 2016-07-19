@@ -115,7 +115,7 @@ def get_index(fastq_file_name):
         while not line.startswith('@'):
             line = f.readline().rstrip()
 
-        index = line.split(':')[9]
+        index = line.split(':')[-1]
         return index
 
 def setup_logging(level='INFO'):

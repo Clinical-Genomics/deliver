@@ -169,7 +169,6 @@ def cust_links(fastq_full_file_name, outdir):
     out_file_name = '_'.join([lane, date, FC, internal_id, index, direction])
     out_file_name = '{}.{}'.format(out_file_name, extension)
 
-    import ipdb; ipdb.set_trace()
     customer = get_cust_name(internal_id)
 
     # make out dir
