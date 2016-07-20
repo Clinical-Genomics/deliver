@@ -59,7 +59,7 @@ def get_internal_id(external_id):
     return None
 
 def get_cust_name(internal_id):
-    """ Looks up the customer name from an external ID in LIMS
+    """ Looks up the customer name from an internal ID in LIMS
 
     Args:
         internal_id (str): the internal sample ID
@@ -85,6 +85,15 @@ def get_cust_name(internal_id):
     return None
 
 def make_link(source, dest, link_type='hard'):
+    """ Create a hard or soft link
+
+    Args:
+        source (str): path to the source file
+        dest (str): path to the destination file
+        link_type (str, default hard): hard|soft link
+
+    Returns: None
+    """
     # remove previous link
     try:
         os.remove(dest)
@@ -98,6 +107,7 @@ def make_link(source, dest, link_type='hard'):
             os.symlink(source, dest)
         else:
             logger.info("ln {} {} ...".format(os.path.realpath(source), dest))
+            # unlink before making hardlink
             os.link(os.path.realpath(source), dest)
     except:
         logger.error("Can't create symlink from {} to {}".format(source, dest))
@@ -119,6 +129,16 @@ def setup_logging(level='INFO'):
     return root_logger
 
 def cust_links(fastq_full_file_name, outdir):
+    """ Based on an input file name:
+        * determine what format the file name has
+        * pick out sample name, read direction, lane, flowcell, date, index
+        * link the input file to the outdir renamed to fit MIP naming scheme.
+
+    Args:
+        fastq_full_file_name (str): full path to the input file
+        outdir (str): the path to the outdir
+
+    """
 
     logger.info('Version: {} {}'.format(__file__, __version__))
     #outdir = '/mnt/hds/proj/bioinfo/EXTERNAL/'
