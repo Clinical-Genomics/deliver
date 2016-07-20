@@ -86,6 +86,7 @@ def setup_logging(level='INFO'):
 
 def bam_links(qc_sample_info_file, outdir):
 
+    # TODO based on the application tag, select the right output dir
     outdir = outdir + '/{cust}/INBOX/genomes/{cust_sample_name}/'
 
     logger.info('Version: {} {}'.format(__file__, __version__))
@@ -111,7 +112,6 @@ def bam_links(qc_sample_info_file, outdir):
 
             # rename the bam file
             bam_cust_file_name = rename_file(bam_file_name, sample_name, cust_sample_name)
-            #import ipdb; ipdb.set_trace()
 
             # create the customer folders and links regardless of the QC
             try:

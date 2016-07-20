@@ -12,7 +12,7 @@ from access import db
 from genologics.lims import *
 from genologics.config import BASEURI, USERNAME, PASSWORD
 
-__version__ = '1.16.1'
+__version__ = '1.16.5'
 
 db_params = []
 
@@ -175,8 +175,13 @@ def main(argv):
       seq_type = analysistype[0:3]
       seq_type_dir = ''
       q30_cutoff = 80
-      if seq_type == 'EXO':
+      if seq_type == 'EFT':
           seq_type_dir = 'exomes'
+      elif seq_type == 'EXO':
+          seq_type_dir = 'exomes'
+      elif seq_type == 'WGT':
+          seq_type_dir = 'genomes'
+          q30_cutoff = 75
       elif seq_type == 'WGS':
           seq_type_dir = 'genomes'
           q30_cutoff = 75
