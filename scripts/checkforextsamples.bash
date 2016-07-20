@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 EXTDIR=${1?'Please provide the EXTERNAL directory'}
 
 log() {
@@ -8,9 +10,16 @@ log() {
 }
 
 cd /mnt/hds/proj/bioinfo/git/kenny/data-delivery/
-for SAMPLE in ${EXTDIR}/*; do
+for SAMPLE in ${EXTDIR}/cust*/*; do
+    DIR=$(dirname $SAMPLE)
+    if [[ -e ${SAMPLE}/delivered.txt ]]; then
+        log "Delivered: $SAMPLE"
+        continue
+    fi
+
     log "Found: $SAMPLE"
 
     python -m createlinks.cli ext $SAMPLE
+    date +'%Y%m%d%H%M%S' > ${SAMPLE}/delivered.txt
 done
 cd -
