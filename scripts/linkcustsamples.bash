@@ -15,7 +15,7 @@ while read -a LINE; do
 
     echo ${INDIR}/${FASTQ_FILE}
 
-    python -m createlinks.cli cust ${INDIR}/${FASTQ_FILE}
+    python -m deliver.cli cust ${INDIR}/${FASTQ_FILE}
 done < ${TICKET_FILE}
 mv $TICKET_FILE ${TICKET_FILE}_complete
 cd -
