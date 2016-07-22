@@ -112,7 +112,7 @@ def make_link(source, dest, link_type='hard'):
     except:
         logger.error("Can't create symlink from {} to {}".format(source, dest))
 
-def setup_logging(level='INFO'):
+def setup_logging(level='INFO', log_file=None):
     root_logger = logging.getLogger()
     root_logger.setLevel(level)
 
@@ -120,12 +120,21 @@ def setup_logging(level='INFO'):
     template = "[%(asctime)s] %(name)-25s %(levelname)-8s %(message)s"
     formatter = logging.Formatter(template)
 
-    # add a basic STDERR handler to the logger
-    console = logging.StreamHandler()
-    console.setLevel(level)
-    console.setFormatter(formatter)
+    # add a basic STDERR handler to the logger if none exists
+    has_stream_handler = [ True for handler in logger.handlers if isinstance(handler, logging.StreamHandler) ]
+    if has_stream_handler:
+        console = logging.StreamHandler()
+        console.setLevel(level)
+        console.setFormatter(formatter)
+        root_logger.addHandler(console)
 
-    root_logger.addHandler(console)
+    # add a file handler to the logger
+    if log_file:
+        file_handler = logging.FileHandler(log_file)
+        file_handler.setLevel(level)
+        file_handler.setFormatter(formatter)
+        root_logger.addHandler(file_handler)
+
     return root_logger
 
 def cust_links(fastq_full_file_name, outdir):
@@ -139,13 +148,14 @@ def cust_links(fastq_full_file_name, outdir):
         outdir (str): the path to the outdir
 
     """
-
-    logger.info('Version: {} {}'.format(__file__, __version__))
-    #outdir = '/mnt/hds/proj/bioinfo/EXTERNAL/'
-
     fastq_file_name = os.path.basename(fastq_full_file_name)
     fastq_file_name_split = fastq_file_name.split('_')
     direction, extension = fastq_file_name_split[-1].split('.', 1)
+
+    # set up logging
+    log_file = os.path.join(outdir, fastq_file_name + '.log')
+    setup_logging(log_file=log_file)
+    logger.info('Version: {} {}'.format(__file__, __version__))
 
     # standard values
     FC = None
@@ -207,6 +217,10 @@ def cust_links(fastq_full_file_name, outdir):
         os.path.join(complete_outdir, out_file_name),
         'hard'
     )
+
+    # move log file to right location
+    log_file_name = os.path.basename(log_file)
+    os.rename(log_file, os.path.join(complete_outdir, log_file_name))
 
 if __name__ == '__main__':
     setup_logging('DEBUG')
