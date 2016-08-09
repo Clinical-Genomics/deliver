@@ -10,8 +10,8 @@
 
 set -e
 
-CRAM=$1
-OUTDIR=$2
+CRAM=${1?'Please provide a cram file'}
+OUTDIR=${2?'Please provide an output directory'}
 
 OUTFILE=$(basename $CRAM)
 IFS=. read -a OUTFILE_PARTS <<< "${OUTFILE}"
