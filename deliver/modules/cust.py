@@ -141,7 +141,8 @@ def setup_logging(level='INFO', delayed_logging=False):
     return root_logger
 
 def setup_logfile(output_file):
-    """TODO: Docstring for write_log.
+    """Sets up the log file by replacing the MemoryHandler from the logger
+    with a FileHandler.
 
     Args:
         output_file (str): The path to the target log file.
