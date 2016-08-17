@@ -4,7 +4,9 @@ from __future__ import print_function
 import sys
 import os
 import logging
+import logging.handlers
 import re
+from StringIO import StringIO
 from access import db
 from genologics.lims import *
 from genologics.config import BASEURI, USERNAME, PASSWORD
@@ -112,7 +114,7 @@ def make_link(source, dest, link_type='hard'):
     except:
         logger.error("Can't create symlink from {} to {}".format(source, dest))
 
-def setup_logging(level='INFO', log_file=None):
+def setup_logging(level='INFO', delayed_logging=False):
     root_logger = logging.getLogger()
     root_logger.setLevel(level)
 
@@ -121,21 +123,55 @@ def setup_logging(level='INFO', log_file=None):
     formatter = logging.Formatter(template)
 
     # add a basic STDERR handler to the logger if none exists
-    has_stream_handler = [ True for handler in logger.handlers if isinstance(handler, logging.StreamHandler) ]
-    if has_stream_handler:
+    has_stream_handler = [ True for handler in root_logger.handlers if isinstance(handler, logging.StreamHandler) ]
+    if not has_stream_handler:
         console = logging.StreamHandler()
         console.setLevel(level)
         console.setFormatter(formatter)
         root_logger.addHandler(console)
 
-    # add a file handler to the logger
-    if log_file:
-        file_handler = logging.FileHandler(log_file)
-        file_handler.setLevel(level)
-        file_handler.setFormatter(formatter)
-        root_logger.addHandler(file_handler)
+    # add a buffer handler to the logger
+    # will be written to a log file once location of the log file is known.
+    if delayed_logging:
+        log_buffer_handler = logging.handlers.MemoryHandler(capacity = 1024 * 100)
+        log_buffer_handler.setLevel(level)
+        log_buffer_handler.setFormatter(formatter)
+        root_logger.addHandler(log_buffer_handler)
 
     return root_logger
+
+def setup_logfile(output_file):
+    """TODO: Docstring for write_log.
+
+    Args:
+        output_file (str): The path to the target log file.
+    Returns: None
+
+    """
+    # set formatter
+    template = "[%(asctime)s] %(name)-25s %(levelname)-8s %(message)s"
+    formatter = logging.Formatter(template)
+
+    # create logfile handler
+    file_handler = logging.FileHandler(output_file)
+    file_handler.setFormatter(formatter)
+
+    # get the MemoryHandler
+    root_logger = logging.getLogger()
+    log_buffer_handler = [ handler for handler in root_logger.handlers if isinstance(handler, logging.handlers.MemoryHandler) ]
+    if not log_buffer_handler:
+        logger.warning("Failed to find the MemoryHandler. '%s' will not be created.", output_file)
+    else:
+        log_buffer_handler = log_buffer_handler.pop()
+
+        # connect the file handler with the memory handler
+        log_buffer_handler.setTarget(file_handler)
+        log_buffer_handler.flush()
+        log_buffer_handler.close()
+
+        # replace the memory handler with the file handler
+        root_logger.removeHandler(log_buffer_handler)
+        root_logger.addHandler(file_handler)
 
 def cust_links(fastq_full_file_name, outdir):
     """ Based on an input file name:
@@ -154,7 +190,7 @@ def cust_links(fastq_full_file_name, outdir):
 
     # set up logging
     log_file = os.path.join(outdir, fastq_file_name + '.log')
-    setup_logging(log_file=log_file)
+    setup_logging(delayed_logging=True) # make sure we set up a logger buffer we can write to file later
     logger.info('Version: {} {}'.format(__file__, __version__))
 
     # standard values
@@ -218,9 +254,8 @@ def cust_links(fastq_full_file_name, outdir):
         'hard'
     )
 
-    # move log file to right location
-    log_file_name = os.path.basename(log_file)
-    os.rename(log_file, os.path.join(complete_outdir, log_file_name))
+    # append the log to the project log
+    setup_logfile(os.path.join(complete_outdir, 'project.log'))
 
 if __name__ == '__main__':
     setup_logging('DEBUG')
