@@ -48,10 +48,21 @@ def get_internal_id(external_id):
     try:
         samples = lims.get_samples(name=external_id)
 
-        # multiple samples could be returned, get the latest one
-        samples.sort(key=lambda x: x.date_received, reverse=True)
+        # multiple samples could be returned
+        # Take the one that has a **X tag
+        ext_samples = []
+        for sample in samples:
+            try:
+                application_tag = sample.udf["Sequencing Analysis"]
+            except KeyError:
+                continue
 
-        return samples[0].id
+            if application_tag[2] == 'X':
+                ext_samples.append(sample)
+
+        ext_samples.sort(key=lambda x: x.date_received, reverse=True)
+
+        return ext_samples[0].id
     except:
         logger.error("External ID '{}' was not found in LIMS".format(external_id))
         raise ExternalIDNotFoundException("External ID '{}' was not found in LIMS".format(external_id))
