@@ -64,6 +64,10 @@ def get_internal_id(external_id):
 
         ext_samples.sort(key=lambda x: x.date_received, reverse=True)
 
+        if len(samples) and len(ext_samples) == 0:
+            logger.error("External ID '{}' does not have correct application tag {}".format(external_id, application_tag))
+            raise ExternalIDNotFoundException("External ID '{}' does not have correct application tag {}".format(external_id, application_tag))
+
         return ext_samples[0].id
     except:
         logger.error("External ID '{}' was not found in LIMS".format(external_id))
