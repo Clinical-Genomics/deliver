@@ -19,7 +19,7 @@ for SAMPLE in ${EXTDIR}/cust*/*; do
 
     log "Found: $SAMPLE"
 
-    python -m deliver.cli ext $SAMPLE >> ${SAMPLE}/project.log
+    python -m deliver.cli ext $SAMPLE &>> ${SAMPLE}/project.log
     date +'%Y%m%d%H%M%S' > ${SAMPLE}/delivered.txt
 done
 cd -
