@@ -49,31 +49,29 @@ def get_internal_id(external_id):
 
     try:
         samples = lims.get_samples(name=external_id)
-
-        # multiple samples could be returned
-        # Take the one that has a **X tag
-        ext_samples = []
-        for sample in samples:
-            try:
-                application_tag = sample.udf["Sequencing Analysis"]
-            except KeyError:
-                continue
-
-            if application_tag[2] == 'X':
-                ext_samples.append(sample)
-
-        ext_samples.sort(key=lambda x: x.date_received, reverse=True)
-
-        if len(samples) and len(ext_samples) == 0:
-            logger.error("External ID '{}' does not have correct application tag {}".format(external_id, application_tag))
-            raise ExternalIDNotFoundException("External ID '{}' does not have correct application tag {}".format(external_id, application_tag))
-
-        return ext_samples[0].id
     except:
         logger.error("External ID '{}' was not found in LIMS".format(external_id))
         raise ExternalIDNotFoundException("External ID '{}' was not found in LIMS".format(external_id))
 
-    return None
+    # multiple samples could be returned
+    # Take the one that has a **X tag
+    ext_samples = []
+    for sample in samples:
+        try:
+            application_tag = sample.udf["Sequencing Analysis"]
+        except KeyError:
+            continue
+
+        if application_tag[2] == 'X':
+            ext_samples.append(sample)
+
+    ext_samples.sort(key=lambda x: x.date_received, reverse=True)
+
+    if len(samples) and len(ext_samples) == 0:
+        logger.error("External ID '{}' does not have correct application tag {}".format(external_id, application_tag))
+        raise ExternalIDNotFoundException("External ID '{}' does not have correct application tag {}".format(external_id, application_tag))
+
+    return ext_samples[0].id
 
 def get_cust_name(internal_id):
     """ Looks up the customer name from an internal ID in LIMS
@@ -200,7 +198,8 @@ def cust_links(fastq_full_file_name, outdir):
         outdir (str): the path to the outdir
 
     """
-    fastq_file_name = os.path.basename(fastq_full_file_name)
+    fastq_file_name = os.path.basename(fastq_full_file_name) # get the file name
+    fastq_target_file = os.path.realpath(fastq_full_file_name) # resolve symlinks
     fastq_file_name_split = fastq_file_name.split('_')
     direction, extension = fastq_file_name_split[-1].split('.', 1)
 
@@ -265,7 +264,7 @@ def cust_links(fastq_full_file_name, outdir):
 
     # link!
     make_link(
-        fastq_full_file_name,
+        fastq_target_file,
         os.path.join(complete_outdir, out_file_name),
         'hard'
     )
