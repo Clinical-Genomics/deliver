@@ -123,8 +123,6 @@ def get_index(fastq_file_name):
             if m:
                 index = m.group(1)
 
-        print(index)
-
         return index
 
 def setup_logging(level='INFO'):
