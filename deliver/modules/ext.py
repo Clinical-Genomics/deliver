@@ -116,6 +116,15 @@ def get_index(fastq_file_name):
             line = f.readline().rstrip()
 
         index = line.split(':')[-1]
+
+        if '#' in index: # possible early fastq header line
+            # @HWUSI-EAS100R:6:73:941:1973#0/1
+            m = re.search(r'.*#(.+)/.*', index)
+            if m:
+                index = m.group(1)
+
+        print(index)
+
         return index
 
 def setup_logging(level='INFO'):
