@@ -1,6 +1,6 @@
 click
 access==0.0.22
-yaml
+PyYAML
 psutils
 pymip
 mysql-python
