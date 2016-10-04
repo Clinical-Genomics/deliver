@@ -12,8 +12,6 @@ from access import db
 from genologics.lims import *
 from genologics.config import BASEURI, USERNAME, PASSWORD
 
-__version__ = '1.9.0'
-
 db_params = []
 
 def getsamplesfromflowcell(demuxdir, flwc):
@@ -34,14 +32,14 @@ def getsampleinfofromname(sample):
              " FROM sample, unaligned, flowcell, demux " +
              " WHERE sample.sample_id = unaligned.sample_id AND unaligned.demux_id = demux.demux_id " +
              " AND demux.flowcell_id = flowcell.flowcell_id " +
-             " AND (samplename LIKE '{sample}\_%' OR samplename = '{sample}')".format(sample=sample))
+             " AND (samplename LIKE '{sample}\_%' OR samplename = '{sample}' OR samplename LIKE '{sample}B\_%' OR samplename LIKE '{sample}F\_%')".format(sample=sample))
     with db.dbconnect(db_params['CLINICALDBHOST'], db_params['CLINICALDBPORT'], db_params['STATSDB'], db_params['CLINICALDBUSER'], db_params['CLINICALDBPASSWD']) as dbc:
        replies = dbc.generalquery( query )
     return replies
 
 def is_pooled_sample(flowcell, lane):
     global db_params
-    q = ("SELECT count(samplename) AS sample_count " 
+    q = ("SELECT count(samplename) AS sample_count "
         "FROM sample "
         "JOIN unaligned ON sample.sample_id = unaligned.sample_id "
         "JOIN demux ON unaligned.demux_id = demux.demux_id "
@@ -74,7 +72,7 @@ def make_link(fastqfiles, outputdir, sample_name, fclane, link_type='soft'):
             # skip undeermined for pooled samples
             if is_pooled_sample(fclane['fc'], fclane['lane']):
                 print('WARNING: Skipping pooled undetermined indexes!')
-                continue 
+                continue
             undetermined = '-Undetermined'
 
         tile = ''
@@ -173,10 +171,6 @@ def demux_links(fc, custoutdir, mipoutdir):
           continue
 
     try:
-      family_id = sample.udf['familyID']
-    except KeyError:
-      family_id = None
-    try:
       cust_name = sample.udf['customer']
       if cust_name is not None:
         cust_name = cust_name.lower()
@@ -187,9 +181,6 @@ def demux_links(fc, custoutdir, mipoutdir):
       continue
     elif not re.match(r'cust\d{3}', cust_name):
       print("ERROR '{}' does not match an internal customer name".format(cust_name))
-      continue
-    if family_id == None and analysistype != None and seq_type != 'RML':
-      print("ERROR '{}' family_id is not set".format(sample_id))
       continue
 
     try:
@@ -224,6 +215,15 @@ def demux_links(fc, custoutdir, mipoutdir):
         sample_name=cust_sample_name,
         link_type='hard'
       )
+
+    # check the family id
+    try:
+      family_id = sample.udf['familyID']
+    except KeyError:
+      family_id = None
+    if family_id == None and analysistype != None and seq_type != 'RML':
+      print("ERROR '{}' family_id is not set".format(sample_id))
+      continue
 
     # create the links for the analysis
     if readcounts:
