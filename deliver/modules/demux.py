@@ -9,10 +9,12 @@ import os
 import os.path
 import grp
 
-from lims.utils import parse_application_tag
+from lims.utils import analysis_info, analysis_type
 from access import db
 from genologics.lims import *
 from genologics.config import BASEURI, USERNAME, PASSWORD
+
+__version__ = '1.19.5'
 
 db_params = []
 
@@ -116,11 +118,29 @@ def make_link(fastqfiles, outputdir, sample_name, fclane, link_type='soft'):
         except:
             print("Can't create symlink for {} in {}".format(sample_name, os.path.join(outputdir, newname)))
 
+def analysis_cutoff(analysis_type):
+    """Based on the analysis type (exomes|genomes), return the q30 cutoff
+
+    Args:
+        analysis_type (str): exomes or genomes.
+
+    Returns: returns the q30 cutoff in percent.
+
+    """
+    if analysis_type == 'exomes':
+        return 80
+    if analysis_type == 'genomes':
+        return 75
+
+    # not recognized, cutoff 0
+    return 0
+
 def demux_links(fc, custoutdir, mipoutdir):
 
     print('Version: {} {}'.format(__file__, __version__))
   
-    params = db.readconfig("/home/hiseq.clinical/.scilifelabrc")
+    global db_params
+    db_params = db.readconfig("/home/hiseq.clinical/.scilifelabrc")
     lims = Lims(BASEURI, USERNAME, PASSWORD)
     samples = getsamplesfromflowcell(db_params['DEMUXDIR'], fc)
   
@@ -142,35 +162,18 @@ def demux_links(fc, custoutdir, mipoutdir):
                 print("WARNING: Sample {} still not found in LIMS!".format(sample_id))
                 continue
   
-        try:
-            analysistype = sample.udf["Sequencing Analysis"]
-        except KeyError:
-            analysistype = None
+      
+        application_tag = analysis_info(sample)
   
-        print('Application tag: {}'.format(analysistype))
-        if analysistype is None:
-            print("WARNING: Application tag not defined for {}".format(sample_id))
-            seq_type_dir = 'exomes'
-            readcounts = None
-        else:
-            if len(analysistype) != 10:
-                print("ERROR: Application tag '{}' is wrong for {}".format(analysistype, sample_id))
-                continue
-            readcounts = .75 * float(analysistype[-3:])    # Accepted readcount is 75% of ordered million reads
-            seq_type = analysistype[0:3]
-            seq_type_dir = ''
-            q30_cutoff = 80
-            if seq_type == 'EXO':
-                seq_type_dir = 'exomes'
-            elif seq_type == 'WGS':
-                seq_type_dir = 'genomes'
-                q30_cutoff = 75
-            elif seq_type == 'RML': # skip Ready Made Libraries
-                seq_type_dir = 'exomes'
-                q30_cutoff = 0
-            else:
-                print("ERROR '{}': unrecognized sequencing type '{}'".format(sample_id, seq_type))
-                continue
+        print('Application tag: {}'.format(application_tag))
+  
+        requested_reads = int(application_tag['reads']) / 1000000 
+        library = application_tag['library']
+        seq_type = application_tag['analysis']
+  
+        readcounts = .75 * float(requested_reads)    # Accepted readcount is 75% of ordered million reads
+        seq_type_dir = analysis_type(sample) # get exomes|genomes
+        q30_cutoff = analysis_cutoff(seq_type_dir)
   
         try:
             cust_name = sample.udf['customer']
@@ -196,7 +199,7 @@ def demux_links(fc, custoutdir, mipoutdir):
         rc = 0         # counter for total readcount of sample
         fclanes = []   # list to keep flowcell names and lanes for a sample
         for info in dbinfo:
-            if analysistype == None or info['q30'] > q30_cutoff:     # Use readcount from lane only if it satisfies QC [=80%]
+            if application_tag == None or info['q30'] > q30_cutoff:     # Use readcount from lane only if it satisfies QC [=80%]
                 rc += info['M_reads']
                 fclanes.append(dict(( (key, info[key]) for key in ['fc', 'q30', 'lane'] )))
             else:
@@ -223,7 +226,7 @@ def demux_links(fc, custoutdir, mipoutdir):
             family_id = sample.udf['familyID']
         except KeyError:
             family_id = None
-        if family_id == None and analysistype != None and seq_type != 'RML':
+        if family_id == None and application_tag != None and seq_type != 'RML':
             print("ERROR '{}' family_id is not set".format(sample_id))
             continue
   
