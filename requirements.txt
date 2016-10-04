@@ -4,4 +4,4 @@ PyYAML
 psutil
 pymip
 mysql-python
-lims
+cghq-lims
