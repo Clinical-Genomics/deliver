@@ -1,7 +1,7 @@
 click
 access==0.0.22
 PyYAML
-psutils
+psutil
 pymip
 mysql-python
 lims
