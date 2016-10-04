@@ -40,5 +40,5 @@ INDEX=${MIDDLE_PARTS[2]}
 
 OUTFILE="${LANE}_${DATE}_${FC}_${SAMPLE}_${INDEX}_DIRECTION.fastq.gz"
 
-echo "cramtools -Xmx4g fastq -I $CRAM -R /mnt/hds/proj/bioinfo/MIP_ANALYSIS/references/Homo_sapiens.GRCh37.d5.fasta | paste - - - - - - - -  | tee >(cut -f 1-4 | tr '\t' '\n' | gzip > ${OUTDIR}/${OUTFILE/DIRECTION/1}) | cut -f 5-8 | tr '\t' '\n' | gzip > ${OUTDIR}/${OUTFILE/DIRECTION/2}"
-cramtools -Xmx4g fastq -I $CRAM -R /mnt/hds/proj/bioinfo/MIP_ANALYSIS/references/Homo_sapiens.GRCh37.d5.fasta | paste - - - - - - - -  | tee >(cut -f 1-4 | tr "\t" "\n" | gzip > ${OUTDIR}/${OUTFILE/DIRECTION/1}) | cut -f 5-8 | tr "\t" "\n" | gzip > ${OUTDIR}/${OUTFILE/DIRECTION/2}
+echo "cramtools -Xmx4g fastq -I $CRAM -R /mnt/hds/proj/bioinfo/MIP_ANALYSIS/references/Homo_sapiens.GRCh37.d5.fasta | tee >(grep '@.*/1' -A 3 --no-group-separator | gzip > ${OUTDIR}/${OUTFILE/DIRECTION/1}) | grep '@.*/2' -A 3 --no-group-separator | gzip > ${OUTDIR}/${OUTFILE/DIRECTION/2}"
+cramtools -Xmx4g fastq -I $CRAM -R /mnt/hds/proj/bioinfo/MIP_ANALYSIS/references/Homo_sapiens.GRCh37.d5.fasta | tee >(grep '@.*/1' -A 3 --no-group-separator | gzip > ${OUTDIR}/${OUTFILE/DIRECTION/1}) | grep '@.*/2' -A 3 --no-group-separator | gzip > ${OUTDIR}/${OUTFILE/DIRECTION/2}
