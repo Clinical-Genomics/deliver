@@ -18,15 +18,19 @@ __version__ = '1.20.6'
 
 db_params = []
 
+
 def getsamplesfromflowcell(demuxdir, flwc):
-    samples = glob.glob("{demuxdir}*{flowcell}/Unalign*/Project_*/Sample_*".\
-                        format(demuxdir=demuxdir, flowcell=flwc))
+    samples = glob.glob("{demuxdir}*{flowcell}/Unalign*/Project_*/Sample_*"
+                        .format(demuxdir=demuxdir, flowcell=flwc))
     fc_samples = {}
     for sample in samples:
         sample = sample.split("/")[-1].split("_")[1]
-        sample = sample.rstrip('BF') # remove the reprep (B) and reception control fail (F) letters from the samplename
+        # remove reprep (B) and reception control fail (F) letters from
+        # the samplename
+        sample = sample.rstrip('BF')
         fc_samples[sample] = ''
     return fc_samples
+
 
 def getsampleinfofromname(sample):
     global db_params
@@ -41,6 +45,7 @@ def getsampleinfofromname(sample):
        replies = dbc.generalquery( query )
     return replies
 
+
 def is_pooled_sample(flowcell, lane):
     global db_params
     q = ("SELECT count(samplename) AS sample_count "
@@ -54,6 +59,7 @@ def is_pooled_sample(flowcell, lane):
        replies = dbc.generalquery(q)
     return True if int(replies[0]['sample_count']) > 1 else False
 
+
 def get_fastq_files(demuxdir, fclane, sample_name):
     fastqfiles = glob.glob(
         "{demuxdir}*{fc}/Unalign*/Project_*/Sample_{sample_name}_*/*L00{lane}*gz".format(
@@ -65,6 +71,7 @@ def get_fastq_files(demuxdir, fclane, sample_name):
         )))
 
     return fastqfiles
+
 
 def make_link(fastqfiles, outputdir, sample_name, fclane, link_type='soft'):
     for fastqfile in fastqfiles:

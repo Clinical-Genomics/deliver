@@ -1,20 +1,27 @@
 # -*- coding: utf-8 -*-
 import logging
 import click
+import yaml
+
 from .modules.demux import demux_links
-from .modules.ext   import ext_links
-from .modules.bam   import bam_links
-from .modules.vcf   import vcf_links
-from .modules.cust  import cust_links
+from .modules.ext import ext_links
+from .modules.bam import bam_links
+from .modules.vcf import vcf_links
+from .modules.cust import cust_links
+from .modules.microbial import link_microbial
 
 logger = logging.getLogger(__name__)
 
 __version__ = '1.20.6'
 
+
 @click.group()
-def link():
+@click.option('-c', '--config', type=click.File('r'))
+@click.pass_context
+def link(context, config):
     """Make linking of FASTQ/BAM files easier!"""
-    pass
+    context.obj = yaml.load(config) if config else {}
+
 
 @link.command()
 @click.argument('flowcell', nargs=1)
@@ -25,6 +32,7 @@ def demux(flowcell, custoutdir, mipoutdir):
     """Links from DEMUX to MIP_ANALYSIS and customer folder"""
     demux_links(flowcell, custoutdir, mipoutdir)
 
+
 @link.command()
 @click.argument('sample_folder', nargs=1, type=click.Path(exists=True))
 @click.option('--outdir', default='/mnt/hds/proj/bioinfo/MIP_ANALYSIS/', show_default=True, type=click.Path(exists=True), help='path to MIP_ANALYSIS')
@@ -32,12 +40,14 @@ def ext(sample_folder, outdir):
     """links from EXTERNAL to MIP_ANALYSIS"""
     ext_links(sample_folder, outdir)
 
+
 @link.command()
 @click.argument('qc_sample_info_file', nargs=1, type=click.Path(exists=True))
 @click.option('--outdir', default='/mnt/hds/proj/', show_default=True, help='path to customer folders')
 def bam(qc_sample_info_file, outdir):
     """links BAM files to cust/INBOX"""
     bam_links(qc_sample_info_file, outdir)
+
 
 @link.command()
 @click.argument('qc_sample_info_file', nargs=1, type=click.Path(exists=True))
@@ -54,6 +64,22 @@ def cust(fastq_file, outdir):
     """links FASTQ file to EXTERNAL"""
     cust_links(fastq_file, outdir)
 
+
+@link.command()
+@click.option('-r', '--root-dir', type=click.Path(exists=True))
+@click.option('-s', '--sample', help='link a specific sample')
+@click.option('-f', '--flowcell', help='link all samples on a flowcell')
+@click.option('-d', '--dry-run', is_flag=True)
+@click.argument('project', required=False)
+@click.pass_context
+def microbial(context, root_dir, sample, flowcell, dry_run, project):
+    """Link FASTQ files to microbial substructure."""
+    if root_dir:
+        context.obj['microbial_root'] = root_dir
+    link_microbial(context.obj, flowcell=flowcell, project=project,
+                   sample=sample, dry_run=dry_run)
+
+
 def setup_logging(level='INFO'):
     root_logger = logging.getLogger()
     root_logger.setLevel(level)
@@ -69,6 +95,7 @@ def setup_logging(level='INFO'):
 
     root_logger.addHandler(console)
     return root_logger
+
 
 if __name__ == '__main__':
     setup_logging(level='DEBUG')
