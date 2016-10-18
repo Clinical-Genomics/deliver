@@ -29,7 +29,7 @@ def link_microbial(config, flowcell=None, project=None, sample=None,
     if sample:
         lims_ids = [sample]
     elif project:
-        lims_ids = project_samples(project)
+        lims_ids = project_samples(lims_api, project)
     elif flowcell:
         lims_ids = flowcell_samples(manager, flowcell)
     else:
@@ -38,12 +38,23 @@ def link_microbial(config, flowcell=None, project=None, sample=None,
     lims_samples = (lims_api.sample(lims_id) for lims_id in lims_ids)
     relevant_samples = (sample for sample in lims_samples
                         if (sample.udf.get('Sequencing Analysis', '')
-                                      .startswith('MWG')))
+                                      .startswith('MW')))
     for lims_sample in relevant_samples:
         log.info("working on sample: %s", lims_sample.id)
         demux_root = config['demux_root']
         microbial_root = config['microbial_root']
-        files = from_sample(manager, demux_root, microbial_root, lims_sample)
+        lims_data = get_limsinfo(lims_sample)
+        project_id = lims_data['project_id']
+        sample_root = path(microbial_root).joinpath(project_id, lims_sample.id)
+        if not dry_run:
+            if sample_root.exists():
+                log.info("removing dir: %s", sample_root)
+                sample_root.rmtree()
+            # Make sure that project/sample dir exists
+            sample_root.makedirs_p()
+
+        files = from_sample(manager, demux_root, sample_root, project_id,
+                            lims_sample.id)
         for fastq, new_loc in files:
             log.info("linking file: %s -> %s", fastq, new_loc)
             if not dry_run:
@@ -74,19 +85,15 @@ def get_samples(flowcell):
             yield lims_id
 
 
-def from_sample(csdb_manager, demux_root, microbial_root, lims_sample):
+def from_sample(csdb_manager, demux_root, sample_root, project_id, lims_id):
     """Perform linking for a sample."""
-    lims_id = lims_sample.id
-    lims_data = get_limsinfo(lims_sample)
     flowcells = get_flowcells(csdb_manager, lims_id)
-    project_id = lims_data['project_id']
-    new_root = path(microbial_root).joinpath(project_id, lims_id)
     for flowcell in flowcells:
         flowcell_id = flowcell.flowcellname
         fastqs = get_fastqs(demux_root, flowcell_id, project_id, lims_id)
         for fastq_file in fastqs:
             new_name = rename_fastq(fastq_file, flowcell_id, lims_id)
-            new_loc = new_root.joinpath(new_name)
+            new_loc = path(sample_root).joinpath(new_name)
             yield fastq_file, new_loc
 
 
