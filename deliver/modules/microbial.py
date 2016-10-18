@@ -121,7 +121,7 @@ def rename_fastq(fastq_file, flowcell_id, lims_id):
     file_name = fastq_file.basename()
     lane = re.search("_L\d{3}_", file_name).group()[-2]
     read_direction = re.search("_R\d_", file_name).group()[-2]
-    new_name = ("{}_{}_L{}_R{}.fastq.gz"
+    new_name = ("{}_{}_L{}_{}.fastq.gz"
                 .format(lims_id, flowcell_id, lane, read_direction))
     return new_name
 
