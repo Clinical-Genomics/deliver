@@ -16,10 +16,12 @@ __version__ = '1.20.6'
 
 
 @click.group()
+@click.option('-l', '--log-level', defualt='INFO')
 @click.option('-c', '--config', type=click.File('r'))
 @click.pass_context
-def link(context, config):
+def link(context, log_level, config):
     """Make linking of FASTQ/BAM files easier!"""
+    setup_logging(level=log_level)
     context.obj = yaml.load(config) if config else {}
 
 
