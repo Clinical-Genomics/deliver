@@ -90,6 +90,7 @@ def from_sample(csdb_manager, demux_root, sample_root, project_id, lims_id):
     flowcells = get_flowcells(csdb_manager, lims_id)
     for flowcell in flowcells:
         flowcell_id = flowcell.flowcellname
+        log.debug("working on flowcell: %s", flowcell_id)
         fastqs = get_fastqs(demux_root, flowcell_id, project_id, lims_id)
         for fastq_file in fastqs:
             new_name = rename_fastq(fastq_file, flowcell_id, lims_id)
