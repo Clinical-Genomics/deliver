@@ -16,7 +16,7 @@ __version__ = '1.20.6'
 
 
 @click.group()
-@click.option('-l', '--log-level', defualt='INFO')
+@click.option('-l', '--log-level', default='INFO')
 @click.option('-c', '--config', type=click.File('r'))
 @click.pass_context
 def link(context, log_level, config):
