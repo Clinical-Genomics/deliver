@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 # check for md5sum file
 # for each line in md5sum file
 
