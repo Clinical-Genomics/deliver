@@ -11,7 +11,7 @@ from access import db
 from genologics.lims import *
 from genologics.config import BASEURI, USERNAME, PASSWORD
 
-__version__ = '1.20.6'
+__version__ = '1.20.7'
 
 logger = logging.getLogger(__name__)
 
