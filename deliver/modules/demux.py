@@ -93,11 +93,16 @@ def make_link(fastqfiles, outputdir, sample_name, fclane, link_type='soft'):
 
         rundir = fastqfile.split("/")[6]
         date = rundir.split("_")[0]
-        newname = "{lane}_{date}_{fc}{tile}{undetermined}_{sample_name}_{index}_{readdirection}.fastq.gz".format(
+
+        # make sure there no "/" in customer sample name
+        sanitized_name = (sample_name.replace("/", "-") if "/" in sample_name
+                          else sample_name)
+
+        newname = "{lane}_{date}_{fc}{tile}{undetermined}_{sample}_{index}_{readdirection}.fastq.gz".format(
             lane=fclane['lane'],
             date=date,
             fc=fclane['fc'],
-            sample_name=sample_name,
+            sample=sanitized_name,
             index=nameparts[-4],
             readdirection=nameparts[-2][-1:],
             undetermined=undetermined,
@@ -142,20 +147,21 @@ def analysis_cutoff(analysis_type):
     # not recognized, cutoff 0
     return 0
 
+
 def demux_links(fc, custoutdir, mipoutdir):
 
     print('Version: {} {}'.format(__file__, __version__))
-  
+
     global db_params
     db_params = db.readconfig("/home/hiseq.clinical/.scilifelabrc")
     lims = Lims(BASEURI, USERNAME, PASSWORD)
     samples = getsamplesfromflowcell(db_params['DEMUXDIR'], fc)
-  
+
     for sample_id in samples.iterkeys():
         print('Sample: {}'.format(sample_id))
         family_id = None
         cust_name = None
-  
+
         try:
             sample = Sample(lims, id=sample_id)
             sample.get(force=True)
@@ -211,7 +217,7 @@ def demux_links(fc, custoutdir, mipoutdir):
                 fclanes.append(dict(( (key, info[key]) for key in ['fc', 'q30', 'lane'] )))
             else:
                 print("WARNING: '{sample_id}' did not reach Q30 > {cut_off} for {flowcell}".format(sample_id=sample_id, cut_off=q30_cutoff, flowcell=info['fc']))
-  
+
         # create the customer folders and links regardless of the QC
         try:
             os.makedirs(os.path.join(custoutdir, cust_name, 'INBOX', seq_type_dir, cust_sample_name))
