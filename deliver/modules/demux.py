@@ -94,15 +94,11 @@ def make_link(fastqfiles, outputdir, sample_name, fclane, link_type='soft'):
         rundir = fastqfile.split("/")[6]
         date = rundir.split("_")[0]
 
-        # make sure there no "/" in customer sample name
-        sanitized_name = (sample_name.replace("/", "-") if "/" in sample_name
-                          else sample_name)
-
         newname = "{lane}_{date}_{fc}{tile}{undetermined}_{sample}_{index}_{readdirection}.fastq.gz".format(
             lane=fclane['lane'],
             date=date,
             fc=fclane['fc'],
-            sample=sanitized_name,
+            sample=sample_name,
             index=nameparts[-4],
             readdirection=nameparts[-2][-1:],
             undetermined=undetermined,
@@ -149,7 +145,7 @@ def analysis_cutoff(analysis_type):
 
 
 def demux_links(fc, custoutdir, mipoutdir):
-
+    """Link FASTQ files from DEMUX output of a flowcell."""
     print('Version: {} {}'.format(__file__, __version__))
 
     global db_params
@@ -202,17 +198,20 @@ def demux_links(fc, custoutdir, mipoutdir):
             continue
   
         try:
-            cust_sample_name = sample.name
+            # make sure there no "/" in customer sample name
+            cust_sample_name = (sample.name.replace("/", "-") if "/" in
+                                sample.name else sample.name)
         except AttributeError:
             print("WARNING '{}' does not have a customer sample name".format(sample_id))
-            cust_sample_name=sample_id
+            cust_sample_name = sample_id
   
         dbinfo = getsampleinfofromname(sample_id)
         print(dbinfo)
         rc = 0         # counter for total readcount of sample
         fclanes = []   # list to keep flowcell names and lanes for a sample
         for info in dbinfo:
-            if application_tag == None or info['q30'] > q30_cutoff:     # Use readcount from lane only if it satisfies QC [=80%]
+            # Use readcount from lane only if it satisfies QC [=80%]
+            if application_tag == None or info['q30'] > q30_cutoff:
                 rc += info['M_reads']
                 fclanes.append(dict(( (key, info[key]) for key in ['fc', 'q30', 'lane'] )))
             else:
