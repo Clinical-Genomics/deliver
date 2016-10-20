@@ -104,7 +104,7 @@ def get_flowcells(csdb_manager, lims_id):
                      .join(Flowcell.demuxes)
                      .join(Demux.unaligned)
                      .join(Unaligned.sample)
-                     .filter(Sample.samplename.like("{}%".format(lims_id))))
+                     .filter(Sample.samplename.like("{}_%".format(lims_id))))
     return query
 
 
