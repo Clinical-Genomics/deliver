@@ -5,3 +5,5 @@ psutil
 pymip
 mysql-python
 cghq-lims
+cglims
+clinstatsdb

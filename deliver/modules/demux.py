@@ -18,15 +18,19 @@ __version__ = '1.20.7'
 
 db_params = []
 
+
 def getsamplesfromflowcell(demuxdir, flwc):
-    samples = glob.glob("{demuxdir}*{flowcell}/Unalign*/Project_*/Sample_*".\
-                        format(demuxdir=demuxdir, flowcell=flwc))
+    samples = glob.glob("{demuxdir}*{flowcell}/Unalign*/Project_*/Sample_*"
+                        .format(demuxdir=demuxdir, flowcell=flwc))
     fc_samples = {}
     for sample in samples:
         sample = sample.split("/")[-1].split("_")[1]
-        sample = sample.rstrip('BF') # remove the reprep (B) and reception control fail (F) letters from the samplename
+        # remove reprep (B) and reception control fail (F) letters from
+        # the samplename
+        sample = sample.rstrip('BF')
         fc_samples[sample] = ''
     return fc_samples
+
 
 def getsampleinfofromname(sample):
     global db_params
@@ -41,6 +45,7 @@ def getsampleinfofromname(sample):
        replies = dbc.generalquery( query )
     return replies
 
+
 def is_pooled_sample(flowcell, lane):
     global db_params
     q = ("SELECT count(samplename) AS sample_count "
@@ -54,6 +59,7 @@ def is_pooled_sample(flowcell, lane):
        replies = dbc.generalquery(q)
     return True if int(replies[0]['sample_count']) > 1 else False
 
+
 def get_fastq_files(demuxdir, fclane, sample_name):
     fastqfiles = glob.glob(
         "{demuxdir}*{fc}/Unalign*/Project_*/Sample_{sample_name}_*/*L00{lane}*gz".format(
@@ -65,6 +71,7 @@ def get_fastq_files(demuxdir, fclane, sample_name):
         )))
 
     return fastqfiles
+
 
 def make_link(fastqfiles, outputdir, sample_name, fclane, link_type='soft'):
     for fastqfile in fastqfiles:
@@ -86,11 +93,12 @@ def make_link(fastqfiles, outputdir, sample_name, fclane, link_type='soft'):
 
         rundir = fastqfile.split("/")[6]
         date = rundir.split("_")[0]
-        newname = "{lane}_{date}_{fc}{tile}{undetermined}_{sample_name}_{index}_{readdirection}.fastq.gz".format(
+
+        newname = "{lane}_{date}_{fc}{tile}{undetermined}_{sample}_{index}_{readdirection}.fastq.gz".format(
             lane=fclane['lane'],
             date=date,
             fc=fclane['fc'],
-            sample_name=sample_name,
+            sample=sample_name,
             index=nameparts[-4],
             readdirection=nameparts[-2][-1:],
             undetermined=undetermined,
@@ -135,20 +143,21 @@ def analysis_cutoff(analysis_type):
     # not recognized, cutoff 0
     return 0
 
-def demux_links(fc, custoutdir, mipoutdir):
 
+def demux_links(fc, custoutdir, mipoutdir):
+    """Link FASTQ files from DEMUX output of a flowcell."""
     print('Version: {} {}'.format(__file__, __version__))
-  
+
     global db_params
     db_params = db.readconfig("/home/hiseq.clinical/.scilifelabrc")
     lims = Lims(BASEURI, USERNAME, PASSWORD)
     samples = getsamplesfromflowcell(db_params['DEMUXDIR'], fc)
-  
+
     for sample_id in samples.iterkeys():
         print('Sample: {}'.format(sample_id))
         family_id = None
         cust_name = None
-  
+
         try:
             sample = Sample(lims, id=sample_id)
             sample.get(force=True)
@@ -189,22 +198,25 @@ def demux_links(fc, custoutdir, mipoutdir):
             continue
   
         try:
-            cust_sample_name = sample.name
+            # make sure there no "/" in customer sample name
+            cust_sample_name = (sample.name.replace("/", "-") if "/" in
+                                sample.name else sample.name)
         except AttributeError:
             print("WARNING '{}' does not have a customer sample name".format(sample_id))
-            cust_sample_name=sample_id
+            cust_sample_name = sample_id
   
         dbinfo = getsampleinfofromname(sample_id)
         print(dbinfo)
         rc = 0         # counter for total readcount of sample
         fclanes = []   # list to keep flowcell names and lanes for a sample
         for info in dbinfo:
-            if application_tag == None or info['q30'] > q30_cutoff:     # Use readcount from lane only if it satisfies QC [=80%]
+            # Use readcount from lane only if it satisfies QC [=80%]
+            if application_tag == None or info['q30'] > q30_cutoff:
                 rc += info['M_reads']
                 fclanes.append(dict(( (key, info[key]) for key in ['fc', 'q30', 'lane'] )))
             else:
                 print("WARNING: '{sample_id}' did not reach Q30 > {cut_off} for {flowcell}".format(sample_id=sample_id, cut_off=q30_cutoff, flowcell=info['fc']))
-  
+
         # create the customer folders and links regardless of the QC
         try:
             os.makedirs(os.path.join(custoutdir, cust_name, 'INBOX', seq_type_dir, cust_sample_name))

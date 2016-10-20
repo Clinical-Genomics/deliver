@@ -71,6 +71,7 @@ setup(
             'cust = deliver.cli:cust',
             'demux = deliver.cli:demux',
             'ext = deliver.cli:ext',
+            'microbial = deliver.cli.microbial',
         ]
     },
 
