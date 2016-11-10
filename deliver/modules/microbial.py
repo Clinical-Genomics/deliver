@@ -94,6 +94,7 @@ def get_samples(flowcell):
 def from_sample(csdb_manager, demux_root, sample_root, project_id, lims_id):
     """Perform linking for a sample."""
     flowcells = get_flowcells(csdb_manager, lims_id)
+    log.debug("found %s flowcells", flowcells.count())
     for flowcell in flowcells:
         flowcell_id = flowcell.flowcellname
         log.debug("working on flowcell: %s", flowcell_id)
@@ -119,7 +120,10 @@ def get_fastqs(demux_root, flowcell_id, project_id, lims_id):
     demux_path = path(demux_root)
     fastqs = demux_path.glob("*{}/Unaligned*/Project_{}/Sample_{}_*/*.fastq.gz"
                              .format(flowcell_id, project_id, lims_id))
-    return fastqs
+    # skip files with "Undertermined" in the filename
+    relevant_files = (fastq_path for fastq_path in fastqs
+                      if '_Undetermined_' not in fastq_path)
+    return relevant_files
 
 
 def rename_fastq(fastq_file, flowcell_id, lims_id):
