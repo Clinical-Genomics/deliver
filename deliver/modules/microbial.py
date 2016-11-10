@@ -131,8 +131,10 @@ def rename_fastq(fastq_file, flowcell_id, lims_id):
     file_name = fastq_file.basename()
     lane = re.search("_L\d{3}_", file_name).group()[-2]
     read_direction = re.search("_R\d_", file_name).group()[-2]
-    new_name = ("{}_{}_L{}_{}.fastq.gz"
-                .format(lims_id, flowcell_id, lane, read_direction))
+    t_number = re.search("-l\dt\d\d_", file_name).group()[4:6]
+    template = "{id}_{fc}-{t}_L{lane}_{read}.fastq.gz"
+    new_name = template.format(id=lims_id, fc=flowcell_id, t=t_number,
+                               lane=lane, read=read_direction)
     return new_name
 
 
