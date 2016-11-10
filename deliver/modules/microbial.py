@@ -12,10 +12,13 @@ Deliver FASTQ files to be run with the microbial pipeline.
 import logging
 import re
 
+from path import path
 from cglims.api import ClinicalLims
 from clinstatsdb.db import api
 from clinstatsdb.db.models import Demux, Flowcell, Sample, Unaligned
-from path import path
+from sqlalchemy.orm.exc import NoResultFound
+
+from deliver.exc import MissingFlowcellError
 
 log = logging.getLogger(__name__)
 
@@ -63,7 +66,10 @@ def link_microbial(config, flowcell=None, project=None, sample=None,
 
 def flowcell_samples(csdb_manager, flowcell_id):
     """Return sample data from a flowcell output."""
-    flowcell = Flowcell.query.filter_by(flowcellname=flowcell_id).one()
+    try:
+        flowcell = Flowcell.query.filter_by(flowcellname=flowcell_id).one()
+    except NoResultFound:
+        raise MissingFlowcellError(flowcell_id)
     lims_ids = get_samples(flowcell)
     return lims_ids
 

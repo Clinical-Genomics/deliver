@@ -3,6 +3,7 @@ import logging
 import click
 import yaml
 
+from .exc import MissingFlowcellError
 from .modules.demux import demux_links
 from .modules.ext import ext_links
 from .modules.bam import bam_links
@@ -10,7 +11,7 @@ from .modules.vcf import vcf_links
 from .modules.cust import cust_links
 from .modules.microbial import link_microbial
 
-logger = logging.getLogger(__name__)
+log = logging.getLogger(__name__)
 
 __version__ = '1.20.7'
 
@@ -78,8 +79,12 @@ def microbial(context, root_dir, sample, flowcell, dry_run, project):
     """Link FASTQ files to microbial substructure."""
     if root_dir:
         context.obj['microbial_root'] = root_dir
-    link_microbial(context.obj, flowcell=flowcell, project=project,
-                   sample=sample, dry_run=dry_run)
+    try:
+        link_microbial(context.obj, flowcell=flowcell, project=project,
+                       sample=sample, dry_run=dry_run)
+    except MissingFlowcellError as error:
+        log.error("can't find flowcell: %s", error.message)
+        context.abort()
 
 
 def setup_logging(level='INFO'):
@@ -101,5 +106,5 @@ def setup_logging(level='INFO'):
 
 if __name__ == '__main__':
     setup_logging(level='DEBUG')
-    logger.info('Version: {} {}'.format(__file__, __version__))
+    log.info('Version: {} {}'.format(__file__, __version__))
     link()
