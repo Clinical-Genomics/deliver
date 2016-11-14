@@ -9,7 +9,6 @@ log() {
     echo "[${NOW}] $@"
 }
 
-cd /mnt/hds/proj/bioinfo/git/kenny/data-delivery/
 for SAMPLE in ${EXTDIR}/cust*/*; do
     DIR=$(dirname $SAMPLE)
     if [[ -e ${SAMPLE}/delivered.txt ]]; then
@@ -19,7 +18,6 @@ for SAMPLE in ${EXTDIR}/cust*/*; do
 
     log "Found: $SAMPLE"
 
-    python -m deliver.cli ext $SAMPLE &>> ${SAMPLE}/project.log
+    deliver ext $SAMPLE &>> ${SAMPLE}/project.log
     date +'%Y%m%d%H%M%S' > ${SAMPLE}/delivered.txt
 done
-cd -
