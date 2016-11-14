@@ -172,7 +172,11 @@ def demux_links(fc, custoutdir, mipoutdir):
                 continue
   
       
-        application_tag = analysis_info(sample)
+        try:
+            application_tag = analysis_info(sample)
+        except ValueError as e:
+            print(e.message)
+            continue
   
         print('Application tag: {}'.format(application_tag))
   
