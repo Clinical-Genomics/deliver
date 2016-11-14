@@ -13,7 +13,7 @@ from .modules.microbial import link_microbial
 
 log = logging.getLogger(__name__)
 
-__version__ = '1.20.8'
+__version__ = '1.20.9'
 
 
 @click.group()
