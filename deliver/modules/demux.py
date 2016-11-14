@@ -177,6 +177,9 @@ def demux_links(fc, custoutdir, mipoutdir):
         except ValueError as e:
             print(e.message)
             continue
+        except KeyError as e:
+            print('Missing Key: {}'.format(e.message))
+            continue
   
         print('Application tag: {}'.format(application_tag))
   
