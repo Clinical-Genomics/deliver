@@ -87,6 +87,9 @@ def get_samples(flowcell):
     for demux in flowcell.demuxes:
         for unaligned in demux.unaligned:
             sample_name = unaligned.sample.samplename
+            # skip the dummy samples to catch the undetermined indexes of HiSeq2500
+            if sample_name.startswith('lane'):
+                continue
             lims_id = sample_name.rsplit('_', 1)[0]
             yield lims_id
 
