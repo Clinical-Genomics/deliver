@@ -14,7 +14,7 @@ from access import db
 from genologics.lims import *
 from genologics.config import BASEURI, USERNAME, PASSWORD
 
-__version__ = '1.20.9'
+__version__ = '1.20.10'
 
 db_params = []
 
