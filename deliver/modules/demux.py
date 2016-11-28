@@ -10,6 +10,7 @@ import os.path
 import grp
 
 from lims.utils import analysis_info, analysis_type
+from lims.exc import UnknownAnalysisTypeException
 from access import db
 from genologics.lims import *
 from genologics.config import BASEURI, USERNAME, PASSWORD
@@ -188,7 +189,10 @@ def demux_links(fc, custoutdir, mipoutdir):
         seq_type = application_tag['analysis']
   
         readcounts = .75 * float(requested_reads)    # Accepted readcount is 75% of ordered million reads
-        seq_type_dir = analysis_type(sample) # get exomes|genomes
+        try:
+            seq_type_dir = analysis_type(sample) # get exomes|genomes
+        except UnknownAnalysisTypeException, e:
+            print(str(e))
         q30_cutoff = analysis_cutoff(seq_type_dir)
   
         try:
