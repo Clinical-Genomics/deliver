@@ -6,6 +6,7 @@ import os
 import logging
 import re
 import gzip
+import time
 from access import db
 from datetime import datetime
 from glob import glob
@@ -162,7 +163,11 @@ def ext_links(start_dir, outdir):
         family_id = get_family_id(sample)
         cust_name = get_cust_name(sample)
         seq_type_dir = get_seq_type_dir(sample)
-        date = datetime.strptime(sample.date_received, "%Y-%m-%d").strftime("%y%m%d")
+        if sample.date_received is not None:
+            date = datetime.strptime(sample.date_received, "%Y-%m-%d").strftime("%y%m%d")
+        else:
+            mtime = os.path.getmtime(fastq_full_file_name)
+            date = time.strftime("%y%m%d", time.localtime(mtime))
 
         # some more info
         index = get_index(fastq_full_file_name)
