@@ -46,6 +46,21 @@ def getsampleinfofromname(sample):
        replies = dbc.generalquery( query )
     return replies
 
+def getsampleinfofromname_glob(fc, demuxdir, sample):
+    samples = glob.glob("{demuxdir}*{flowcell}/Unalign*/Project_*/Sample_{sample}*/*fastq.gz"
+                        .format(demuxdir=demuxdir, flowcell=fc, sample=sample))
+
+    replies = []
+    lanes = set()
+    for sample in samples:
+        sample_split = sample.split("/")[-1].split("_")
+        lane = int(sample_split[3][1:])
+        lanes.add(lane)
+
+    for lane in lanes:
+        replies.append( { 'fc': fc, 'lane': lane } )
+
+    return replies
 
 def is_pooled_sample(flowcell, lane):
     global db_params
@@ -145,7 +160,7 @@ def analysis_cutoff(analysis_type):
     return 0
 
 
-def demux_links(fc, custoutdir, mipoutdir):
+def demux_links(fc, custoutdir, mipoutdir, skip_stats):
     """Link FASTQ files from DEMUX output of a flowcell."""
     print('Version: {} {}'.format(__file__, __version__))
 
@@ -216,17 +231,22 @@ def demux_links(fc, custoutdir, mipoutdir):
             print("WARNING '{}' does not have a customer sample name".format(sample_id))
             cust_sample_name = sample_id
   
-        dbinfo = getsampleinfofromname(sample_id)
-        print(dbinfo)
-        rc = 0         # counter for total readcount of sample
-        fclanes = []   # list to keep flowcell names and lanes for a sample
-        for info in dbinfo:
-            # Use readcount from lane only if it satisfies QC [=80%]
-            if application_tag == None or info['q30'] > q30_cutoff:
-                rc += info['M_reads']
-                fclanes.append(dict(( (key, info[key]) for key in ['fc', 'q30', 'lane'] )))
-            else:
-                print("WARNING: '{sample_id}' did not reach Q30 > {cut_off} for {flowcell}".format(sample_id=sample_id, cut_off=q30_cutoff, flowcell=info['fc']))
+
+        if skip_stats:
+            fclanes = getsampleinfofromname_glob(fc, db_params['DEMUXDIR'], sample_id)
+            print(fclanes)
+        else:
+            dbinfo = getsampleinfofromname(sample_id)
+            print(dbinfo)
+            rc = 0         # counter for total readcount of sample
+            fclanes = []   # list to keep flowcell names and lanes for a sample
+            for info in dbinfo:
+                # Use readcount from lane only if it satisfies QC [=80%]
+                if application_tag == None or info['q30'] > q30_cutoff:
+                    rc += info['M_reads']
+                    fclanes.append(dict(( (key, info[key]) for key in ['fc', 'q30', 'lane'] )))
+                else:
+                    print("WARNING: '{sample_id}' did not reach Q30 > {cut_off} for {flowcell}".format(sample_id=sample_id, cut_off=q30_cutoff, flowcell=info['fc']))
 
         # create the customer folders and links regardless of the QC
         try:
@@ -243,7 +263,7 @@ def demux_links(fc, custoutdir, mipoutdir):
                 sample_name=cust_sample_name,
                 link_type='hard'
             )
-  
+ 
         # check the family id
         try:
             family_id = sample.udf['familyID']
@@ -252,12 +272,12 @@ def demux_links(fc, custoutdir, mipoutdir):
         if family_id == None and application_tag != None and seq_type != 'RML':
             print("ERROR '{}' family_id is not set".format(sample_id))
             continue
-  
+
         # create the links for the analysis
-        if readcounts:
+        if not skip_stats and readcounts:
             if (rc > readcounts):        # If enough reads are obtained do
                 print("{sample_id} Passed {readcount} M reads\nUsing reads from {fclanes}".format(sample_id=sample_id, readcount=rc, fclanes=fclanes))
-  
+
                 # try to create new dir structure
                 sample_outdir = os.path.join(mipoutdir, cust_name, family_id, seq_type_dir, sample_id, 'fastq')
                 family_outdir = os.path.join(mipoutdir, cust_name, family_id, seq_type_dir, family_id)
@@ -271,7 +291,7 @@ def demux_links(fc, custoutdir, mipoutdir):
                     os.makedirs(family_outdir)
                 except OSError:
                     print('WARNING: Failed to create {}'.format(family_outdir))
-  
+
                 # create symlinks for each fastq file
                 for fclane in fclanes:
                     fastqfiles = get_fastq_files(db_params['DEMUXDIR'], fclane, sample_id)
