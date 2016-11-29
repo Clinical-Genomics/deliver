@@ -175,12 +175,13 @@ def ext_links(start_dir, outdir):
         # create dest dir
         complete_outdir = os.path.join(outdir, cust_name, family_id, seq_type_dir, sample_id, 'fastq')
         out_filename = '_'.join( [lane, date, FC, sample_id, index, direction ])
+        out_full_filename = os.path.join(complete_outdir, out_filename)
         logger.debug(complete_outdir)
         logger.debug(out_filename)
 
         # check if file already exists
-        if os.path.isfile(os.path.join(complete_outdir, out_filename)):
-            logger.info('Skipping creation of {}. Already exists'.format(out_filename))
+        if os.path.isfile(out_full_filename):
+            logger.info('Skipping creation of {}. Already exists'.format(out_full_filename))
             continue
 
         # create the out dir
@@ -195,10 +196,7 @@ def ext_links(start_dir, outdir):
         # link!
         make_link(
             fastq_full_file_name,
-            os.path.join(
-                complete_outdir,
-                '_'.join( [lane, date, FC, sample_id, index, direction ])
-            ),
+            out_full_filename,
             'soft'
         )
 
