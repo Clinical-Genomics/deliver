@@ -76,7 +76,7 @@ def flowcell_samples(csdb_manager, flowcell_id):
 
 def project_samples(lims_api, project_id):
     """Get all samples for a project."""
-    lims_samples = lims_api.get_samples(projectname=project_id)
+    lims_samples = lims_api.get_samples(projectlimsid=project_id)
     assert len(lims_samples) > 0, "bad project id: {}".format(project_id)
     for lims_sample in lims_samples:
         yield lims_sample.id
