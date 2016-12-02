@@ -15,7 +15,7 @@ from access import db
 from genologics.lims import *
 from genologics.config import BASEURI, USERNAME, PASSWORD
 
-__version__ = '1.20.13'
+__version__ = '1.20.14'
 
 db_params = []
 
@@ -89,7 +89,7 @@ def get_fastq_files(demuxdir, fclane, sample_name):
     return fastqfiles
 
 
-def make_link(fastqfiles, outputdir, sample_name, fclane, link_type='soft'):
+def make_link(fastqfiles, outputdir, sample_name, fclane, link_type='soft', skip_undetermined=False):
     for fastqfile in fastqfiles:
         nameparts = fastqfile.split("/")[-1].split("_")
 
@@ -97,7 +97,7 @@ def make_link(fastqfiles, outputdir, sample_name, fclane, link_type='soft'):
         undetermined = ''
         if nameparts[1] == 'Undetermined':
             # skip undeermined for pooled samples
-            if is_pooled_sample(fclane['fc'], fclane['lane']):
+            if skip_undetermined or is_pooled_sample(fclane['fc'], fclane['lane']):
                 print('WARNING: Skipping pooled undetermined indexes!')
                 continue
             undetermined = '-Undetermined'
@@ -160,7 +160,7 @@ def analysis_cutoff(analysis_type):
     return 0
 
 
-def demux_links(fc, custoutdir, mipoutdir, skip_stats):
+def demux_links(fc, custoutdir, mipoutdir, skip_stats, skip_undetermined):
     """Link FASTQ files from DEMUX output of a flowcell."""
     print('Version: {} {}'.format(__file__, __version__))
 
@@ -261,7 +261,8 @@ def demux_links(fc, custoutdir, mipoutdir, skip_stats):
                 outputdir=os.path.join(custoutdir, cust_name, 'INBOX', seq_type_dir, cust_sample_name),
                 fclane=fclane,
                 sample_name=cust_sample_name,
-                link_type='hard'
+                link_type='hard',
+                skip_undetermined=skip_undetermined
             )
  
         # check the family id
@@ -299,7 +300,8 @@ def demux_links(fc, custoutdir, mipoutdir, skip_stats):
                         fastqfiles=fastqfiles,
                         outputdir=sample_outdir,
                         fclane=fclane,
-                        sample_name=sample_id
+                        sample_name=sample_id,
+                        skip_undetermined=skip_undetermined
                     )
             else:                        # Otherwise just present the data
               print("{sample_id} FAIL with {readcount} M reads.\n"

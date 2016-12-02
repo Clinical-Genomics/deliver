@@ -13,7 +13,7 @@ from .modules.microbial import link_microbial
 
 log = logging.getLogger(__name__)
 
-__version__ = '1.20.13'
+__version__ = '1.20.14'
 
 
 @click.group()
@@ -31,8 +31,9 @@ def link(context, log_level, config):
 @click.option('--custoutdir', default='/mnt/hds/proj/', show_default=True, type=click.Path(exists=True), help='path to customer folders')
 @click.option('--mipoutdir', default='/mnt/hds/proj/bioinfo/MIP_ANALYSIS/', show_default=True, type=click.Path(exists=True), help='path to MIP_ANALYSIS')
 @click.option('--skip-stats', is_flag=True, help='Link to cust INBOX without having stats. BEWARE that Undetermined indexes will be linked as well even if pooled sample!')
+@click.option('--skip-undetermined', is_flag=True, help='Skip linking undetermined.')
 @click.help_option()
-def demux(flowcell, custoutdir, mipoutdir, skip_stats):
+def demux(flowcell, custoutdir, mipoutdir, skip_stats, skip_undetermined):
     """Links from DEMUX to MIP_ANALYSIS and customer folder"""
     demux_links(flowcell, custoutdir, mipoutdir, skip_stats)
 
