@@ -149,6 +149,6 @@ def get_limsinfo(lims_sample):
     """Get information from LIMS."""
     # check that application tag is indicating microbial sample
     app_tag = lims_sample.udf['Sequencing Analysis']
-    project_id = lims_sample.project.name
+    project_id = lims_sample.project.id
     customer = lims_sample.udf['customer']
     return {'customer': customer, 'project_id': project_id, 'app_tag': app_tag}
