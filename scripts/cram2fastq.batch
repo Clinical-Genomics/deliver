@@ -13,7 +13,7 @@ set -e
 CRAM=${1?'Please provide a cram file'}
 OUTDIR=${2?'Please provide an output directory'}
 
-VERSION=1.20.16
+VERSION=1.20.17
 echo "$0 - $VERSION"
 
 OUTFILE=$(basename $CRAM)
