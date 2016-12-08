@@ -48,6 +48,7 @@ def link_microbial(config, flowcell=None, project=None, sample=None,
         microbial_root = config['microbial_root']
         lims_data = get_limsinfo(lims_sample)
         project_id = lims_data['project_id']
+        susy_project_id = lims_data['project_name'].split(' ')[0]
         sample_root = path(microbial_root).joinpath(project_id, lims_sample.id)
         if not dry_run:
             if sample_root.exists():
@@ -56,7 +57,7 @@ def link_microbial(config, flowcell=None, project=None, sample=None,
             # Make sure that project/sample dir exists
             sample_root.makedirs_p()
 
-        files = from_sample(manager, demux_root, sample_root, project_id,
+        files = from_sample(manager, demux_root, sample_root, susy_project_id,
                             lims_sample.id)
         for fastq, new_loc in files:
             log.info("linking file: %s -> %s", fastq, new_loc)
@@ -150,5 +151,6 @@ def get_limsinfo(lims_sample):
     # check that application tag is indicating microbial sample
     app_tag = lims_sample.udf['Sequencing Analysis']
     project_id = lims_sample.project.id
+    project_name = lims_sample.project.name
     customer = lims_sample.udf['customer']
-    return {'customer': customer, 'project_id': project_id, 'app_tag': app_tag}
+    return {'customer': customer, 'project_name': project_name, 'project_id': project_id, 'app_tag': app_tag}
