@@ -154,6 +154,7 @@ def ext_links(start_dir, outdir):
         lane = fastq_file_name_split[0]
         direction = fastq_file_name_split[-1] # will also have the ext
         sample_id = fastq_file_name_split[3]
+        index = fastq_file_name_split[4]
         FC = fastq_file_name_split[2]
         if FC == '0':
             FC = 'EXTERNALX'
