@@ -35,7 +35,7 @@ def link(context, log_level, config):
 @click.help_option()
 def demux(flowcell, custoutdir, mipoutdir, skip_stats, skip_undetermined):
     """Links from DEMUX to MIP_ANALYSIS and customer folder"""
-    demux_links(flowcell, custoutdir, mipoutdir, skip_stats)
+    demux_links(flowcell, custoutdir, mipoutdir, skip_stats, skip_undetermined)
 
 
 @link.command()
