@@ -160,7 +160,7 @@ def analysis_cutoff(analysis_type):
     return 0
 
 
-def demux_links(fc, custoutdir, mipoutdir, skip_stats, skip_undetermined):
+def demux_links(fc, custoutdir, mipoutdir, force, skip_undetermined):
     """Link FASTQ files from DEMUX output of a flowcell."""
     print('Version: {} {}'.format(__file__, __version__))
 
@@ -232,7 +232,7 @@ def demux_links(fc, custoutdir, mipoutdir, skip_stats, skip_undetermined):
             cust_sample_name = sample_id
   
 
-        if skip_stats:
+        if force:
             fclanes = getsampleinfofromname_glob(fc, db_params['DEMUXDIR'], sample_id)
             print(fclanes)
         else:
@@ -275,9 +275,12 @@ def demux_links(fc, custoutdir, mipoutdir, skip_stats, skip_undetermined):
             continue
 
         # create the links for the analysis
-        if not skip_stats and readcounts:
-            if (rc > readcounts):        # If enough reads are obtained do
-                print("{sample_id} Passed {readcount} M reads\nUsing reads from {fclanes}".format(sample_id=sample_id, readcount=rc, fclanes=fclanes))
+        if readcounts:
+            if force or rc > readcounts: # If enough reads are obtained do
+                if force:
+                    print("{sample_id} Passed".format(sample_id=sample_id))
+                else:
+                    print("{sample_id} Passed {readcount} M reads\nUsing reads from {fclanes}".format(sample_id=sample_id, readcount=rc, fclanes=fclanes))
 
                 # try to create new dir structure
                 sample_outdir = os.path.join(mipoutdir, cust_name, family_id, seq_type_dir, sample_id, 'fastq')
