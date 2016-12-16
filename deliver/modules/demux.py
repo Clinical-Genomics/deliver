@@ -47,8 +47,8 @@ def getsampleinfofromname(sample):
     return replies
 
 def getsampleinfofromname_glob(fc, demuxdir, sample):
-    samples = glob.glob("{demuxdir}*{flowcell}/Unalign*/Project_*/Sample_{sample}*/*fastq.gz"
-                        .format(demuxdir=demuxdir, flowcell=fc, sample=sample))
+    samples = glob.glob("{demuxdir}/*/Unalign*/Project_*/Sample_{sample}*/*fastq.gz"
+                        .format(demuxdir=demuxdir, sample=sample))
 
     replies = []
     lanes = set()
