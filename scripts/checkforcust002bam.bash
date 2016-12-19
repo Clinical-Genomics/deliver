@@ -8,5 +8,5 @@ log() {
 }
 
 cd /mnt/hds/proj/bioinfo/git/kenny/data-delivery/
-find /mnt/hds/proj/bioinfo/MIP_ANALYSIS/cust002/*/genomes/ -name '*_qc_sampleInfo.yaml' -mdate +1 -mtime -2 -exec python -m createlinks.cli bam $SAMPLE_INFO \;
+find /mnt/hds/proj/bioinfo/MIP_ANALYSIS/cust002/*/genomes/ -name '*_qc_sampleInfo.yaml' -mtime +1 -mtime -2 -exec python -m createlinks.cli bam $SAMPLE_INFO \;
 cd -

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 INDIR=${1?'Please provide the md5sum directory'}
 SCRIPTDIR=$(dirname $0)
 

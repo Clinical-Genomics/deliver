@@ -4,9 +4,7 @@ from __future__ import print_function
 import os
 import sys
 import logging
-import yaml
 import grp
-from glob import glob
 from access import db
 from genologics.lims import *
 from genologics.config import BASEURI, USERNAME, PASSWORD

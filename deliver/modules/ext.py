@@ -6,6 +6,7 @@ import os
 import logging
 import re
 import gzip
+import time
 from access import db
 from datetime import datetime
 from glob import glob
@@ -116,6 +117,13 @@ def get_index(fastq_file_name):
             line = f.readline().rstrip()
 
         index = line.split(':')[-1]
+
+        if '#' in index: # possible early fastq header line
+            # @HWUSI-EAS100R:6:73:941:1973#0/1
+            m = re.search(r'.*#(.+)/.*', index)
+            if m:
+                index = m.group(1)
+
         return index
 
 def setup_logging(level='INFO'):
@@ -146,6 +154,7 @@ def ext_links(start_dir, outdir):
         lane = fastq_file_name_split[0]
         direction = fastq_file_name_split[-1] # will also have the ext
         sample_id = fastq_file_name_split[3]
+        index = fastq_file_name_split[4]
         FC = fastq_file_name_split[2]
         if FC == '0':
             FC = 'EXTERNALX'
@@ -155,20 +164,26 @@ def ext_links(start_dir, outdir):
         family_id = get_family_id(sample)
         cust_name = get_cust_name(sample)
         seq_type_dir = get_seq_type_dir(sample)
-        date = datetime.strptime(sample.date_received, "%Y-%m-%d").strftime("%y%m%d")
+        if sample.date_received is not None:
+            date = datetime.strptime(sample.date_received, "%Y-%m-%d").strftime("%y%m%d")
+        else:
+            mtime = os.path.getmtime(fastq_full_file_name)
+            date = time.strftime("%y%m%d", time.localtime(mtime))
 
         # some more info
-        index = get_index(fastq_full_file_name)
+        if index == '0':
+            index = get_index(fastq_full_file_name)
 
         # create dest dir
         complete_outdir = os.path.join(outdir, cust_name, family_id, seq_type_dir, sample_id, 'fastq')
         out_filename = '_'.join( [lane, date, FC, sample_id, index, direction ])
+        out_full_filename = os.path.join(complete_outdir, out_filename)
         logger.debug(complete_outdir)
         logger.debug(out_filename)
 
         # check if file already exists
-        if os.path.isfile(os.path.join(complete_outdir, out_filename)):
-            logger.info('Skipping creation of {}. Already exists'.format(out_filename))
+        if os.path.isfile(out_full_filename):
+            logger.info('Skipping creation of {}. Already exists'.format(out_full_filename))
             continue
 
         # create the out dir
@@ -183,10 +198,7 @@ def ext_links(start_dir, outdir):
         # link!
         make_link(
             fastq_full_file_name,
-            os.path.join(
-                complete_outdir,
-                '_'.join( [lane, date, FC, sample_id, index, direction ])
-            ),
+            out_full_filename,
             'soft'
         )
 

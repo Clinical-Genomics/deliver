@@ -33,12 +33,12 @@ with open('requirements.txt') as f:
     required = f.read().splitlines()
 
 setup(
-    name='createlinks',
+    name='deliver',
 
     # Versions should comply with PEP440. For a discussion on
     # single-sourcing the version across setup.py and the project code,
     # see http://packaging.python.org/en/latest/tutorial.html#version
-    version='1.19.1',
+    version='1.20.20',
 
     description='Create links and rename sample names',
     long_description=long_description,
@@ -64,13 +64,14 @@ setup(
     # target platform.
     entry_points={
         'console_scripts': [
-            'createlinks = createlinks.cli:link',
+            'deliver = deliver.cli:link',
         ],
         'createlinks.subcommands.3': [
-            'bam = createlinks.cli:bam',
-            'cust = createlinks.cli:cust',
-            'demux = createlinks.cli:demux',
-            'ext = createlinks.cli:ext',
+            'bam = deliver.cli:bam',
+            'cust = deliver.cli:cust',
+            'demux = deliver.cli:demux',
+            'ext = deliver.cli:ext',
+            'microbial = deliver.cli.microbial',
         ]
     },
 
