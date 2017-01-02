@@ -9,7 +9,8 @@ import os
 import os.path
 import grp
 
-from lims.utils import analysis_info, analysis_type
+from cglims.apptag import ApplicationTag
+from lims.utils import analysis_info
 from lims.exc import UnknownAnalysisTypeException
 from access import db
 from genologics.lims import *
@@ -204,10 +205,9 @@ def demux_links(fc, custoutdir, mipoutdir, force, skip_undetermined):
         seq_type = application_tag['analysis']
   
         readcounts = .75 * float(requested_reads)    # Accepted readcount is 75% of ordered million reads
-        try:
-            seq_type_dir = analysis_type(sample) # get exomes|genomes
-        except UnknownAnalysisTypeException, e:
-            print(str(e))
+        raw_apptag = sample.udf['Sequencing Analysis']
+        apptag = ApplicationTag(raw_apptag)
+        seq_type_dir = apptag.analysis_type # get wes|wgs
         q30_cutoff = analysis_cutoff(seq_type_dir)
   
         try:
@@ -230,7 +230,6 @@ def demux_links(fc, custoutdir, mipoutdir, force, skip_undetermined):
         except AttributeError:
             print("WARNING '{}' does not have a customer sample name".format(sample_id))
             cust_sample_name = sample_id
-  
 
         if force:
             fclanes = getsampleinfofromname_glob(fc, db_params['DEMUXDIR'], sample_id)
@@ -284,17 +283,12 @@ def demux_links(fc, custoutdir, mipoutdir, force, skip_undetermined):
 
                 # try to create new dir structure
                 sample_outdir = os.path.join(mipoutdir, cust_name, family_id, seq_type_dir, sample_id, 'fastq')
-                family_outdir = os.path.join(mipoutdir, cust_name, family_id, seq_type_dir, family_id)
+                
                 try:
                     print('mkdir -p ' + sample_outdir)
                     os.makedirs(sample_outdir)
                 except OSError:
                     print('WARNING: Failed to create {}'.format(sample_outdir))
-                try:
-                    print('mkdir -p ' + family_outdir)
-                    os.makedirs(family_outdir)
-                except OSError:
-                    print('WARNING: Failed to create {}'.format(family_outdir))
 
                 # create symlinks for each fastq file
                 for fclane in fclanes:
