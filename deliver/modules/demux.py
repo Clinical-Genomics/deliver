@@ -171,6 +171,9 @@ def demux_links(fc, custoutdir, mipoutdir, force, skip_undetermined):
     samples = getsamplesfromflowcell(db_params['DEMUXDIR'], fc)
 
     for sample_id in samples.iterkeys():
+        if sample_id.startswith('MIC'):
+            print("skipping microbial sample: {}".format(sample_id))
+            continue
         print('Sample: {}'.format(sample_id))
         family_id = None
         cust_name = None
