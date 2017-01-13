@@ -6,14 +6,12 @@ import yaml
 from .exc import MissingFlowcellError
 from .modules.demux import demux_links
 from .modules.ext import ext_links
-from .modules.bam import bam_links
-from .modules.vcf import vcf_links
 from .modules.cust import cust_links
 from .modules.microbial import link_microbial
 
 log = logging.getLogger(__name__)
 
-__version__ = '1.20.21'
+__version__ = '1.20.22'
 
 
 @click.group()
@@ -44,22 +42,6 @@ def demux(flowcell, custoutdir, mipoutdir, force, skip_undetermined):
 def ext(sample_folder, outdir):
     """links from EXTERNAL to MIP_ANALYSIS"""
     ext_links(sample_folder, outdir)
-
-
-@link.command()
-@click.argument('qc_sample_info_file', nargs=1, type=click.Path(exists=True))
-@click.option('--outdir', default='/mnt/hds/proj/', show_default=True, help='path to customer folders')
-def bam(qc_sample_info_file, outdir):
-    """links BAM files to cust/INBOX"""
-    bam_links(qc_sample_info_file, outdir)
-
-
-@link.command()
-@click.argument('qc_sample_info_file', nargs=1, type=click.Path(exists=True))
-@click.option('--outdir', default='/mnt/hds/proj/', show_default=True, help='path to customer folders')
-def vcf(qc_sample_info_file, outdir):
-    """links bcf files to cust/INBOX"""
-    vcf_links(qc_sample_info_file, outdir)
 
 
 @link.command()

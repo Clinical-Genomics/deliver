@@ -10,13 +10,11 @@ import os.path
 import grp
 
 from cglims.apptag import ApplicationTag
-from lims.utils import analysis_info
-from lims.exc import UnknownAnalysisTypeException
 from access import db
 from genologics.lims import *
 from genologics.config import BASEURI, USERNAME, PASSWORD
 
-__version__ = '1.20.21'
+__version__ = '1.20.22'
 
 db_params = []
 
@@ -171,9 +169,6 @@ def demux_links(fc, custoutdir, mipoutdir, force, skip_undetermined):
     samples = getsamplesfromflowcell(db_params['DEMUXDIR'], fc)
 
     for sample_id in samples.iterkeys():
-        if sample_id.startswith('MIC'):
-            print("skipping microbial sample: {}".format(sample_id))
-            continue
         print('Sample: {}'.format(sample_id))
         family_id = None
         cust_name = None
@@ -190,15 +185,12 @@ def demux_links(fc, custoutdir, mipoutdir, force, skip_undetermined):
             except:
                 print("WARNING: Sample {} still not found in LIMS!".format(sample_id))
                 continue
-  
-      
-        try:
-            application_tag = analysis_info(sample)
-        except ValueError as e:
-            print(e.message)
-            continue
-        except KeyError as e:
-            print('Missing Key: {}'.format(e.message))
+
+        clinical_sample = ClinicalSample(sample)
+        application_tag = clinical_sample.apptag
+
+        if clinical_sample.pipeline == 'mwgs':
+            print("skipping microbial sample: {}".format(sample_id))
             continue
   
         print('Application tag: {}'.format(application_tag))

@@ -12,7 +12,7 @@ from glob import glob
 from genologics.lims import *
 from genologics.config import BASEURI, USERNAME, PASSWORD
 
-__version__ = '1.20.21'
+__version__ = '1.20.22'
 
 logger = logging.getLogger(__name__)
 
