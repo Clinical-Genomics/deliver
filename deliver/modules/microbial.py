@@ -13,7 +13,7 @@ import logging
 import re
 
 from path import path
-from cglims.api import ClinicalLims
+from cglims.api import ClinicalLims, ClinicalSample
 from clinstatsdb.db import api
 from clinstatsdb.db.models import Demux, Flowcell, Sample, Unaligned
 from sqlalchemy.orm.exc import NoResultFound
@@ -40,8 +40,8 @@ def link_microbial(config, flowcell=None, project=None, sample=None,
 
     lims_samples = (lims_api.sample(lims_id) for lims_id in lims_ids)
     relevant_samples = (sample for sample in lims_samples
-                        if (sample.udf.get('Sequencing Analysis', '')
-                                      .startswith('MW')))
+                        if ClinicalSample(sample).pipeline == 'mwgs')
+                                  
     for lims_sample in relevant_samples:
         log.info("working on sample: %s", lims_sample.id)
         demux_root = config['demux_root']
