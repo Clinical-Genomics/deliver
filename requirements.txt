@@ -2,8 +2,7 @@ click
 access==0.0.22
 PyYAML
 psutil
-pymip
 mysql-python
-cghq-lims
 cglims
 clinstatsdb
+path.py
