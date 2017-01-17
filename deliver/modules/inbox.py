@@ -22,38 +22,25 @@ from cglims.api import ClinicalLims
 logger = logging.getLogger(__name__)
 
 
-def bam_links(config, bam_file, cust, sample_lims_id, outdir):
+def inbox_links(config, infile, cust, sample_lims_id, outdir):
 
     lims_api = ClinicalLims(**config['lims'])
-
     outdir = outdir + '/{cust}/INBOX/{project_id}/'
-
-    bam_file_name = path(bam_file).basename()
-
-    # get the customer external sample name
+    infile_name = path(infile).basename()
     lims_sample = lims_api.sample(sample_lims_id)
     cust_sample_name = lims_sample.name
-
-    # get the project id
     project_id = lims_sample.project.id
-
-    # rename the bam file
-    bam_cust_file_name = rename_file(str(bam_file_name), sample_lims_id, cust_sample_name)
-
     complete_outdir = path.joinpath(outdir.format(
         cust=cust, project_id=project_id)
     )
 
-    # create the customer folders and links regardless of the QC
-    try:
-        path(complete_outdir).makedirs()
-    except OSError:
-        pass
+    cust_file_name = rename_file(str(infile_name), sample_lims_id, cust_sample_name)
+    path(complete_outdir).makedirs_p()
 
     # link!
     make_link(
-        bam_file,
-        path.joinpath(complete_outdir, bam_cust_file_name)
+        infile,
+        path.joinpath(complete_outdir, cust_file_name)
     )
 
 

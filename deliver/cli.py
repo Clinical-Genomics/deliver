@@ -6,7 +6,7 @@ import yaml
 from .exc import MissingFlowcellError
 from .modules.demux import demux_links
 from .modules.ext import ext_links
-from .modules.bam import bam_links
+from .modules.inbox import inbox_links
 from .modules.cust import cust_links
 from .modules.microbial import link_microbial
 
@@ -45,14 +45,14 @@ def ext(sample_folder, outdir):
 
 
 @link.command()
-@click.argument('bam', type=click.Path(exists=True))
+@click.argument('infile', type=click.Path(exists=True))
 @click.option('-c', '--cust', required=True, help='Customer name')
 @click.option('-s', '--sample', required=True, help='Sample name')
 @click.option('--outdir', default='/mnt/hds/proj/', show_default=True, help='Path to customer folders')
 @click.pass_context
-def bam(context, bam, cust, sample, outdir):
-    """links BAM files to cust/INBOX"""
-    bam_links(context.obj, bam, cust, sample, outdir)
+def inbox(context, infile, cust, sample, outdir):
+    """links files to cust/INBOX/project"""
+    inbox_links(context.obj, infile, cust, sample, outdir)
 
 
 @link.command()
