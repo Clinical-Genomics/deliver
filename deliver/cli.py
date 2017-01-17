@@ -5,10 +5,9 @@ import yaml
 
 from .exc import MissingFlowcellError
 from .modules.demux import demux_links
-from .modules.ext import ext_links
 from .modules.inbox import inbox_links
-from .modules.cust import cust_links
 from .modules.microbial import link_microbial
+from .ext import ext
 
 log = logging.getLogger(__name__)
 
@@ -18,6 +17,7 @@ __version__ = '1.20.22'
 @click.group()
 @click.option('-l', '--log-level', default='INFO')
 @click.option('-c', '--config', type=click.File('r'))
+@click.version_option(version=__version__, prog_name="deliver")
 @click.pass_context
 def link(context, log_level, config):
     """Make linking of FASTQ/BAM files easier!"""
@@ -31,17 +31,9 @@ def link(context, log_level, config):
 @click.option('--force', is_flag=True, help='Link regardless of QC. BEWARE that Undetermined indexes will be linked as well even if pooled sample!')
 @click.option('--skip-undetermined', is_flag=True, help='Skip linking undetermined.')
 @click.help_option()
-def demux(flowcell, custoutdir, mipoutdir, force, skip_undetermined):
+def mip(flowcell, custoutdir, mipoutdir, force, skip_undetermined):
     """Links from DEMUX to MIP_ANALYSIS and customer folder"""
     demux_links(flowcell, custoutdir, mipoutdir, force, skip_undetermined)
-
-
-@link.command()
-@click.argument('sample_folder', nargs=1, type=click.Path(exists=True))
-@click.option('--outdir', default='/mnt/hds/proj/bioinfo/MIP_ANALYSIS/', show_default=True, type=click.Path(exists=True), help='path to MIP_ANALYSIS')
-def ext(sample_folder, outdir):
-    """links from EXTERNAL to MIP_ANALYSIS"""
-    ext_links(sample_folder, outdir)
 
 
 @link.command()
@@ -53,14 +45,6 @@ def ext(sample_folder, outdir):
 def inbox(context, infile, cust, sample, outdir):
     """links files to cust/INBOX/project"""
     inbox_links(context.obj, infile, cust, sample, outdir)
-
-
-@link.command()
-@click.argument('fastq_file', nargs=1, type=click.Path(exists=True))
-@click.option('--outdir', default='/mnt/hds/proj/bioinfo/EXTERNAL/', show_default=True, help='path to EXTERNAL folder')
-def cust(fastq_file, outdir):
-    """links FASTQ file to EXTERNAL"""
-    cust_links(fastq_file, outdir)
 
 
 @link.command()
@@ -98,6 +82,8 @@ def setup_logging(level='INFO'):
     root_logger.addHandler(console)
     return root_logger
 
+
+link.add_command(ext)
 
 if __name__ == '__main__':
     setup_logging(level='DEBUG')
