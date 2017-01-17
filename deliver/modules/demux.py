@@ -14,10 +14,7 @@ from access import db
 from genologics.lims import *
 from genologics.config import BASEURI, USERNAME, PASSWORD
 
-__version__ = '1.20.22'
-
 db_params = []
-
 
 def getsamplesfromflowcell(demuxdir, flwc):
     samples = glob.glob("{demuxdir}*{flowcell}/Unalign*/Project_*/Sample_*"
@@ -161,7 +158,6 @@ def analysis_cutoff(analysis_type):
 
 def demux_links(fc, custoutdir, mipoutdir, force, skip_undetermined):
     """Link FASTQ files from DEMUX output of a flowcell."""
-    print('Version: {} {}'.format(__file__, __version__))
 
     global db_params
     db_params = db.readconfig("/home/hiseq.clinical/.scilifelabrc")
@@ -192,19 +188,19 @@ def demux_links(fc, custoutdir, mipoutdir, force, skip_undetermined):
         if clinical_sample.pipeline == 'mwgs':
             print("skipping microbial sample: {}".format(sample_id))
             continue
-  
+
         print('Application tag: {}'.format(application_tag))
-  
-        requested_reads = int(application_tag['reads']) / 1000000 
+
+        requested_reads = int(application_tag['reads']) / 1000000
         library = application_tag['library']
         seq_type = application_tag['analysis']
-  
+
         readcounts = .75 * float(requested_reads)    # Accepted readcount is 75% of ordered million reads
         raw_apptag = sample.udf['Sequencing Analysis']
         apptag = ApplicationTag(raw_apptag)
         seq_type_dir = apptag.analysis_type # get wes|wgs
         q30_cutoff = analysis_cutoff(seq_type_dir)
-  
+
         try:
             cust_name = sample.udf['customer']
             if cust_name is not None:
@@ -217,7 +213,7 @@ def demux_links(fc, custoutdir, mipoutdir, force, skip_undetermined):
         elif not re.match(r'cust\d{3}', cust_name):
             print("ERROR '{}' does not match an internal customer name".format(cust_name))
             continue
-  
+
         try:
             # make sure there no "/" in customer sample name
             cust_sample_name = (sample.name.replace("/", "-") if "/" in
@@ -258,7 +254,7 @@ def demux_links(fc, custoutdir, mipoutdir, force, skip_undetermined):
                 link_type='hard',
                 skip_undetermined=skip_undetermined
             )
- 
+
         # check the family id
         try:
             family_id = sample.udf['familyID']
@@ -278,7 +274,7 @@ def demux_links(fc, custoutdir, mipoutdir, force, skip_undetermined):
 
                 # try to create new dir structure
                 sample_outdir = os.path.join(mipoutdir, cust_name, family_id, seq_type_dir, sample_id, 'fastq')
-                
+
                 try:
                     print('mkdir -p ' + sample_outdir)
                     os.makedirs(sample_outdir)
