@@ -21,7 +21,6 @@ __version__ = '1.20.22'
 @click.pass_context
 def link(context, log_level, config):
     """Make linking of FASTQ/BAM files easier!"""
-    setup_logging(level=log_level)
     context.obj = yaml.load(config) if config else {}
 
 
@@ -46,13 +45,14 @@ def ext(sample_folder, outdir):
 
 
 @link.command()
-@click.argument('bam', nargs=1, type=click.Path(exists=True))
-@click.option('--cust', required=True, help='Customer name')
-@click.option('--sample', required=True, help='Sample name')
+@click.argument('bam', type=click.Path(exists=True))
+@click.option('-c', '--cust', required=True, help='Customer name')
+@click.option('-s', '--sample', required=True, help='Sample name')
 @click.option('--outdir', default='/mnt/hds/proj/', show_default=True, help='Path to customer folders')
-def bam(bam, cust, sample, outdir):
+@click.pass_context
+def bam(context, bam, cust, sample, outdir):
     """links BAM files to cust/INBOX"""
-    bam_links(bam, cust, sample, outdir)
+    bam_links(context.obj, bam, cust, sample, outdir)
 
 
 @link.command()

@@ -1,42 +1,60 @@
 #!/usr/bin/python
+"""
+Deliver files from Housekeeper to the customer's inbox.
+
+=> INPUT: cust name, sample name, housekeeper file (bam, vcf, bcf, ...)
+
+=> CONFIG: root_dir, clinstatsdb_connection
+"""
 
 from __future__ import print_function
-import os
 import sys
 import logging
 import yaml
 import grp
-from glob import glob
-from access import db
-from genologics.lims import *
-from genologics.config import BASEURI, USERNAME, PASSWORD
 
-__version__ = '1.9.0'
+from glob import glob
+from path import path
+
+from cglims.api import ClinicalLims
+
 
 logger = logging.getLogger(__name__)
 
-def get_cust_sample_name(lims, sample_name):
+
+def bam_links(config, bam_file, cust, sample_lims_id, outdir):
+
+    lims_api = ClinicalLims(**config['lims'])
+
+    outdir = outdir + '/{cust}/INBOX/{project_id}/'
+
+    bam_file_name = path(bam_file).basename()
+
+    # get the customer external sample name
+    lims_sample = lims_api.sample(sample_lims_id)
+    cust_sample_name = lims_sample.name
+
+    # get the project id
+    project_id = lims_sample.project.id
+
+    # rename the bam file
+    bam_cust_file_name = rename_file(str(bam_file_name), sample_lims_id, cust_sample_name)
+
+    complete_outdir = path.joinpath(outdir.format(
+        cust=cust, project_id=project_id)
+    )
+
+    # create the customer folders and links regardless of the QC
     try:
-        sample = Sample(lims, id=sample_name)
-        sample.get(force=True)
-    except:
-        try:
-            logger.info("Sample {} not found in LIMS! Trying as CG ID...".format(sample_name))
+        path(complete_outdir).makedirs()
+    except OSError:
+        pass
 
-            # maybe it's an old CG ID
-            sample = lims.get_samples(udf={'Clinical Genomics ID': sample_name})[0]
-            logger.info("Got it: {}".format(sample.id))
-        except:
-            logger.warn("Sample {} still not found in LIMS!".format(sample_name))
-            return sample_name
-
-    try:
-        cust_sample_name = sample.name
-    except AttributeError:
-        logger.warn("'{}' does not have a customer sample name!".format(sample_name))
-        return sample_name
-
-    return cust_sample_name
+    # link!
+    make_link(
+        bam_file,
+        path.joinpath(complete_outdir, bam_cust_file_name)
+    )
 
 
 def rename_file(file_name, sample_name, cust_sample_name):
@@ -44,74 +62,18 @@ def rename_file(file_name, sample_name, cust_sample_name):
 
 
 def make_link(source, dest, link_type='hard'):
-    # remove previous link
-    try:
-        os.remove(dest)
-    except OSError:
-        pass
+    path(dest).remove_p()
 
-    # then create it
     try:
         if link_type == 'soft':
             logging.info("ln -s {} {} ...".format(source, dest))
-            os.symlink(source, dest)
+            path(source).symlink(dest)
         else:
-            logging.info("ln {} {} ...".format(os.path.realpath(source), dest))
-            os.link(os.path.realpath(source), dest)
-            os.chmod(dest, 0o644)
+            real_source = path(source).realpath()
+            logging.info("ln {} {} ...".format(real_source, dest))
+            path.link(real_source, dest)
+            path(dest).chmod(0o644)
             gid = grp.getgrnam("users").gr_gid
-            os.chown(dest, -1, gid)
+            path(dest).chown(-1, gid)
     except:
         logging.error("Can't create symlink from {} to {}".format(source, dest))
-
-
-def setup_logging(level='INFO'):
-    root_logger = logging.getLogger()
-    root_logger.setLevel(level)
-
-    # customize formatter, align each column
-    template = "[%(asctime)s] %(name)-25s %(levelname)-8s %(message)s"
-    formatter = logging.Formatter(template)
-
-    # add a basic STDERR handler to the logger
-    console = logging.StreamHandler()
-    console.setLevel(level)
-    console.setFormatter(formatter)
-
-    root_logger.addHandler(console)
-    return root_logger
-
-
-def bam_links(bam_file, cust, sample, outdir):
-
-    # TODO based on the application tag, select the right output dir
-    outdir = outdir + '/{cust}/INBOX/genomes/{cust_sample_name}/'
-
-    logger.info('Version: {} {}'.format(__file__, __version__))
-
-    params = db.readconfig("/home/hiseq.clinical/.scilifelabrc")
-    lims = Lims(BASEURI, USERNAME, PASSWORD)
-
-    bam_file_name = os.path.basename(bam_file)
-
-    # get the customer external sample name
-    cust_sample_name = get_cust_sample_name(lims, sample)
-
-    # rename the bam file
-    bam_cust_file_name = rename_file(bam_file_name, sample, cust_sample_name)
-
-    # create the customer folders and links regardless of the QC
-    try:
-        os.makedirs(os.path.join(outdir.format(cust=cust, cust_sample_name=cust_sample_name)))
-    except OSError:
-        pass
-
-    # link!
-    make_link(
-        bam_file,
-        os.path.join(outdir.format(cust=cust, cust_sample_name=cust_sample_name), bam_cust_file_name)
-    )
-
-if __name__ == '__main__':
-    setup_logging(level='DEBUG')
-    main(sys.argv[1:])
