@@ -2,6 +2,8 @@
 
 set -e
 
+source ~/.bashrc
+
 EXTDIR=${1?'Please provide the EXTERNAL directory'}
 
 log() {
@@ -18,6 +20,11 @@ for SAMPLE in ${EXTDIR}/cust*/*; do
 
     log "Found: $SAMPLE"
 
+    # link the sample
     deliver ext $SAMPLE &>> ${SAMPLE}/project.log
+
+    # add sample to HK
+    add_sample $SAMPLE
+
     date +'%Y%m%d%H%M%S' > ${SAMPLE}/delivered.txt
 done

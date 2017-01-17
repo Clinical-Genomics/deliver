@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source ~/.bashrc
+
 source /mnt/hds/proj/bioinfo/SCRIPTS/log.bash
 log $(getversion)
 
@@ -17,9 +19,8 @@ for run in ${runs[@]}; do
       # add an X FC to clinstatsdb - because the permanent tunnel is not active on the nodes.
       if [[ -d "${UNABASE}${run}/l1t11" ]]; then
         log ${run} "python /mnt/hds/proj/bioinfo/SCRIPTS/xparseunaligned.py ${UNABASE}${run} &> ${UNABASE}${run}/LOG/xparseunaligned.`date +'%Y%m%d%H%M%S'`.log"
-        python /mnt/hds/proj/bioinfo/SCRIPTS/xparseunaligned.py ${UNABASE}${run} &> ${UNABASE}${run}/LOG/xparseunaligned.`date +'%Y%m%d%H%M%S'`.log
-        #/mnt/hds/proj/bioinfo/components/maintainance/miniconda/envs/stage/bin/python /mnt/hds/proj/bioinfo/SERVER/apps/deliver/scripts/xparseunaligned.py ${UNABASE}${run} /mnt/hds/proj/bioinfo/SERVER/apps/deliver/config/databases.yaml
-
+        /mnt/hds/proj/bioinfo/components/maintainance/miniconda/envs/prod/bin/python /mnt/hds/proj/bioinfo/SCRIPTS/xparseunaligned.py ${UNABASE}${run} &> ${UNABASE}${run}/LOG/xparseunaligned.`date +'%Y%m%d%H%M%S'`.log
+        python /mnt/hds/proj/bioinfo/SERVER/apps/deliver/scripts/xparseunaligned.py ${UNABASE}${run} /mnt/hds/proj/bioinfo/SERVER/apps/deliver/config/databases.yaml
         # create stats per project
         for PROJECT in ${UNABASE}${run}/Unaligned/Project*; do
           PROJECT=$(basename $PROJECT)
@@ -30,8 +31,12 @@ for run in ${runs[@]}; do
       fi
       # end add
 
+      # link the fastq files
       NOW=$(date +"%Y%m%d%H%M%S")
       deliver demux $FC &> ${UNABASE}${run}/createfastqlinks.${FC}.${NOW}.log
+
+      # add teh samples to HK
+      add_samples $FC
 
       SUBJECT=${FC}
       # send an email on completion
