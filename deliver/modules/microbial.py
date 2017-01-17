@@ -41,7 +41,7 @@ def link_microbial(config, flowcell=None, project=None, sample=None,
     lims_samples = (lims_api.sample(lims_id) for lims_id in lims_ids)
     relevant_samples = (sample for sample in lims_samples
                         if ClinicalSample(sample).pipeline == 'mwgs')
-                                  
+
     for lims_sample in relevant_samples:
         log.info("working on sample: %s", lims_sample.id)
         demux_root = config['demux_root']
