@@ -6,6 +6,7 @@ import yaml
 from .exc import MissingFlowcellError
 from .modules.demux import demux_links
 from .modules.ext import ext_links
+from .modules.bam import bam_links
 from .modules.cust import cust_links
 from .modules.microbial import link_microbial
 
@@ -42,6 +43,16 @@ def demux(flowcell, custoutdir, mipoutdir, force, skip_undetermined):
 def ext(sample_folder, outdir):
     """links from EXTERNAL to MIP_ANALYSIS"""
     ext_links(sample_folder, outdir)
+
+
+@link.command()
+@click.argument('bam', nargs=1, type=click.Path(exists=True))
+@click.option('--cust', required=True, help='Customer name')
+@click.option('--sample', required=True, help='Sample name')
+@click.option('--outdir', default='/mnt/hds/proj/', show_default=True, help='Path to customer folders')
+def bam(bam, cust, sample, outdir):
+    """links BAM files to cust/INBOX"""
+    bam_links(bam, cust, sample, outdir)
 
 
 @link.command()

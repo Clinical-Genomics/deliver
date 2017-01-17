@@ -38,8 +38,10 @@ def get_cust_sample_name(lims, sample_name):
 
     return cust_sample_name
 
+
 def rename_file(file_name, sample_name, cust_sample_name):
     return file_name.replace(sample_name, cust_sample_name)
+
 
 def make_link(source, dest, link_type='hard'):
     # remove previous link
@@ -62,11 +64,6 @@ def make_link(source, dest, link_type='hard'):
     except:
         logging.error("Can't create symlink from {} to {}".format(source, dest))
 
-def get_bam_files(qc_file_info):
-    for case in qc_file_info.keys():
-        for sample in qc_file:
-            pass
-
 
 def setup_logging(level='INFO'):
     root_logger = logging.getLogger()
@@ -84,7 +81,8 @@ def setup_logging(level='INFO'):
     root_logger.addHandler(console)
     return root_logger
 
-def bam_links(qc_sample_info_file, outdir):
+
+def bam_links(bam_file, cust, sample, outdir):
 
     # TODO based on the application tag, select the right output dir
     outdir = outdir + '/{cust}/INBOX/genomes/{cust_sample_name}/'
@@ -94,36 +92,25 @@ def bam_links(qc_sample_info_file, outdir):
     params = db.readconfig("/home/hiseq.clinical/.scilifelabrc")
     lims = Lims(BASEURI, USERNAME, PASSWORD)
 
-    # parse the yaml file
-    with open(qc_sample_info_file, 'r') as stream:
-        qc_sample_info = yaml.load(stream)
+    bam_file_name = os.path.basename(bam_file)
 
-    for case in qc_sample_info.keys():
-        for sample_name in qc_sample_info[case]:
-            if sample_name == case: continue # case info, not sample info
+    # get the customer external sample name
+    cust_sample_name = get_cust_sample_name(lims, sample)
 
-            bam_file = qc_sample_info[case][sample_name]['MostCompleteBAM']['Path']
-            bam_file_name = os.path.basename(bam_file)
-            cust = bam_file.split('/')[-8] # ... or extract with a regex?
-            # TODO validate the name of the cust!
+    # rename the bam file
+    bam_cust_file_name = rename_file(bam_file_name, sample, cust_sample_name)
 
-            # get the customer external sample name
-            cust_sample_name = get_cust_sample_name(lims, sample_name)
+    # create the customer folders and links regardless of the QC
+    try:
+        os.makedirs(os.path.join(outdir.format(cust=cust, cust_sample_name=cust_sample_name)))
+    except OSError:
+        pass
 
-            # rename the bam file
-            bam_cust_file_name = rename_file(bam_file_name, sample_name, cust_sample_name)
-
-            # create the customer folders and links regardless of the QC
-            try:
-                os.makedirs(os.path.join(outdir.format(cust=cust, cust_sample_name=cust_sample_name)))
-            except OSError:
-                pass
-
-            # link!
-            make_link(
-                bam_file,
-                os.path.join(outdir.format(cust=cust, cust_sample_name=cust_sample_name), bam_cust_file_name)
-            )
+    # link!
+    make_link(
+        bam_file,
+        os.path.join(outdir.format(cust=cust, cust_sample_name=cust_sample_name), bam_cust_file_name)
+    )
 
 if __name__ == '__main__':
     setup_logging(level='DEBUG')
