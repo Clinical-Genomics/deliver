@@ -175,7 +175,7 @@ def ext_links(start_dir, outdir):
             index = get_index(fastq_full_file_name)
 
         # create dest dir
-        complete_outdir = os.path.join(outdir, cust_name, family_id, seq_type_dir, sample_id, 'fastq')
+        complete_outdir = os.path.join(outdir, 'customers', cust_name, family_id, seq_type_dir, sample_id, 'fastq')
         out_filename = '_'.join( [lane, date, FC, sample_id, index, direction ])
         out_full_filename = os.path.join(complete_outdir, out_filename)
         logger.debug(complete_outdir)
