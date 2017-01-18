@@ -11,7 +11,7 @@ from .ext import ext
 
 log = logging.getLogger(__name__)
 
-__version__ = '1.21.1'
+__version__ = '1.21.2'
 
 
 @click.group()
@@ -38,11 +38,10 @@ def mip(flowcell, custoutdir, mipoutdir, force, skip_undetermined):
 
 @link.command()
 @click.argument('infile', type=click.Path(exists=True))
-@click.option('-c', '--cust', required=True, help='Customer name')
 @click.option('-s', '--sample', required=True, help='Sample name')
 @click.option('--outdir', default='/mnt/hds/proj/', show_default=True, help='Path to customer folders')
 @click.pass_context
-def inbox(context, infile, cust, sample, outdir):
+def inbox(context, infile, sample, outdir):
     """links files to cust/INBOX/project"""
     inbox_links(context.obj, infile, cust, sample, outdir)
 
