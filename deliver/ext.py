@@ -18,7 +18,7 @@ def ext(context):
 
 @ext.command()
 @click.argument('sample_folder', nargs=1, type=click.Path(exists=True))
-@click.option('--outdir', default='/mnt/hds/proj/bioinfo/MIP_ANALYSIS/', show_default=True, type=click.Path(exists=True), help='path to MIP_ANALYSIS')
+@click.option('--outdir', default='/mnt/hds/proj/bioinfo/MIP_ANALYSIS/customers/', show_default=True, type=click.Path(exists=True), help='path to MIP_ANALYSIS')
 def mip(context, sample_folder, outdir):
     """links from EXTERNAL to MIP_ANALYSIS"""
     ext_links(sample_folder, outdir)
