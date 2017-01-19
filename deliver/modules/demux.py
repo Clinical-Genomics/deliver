@@ -8,12 +8,15 @@ import re
 import os
 import os.path
 import grp
+import logging
 
 from cglims.apptag import ApplicationTag
 from cglims.api import ClinicalSample
 from access import db
 from genologics.lims import *
 from genologics.config import BASEURI, USERNAME, PASSWORD
+
+log = logging.getLogger(__name__)
 
 db_params = []
 
@@ -95,7 +98,7 @@ def make_link(fastqfiles, outputdir, sample_name, fclane, link_type='soft', skip
         if nameparts[1] == 'Undetermined':
             # skip undeermined for pooled samples
             if skip_undetermined or is_pooled_sample(fclane['fc'], fclane['lane']):
-                print('WARNING: Skipping pooled undetermined indexes!')
+                log.warn('Skipping pooled undetermined indexes!')
                 continue
             undetermined = '-Undetermined'
 
@@ -128,16 +131,16 @@ def make_link(fastqfiles, outputdir, sample_name, fclane, link_type='soft', skip
         # then create it
         try:
             if link_type == 'soft':
-                print("ln -s {} {} ...".format(fastqfile, dest_fastqfile))
+                log.debug("ln -s {} {} ...".format(fastqfile, dest_fastqfile))
                 os.symlink(fastqfile, dest_fastqfile)
             else:
-                print("ln {} {} ...".format(os.path.realpath(fastqfile), dest_fastqfile))
+                log.debug("ln {} {} ...".format(os.path.realpath(fastqfile), dest_fastqfile))
                 os.link(os.path.realpath(fastqfile), dest_fastqfile)
                 os.chmod(dest_fastqfile, 0o644)
                 gid = grp.getgrnam("users").gr_gid
                 os.chown(dest_fastqfile, -1, gid)
         except:
-            print("Can't create symlink for {} in {}".format(sample_name, os.path.join(outputdir, newname)))
+            log.error("Can't create symlink for {} in {}".format(sample_name, os.path.join(outputdir, newname)))
 
 def analysis_cutoff(analysis_type):
     """Based on the analysis type (exomes|genomes), return the q30 cutoff
@@ -166,7 +169,7 @@ def demux_links(fc, custoutdir, mipoutdir, force, skip_undetermined):
     samples = getsamplesfromflowcell(db_params['DEMUXDIR'], fc)
 
     for sample_id in samples.iterkeys():
-        print('Sample: {}'.format(sample_id))
+        log.info('Sample: {}'.format(sample_id))
         family_id = None
         cust_name = None
 
@@ -175,22 +178,21 @@ def demux_links(fc, custoutdir, mipoutdir, force, skip_undetermined):
             sample.get(force=True)
         except:
             try:
-                print("WARNING: Sample {} not found in LIMS! Trying as CG ID...".format(sample_id), end='')
                 # maybe it's an old CG ID
                 sample = lims.get_samples(udf={'Clinical Genomics ID': sample_id})[0]
-                print("Got it: {}".format(sample.id))
+                log.debug("Found as CG id in LIMS: {} ! ...".format(sample_id))
             except:
-                print("WARNING: Sample {} still not found in LIMS!".format(sample_id))
+                log.warn("Sample {} still not found in LIMS!".format(sample_id))
                 continue
 
         clinical_sample = ClinicalSample(sample)
         application_tag = clinical_sample.apptag
 
         if clinical_sample.pipeline == 'mwgs':
-            print("skipping microbial sample: {}".format(sample_id))
+            log.info("skipping microbial sample: {}".format(sample_id))
             continue
 
-        print('Application tag: {}'.format(application_tag))
+        log.debug('Application tag: {}'.format(application_tag))
 
         requested_reads = application_tag.reads / 1000000
         seq_type = application_tag.sequencing
@@ -208,10 +210,10 @@ def demux_links(fc, custoutdir, mipoutdir, force, skip_undetermined):
         except KeyError:
             cust_name = None
         if cust_name == None:
-            print("ERROR '{}' internal customer name is not set".format(sample_id))
+            log.error("'{}' internal customer name is not set".format(sample_id))
             continue
         elif not re.match(r'cust\d{3}', cust_name):
-            print("ERROR '{}' does not match an internal customer name".format(cust_name))
+            log.error("'{}' does not match an internal customer name".format(cust_name))
             continue
 
         try:
@@ -219,15 +221,15 @@ def demux_links(fc, custoutdir, mipoutdir, force, skip_undetermined):
             cust_sample_name = (sample.name.replace("/", "-") if "/" in
                                 sample.name else sample.name)
         except AttributeError:
-            print("WARNING '{}' does not have a customer sample name".format(sample_id))
+            log.warn("'{}' does not have a customer sample name".format(sample_id))
             cust_sample_name = sample_id
 
         if force:
             fclanes = getsampleinfofromname_glob(fc, db_params['DEMUXDIR'], sample_id)
-            print(fclanes)
+            log.debug(fclanes)
         else:
             dbinfo = getsampleinfofromname(sample_id)
-            print(dbinfo)
+            log.debug(dbinfo)
             rc = 0         # counter for total readcount of sample
             fclanes = []   # list to keep flowcell names and lanes for a sample
             for info in dbinfo:
@@ -236,7 +238,7 @@ def demux_links(fc, custoutdir, mipoutdir, force, skip_undetermined):
                     rc += info['M_reads']
                     fclanes.append(dict(( (key, info[key]) for key in ['fc', 'q30', 'lane'] )))
                 else:
-                    print("WARNING: '{sample_id}' did not reach Q30 > {cut_off} for {flowcell}".format(sample_id=sample_id, cut_off=q30_cutoff, flowcell=info['fc']))
+                    log.warn("'{sample_id}' did not reach Q30 > {cut_off} for {flowcell}".format(sample_id=sample_id, cut_off=q30_cutoff, flowcell=info['fc']))
 
         # create the customer folders and links regardless of the QC
         try:
@@ -261,25 +263,25 @@ def demux_links(fc, custoutdir, mipoutdir, force, skip_undetermined):
         except KeyError:
             family_id = None
         if family_id == None and seq_type != 'RML':
-            print("ERROR '{}' family_id is not set".format(sample_id))
+            log.error("'{}' family_id is not set".format(sample_id))
             continue
 
         # create the links for the analysis
         if readcounts:
             if force or rc > readcounts: # If enough reads are obtained do
                 if force:
-                    print("{sample_id} Passed".format(sample_id=sample_id))
+                    log.info("{sample_id} Passed".format(sample_id=sample_id))
                 else:
-                    print("{sample_id} Passed {readcount} M reads\nUsing reads from {fclanes}".format(sample_id=sample_id, readcount=rc, fclanes=fclanes))
+                    log.info("{sample_id} Passed {readcount} M reads\nUsing reads from {fclanes}".format(sample_id=sample_id, readcount=rc, fclanes=fclanes))
 
                 # try to create new dir structure
                 sample_outdir = os.path.join(mipoutdir, cust_name, family_id, seq_type_dir, sample_id, 'fastq')
 
                 try:
-                    print('mkdir -p ' + sample_outdir)
+                    log.debug('mkdir -p ' + sample_outdir)
                     os.makedirs(sample_outdir)
                 except OSError:
-                    print('WARNING: Failed to create {}'.format(sample_outdir))
+                    log.warn('Failed to create {}'.format(sample_outdir))
 
                 # create symlinks for each fastq file
                 for fclane in fclanes:
@@ -292,11 +294,11 @@ def demux_links(fc, custoutdir, mipoutdir, force, skip_undetermined):
                         skip_undetermined=skip_undetermined
                     )
             else:                        # Otherwise just present the data
-              print("{sample_id} FAIL with {readcount} M reads.\n"
+              log.error("{sample_id} FAIL with {readcount} M reads.\n"
                     "Requested with {reqreadcount} M reads.\n"
                     "These flowcells summarized {fclanes}".format(sample_id=sample_id, readcount=rc, fclanes=fclanes, reqreadcount=readcounts))
         else:
-            print("{} - no analysis parameter specified in lims".format(sample_id))
+            log.error("{} - no analysis parameter specified in lims".format(sample_id))
 
 if __name__ == '__main__':
     main(sys.argv[1:])

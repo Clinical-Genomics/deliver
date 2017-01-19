@@ -85,6 +85,6 @@ def setup_logging(level='INFO'):
 link.add_command(ext)
 
 if __name__ == '__main__':
-    setup_logging(level='DEBUG')
+    setup_logging(level='INFO')
     log.info('Version: {} {}'.format(__file__, __version__))
     link()
