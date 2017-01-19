@@ -6,7 +6,6 @@ import sys
 import glob
 import re
 import os
-import os.path
 import grp
 import logging
 
@@ -98,7 +97,7 @@ def make_link(fastqfiles, outputdir, sample_name, fclane, link_type='soft', skip
         if nameparts[1] == 'Undetermined':
             # skip undeermined for pooled samples
             if skip_undetermined or is_pooled_sample(fclane['fc'], fclane['lane']):
-                log.warn('Skipping pooled undetermined indexes!')
+                log.info('Skipping pooled undetermined indexes!')
                 continue
             undetermined = '-Undetermined'
 
@@ -180,9 +179,9 @@ def demux_links(fc, custoutdir, mipoutdir, force, skip_undetermined):
             try:
                 # maybe it's an old CG ID
                 sample = lims.get_samples(udf={'Clinical Genomics ID': sample_id})[0]
-                log.debug("Found as CG id in LIMS: {} ! ...".format(sample_id))
+                log.debug("Found as CG id in LIMS: {}!".format(sample_id))
             except:
-                log.warn("Sample {} still not found in LIMS!".format(sample_id))
+                log.error("{} Skipping! Not found in LIMS.".format(sample_id))
                 continue
 
         clinical_sample = ClinicalSample(sample)
@@ -281,7 +280,7 @@ def demux_links(fc, custoutdir, mipoutdir, force, skip_undetermined):
                     log.debug('mkdir -p ' + sample_outdir)
                     os.makedirs(sample_outdir)
                 except OSError:
-                    log.warn('Failed to create {}'.format(sample_outdir))
+                    log.debug('Failed to create {}'.format(sample_outdir))
 
                 # create symlinks for each fastq file
                 for fclane in fclanes:

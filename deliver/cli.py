@@ -21,6 +21,8 @@ __version__ = '1.21.5'
 @click.pass_context
 def link(context, log_level, config):
     """Make linking of FASTQ/BAM files easier!"""
+    setup_logging(level=log_level)
+    log.info('{}: version {}'.format(__package__, __version__))
     context.obj = yaml.load(config) if config else {}
 
 
@@ -85,6 +87,4 @@ def setup_logging(level='INFO'):
 link.add_command(ext)
 
 if __name__ == '__main__':
-    setup_logging(level='INFO')
-    log.info('Version: {} {}'.format(__file__, __version__))
     link()
