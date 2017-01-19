@@ -10,6 +10,7 @@ import os.path
 import grp
 
 from cglims.apptag import ApplicationTag
+from cglims.api import ClinicalSample
 from access import db
 from genologics.lims import *
 from genologics.config import BASEURI, USERNAME, PASSWORD
@@ -191,9 +192,8 @@ def demux_links(fc, custoutdir, mipoutdir, force, skip_undetermined):
 
         print('Application tag: {}'.format(application_tag))
 
-        requested_reads = int(application_tag['reads']) / 1000000
-        library = application_tag['library']
-        seq_type = application_tag['analysis']
+        requested_reads = application_tag.reads / 1000000
+        seq_type = application_tag.sequencing
 
         readcounts = .75 * float(requested_reads)    # Accepted readcount is 75% of ordered million reads
         raw_apptag = sample.udf['Sequencing Analysis']
@@ -232,7 +232,7 @@ def demux_links(fc, custoutdir, mipoutdir, force, skip_undetermined):
             fclanes = []   # list to keep flowcell names and lanes for a sample
             for info in dbinfo:
                 # Use readcount from lane only if it satisfies QC [=80%]
-                if application_tag == None or info['q30'] > q30_cutoff:
+                if info['q30'] > q30_cutoff:
                     rc += info['M_reads']
                     fclanes.append(dict(( (key, info[key]) for key in ['fc', 'q30', 'lane'] )))
                 else:
@@ -260,7 +260,7 @@ def demux_links(fc, custoutdir, mipoutdir, force, skip_undetermined):
             family_id = sample.udf['familyID']
         except KeyError:
             family_id = None
-        if family_id == None and application_tag != None and seq_type != 'RML':
+        if family_id == None and seq_type != 'RML':
             print("ERROR '{}' family_id is not set".format(sample_id))
             continue
 
