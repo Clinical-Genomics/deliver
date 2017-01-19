@@ -5,9 +5,10 @@ from __future__ import print_function
 import sys
 import glob
 import re
-import os
 import grp
 import logging
+
+from path import path
 
 from cglims.apptag import ApplicationTag
 from cglims.api import ClinicalSample
@@ -121,25 +122,23 @@ def make_link(fastqfiles, outputdir, sample_name, fclane, link_type='soft', skip
         )
 
         # first remove the link - might be pointing to wrong file
-        dest_fastqfile = os.path.join(outputdir, newname)
-        try:
-            os.remove(dest_fastqfile)
-        except OSError:
-            pass
+        dest_fastqfile = path(outputdir).joinpath(newname)
+        path(dest_fastqfile).remove_p()
 
         # then create it
         try:
             if link_type == 'soft':
                 log.debug("ln -s {} {} ...".format(fastqfile, dest_fastqfile))
-                os.symlink(fastqfile, dest_fastqfile)
+                path(fastqfile).symlink(dest_fastqfile)
             else:
-                log.debug("ln {} {} ...".format(os.path.realpath(fastqfile), dest_fastqfile))
-                os.link(os.path.realpath(fastqfile), dest_fastqfile)
-                os.chmod(dest_fastqfile, 0o644)
+                fastqfile_realpath = path(fastqfile).realpath()
+                log.debug("ln {} {} ...".format(fastqfile_realpath, dest_fastqfile))
+                path(fastqfile_realpath).link(dest_fastqfile)
+                path(dest_fastqfile).chmod(0o644)
                 gid = grp.getgrnam("users").gr_gid
-                os.chown(dest_fastqfile, -1, gid)
+                path(dest_fastqfile).chown(-1, gid)
         except:
-            log.error("Can't create symlink for {} in {}".format(sample_name, os.path.join(outputdir, newname)))
+            log.error("Can't create symlink for {} in {}".format(sample_name, dest_fastqfile))
 
 def analysis_cutoff(analysis_type):
     """Based on the analysis type (exomes|genomes), return the q30 cutoff
@@ -168,7 +167,6 @@ def demux_links(fc, custoutdir, mipoutdir, force, skip_undetermined):
     samples = getsamplesfromflowcell(db_params['DEMUXDIR'], fc)
 
     for sample_id in samples.iterkeys():
-        log.info('Sample: {}'.format(sample_id))
         family_id = None
         cust_name = None
 
@@ -240,16 +238,14 @@ def demux_links(fc, custoutdir, mipoutdir, force, skip_undetermined):
                     log.warn("'{sample_id}' did not reach Q30 > {cut_off} for {flowcell}".format(sample_id=sample_id, cut_off=q30_cutoff, flowcell=info['fc']))
 
         # create the customer folders and links regardless of the QC
-        try:
-            os.makedirs(os.path.join(custoutdir, cust_name, 'INBOX', seq_type_dir, cust_sample_name))
-        except OSError:
-            pass
+        cust_inbox_outdir = path(custoutdir).joinpath(cust_name, 'INBOX', seq_type_dir, cust_sample_name)
+        path(cust_inbox_outdir).makedirs_p()
         # create symlinks for each fastq file
         for fclane in fclanes:
             fastqfiles = get_fastq_files(db_params['DEMUXDIR'], fclane, sample_id)
             make_link(
                 fastqfiles=fastqfiles,
-                outputdir=os.path.join(custoutdir, cust_name, 'INBOX', seq_type_dir, cust_sample_name),
+                outputdir=cust_inbox_outdir,
                 fclane=fclane,
                 sample_name=cust_sample_name,
                 link_type='hard',
@@ -274,13 +270,8 @@ def demux_links(fc, custoutdir, mipoutdir, force, skip_undetermined):
                     log.info("{sample_id} Passed {readcount} M reads\nUsing reads from {fclanes}".format(sample_id=sample_id, readcount=rc, fclanes=fclanes))
 
                 # try to create new dir structure
-                sample_outdir = os.path.join(mipoutdir, cust_name, family_id, seq_type_dir, sample_id, 'fastq')
-
-                try:
-                    log.debug('mkdir -p ' + sample_outdir)
-                    os.makedirs(sample_outdir)
-                except OSError:
-                    log.debug('Failed to create {}'.format(sample_outdir))
+                sample_outdir = path(mipoutdir).joinpath(cust_name, family_id, seq_type_dir, sample_id, 'fastq')
+                path(sample_outdir).makedirs_p()
 
                 # create symlinks for each fastq file
                 for fclane in fclanes:
