@@ -76,15 +76,18 @@ def is_pooled_sample(flowcell, lane):
     return True if int(replies[0]['sample_count']) > 1 else False
 
 
-def get_fastq_files(demuxdir, fclane, sample_name):
+def get_fastq_files(demuxdir, fc, lane, sample_name):
     fastqfiles = glob.glob(
         "{demuxdir}*{fc}/Unalign*/Project_*/Sample_{sample_name}_*/*L00{lane}*gz".format(
-          demuxdir=demuxdir, fc=fclane['fc'], sample_name=sample_name, lane=fclane['lane']
+          demuxdir=demuxdir, fc=fc, sample_name=sample_name, lane=lane
         ))
     fastqfiles.extend(glob.glob(
         "{demuxdir}*{fc}/Unalign*/Project_*/Sample_{sample_name}[BF]_*/*L00{lane}*gz".format(
-          demuxdir=demuxdir, fc=fclane['fc'], sample_name=sample_name, lane=fclane['lane']
+          demuxdir=demuxdir, fc=fc, sample_name=sample_name, lane=lane
         )))
+
+    if not fastqfiles:
+        log.error('No fastq files found for {} on FC {} on lane {}'.format(sample_name, fc, lane))
 
     return fastqfiles
 
@@ -158,13 +161,13 @@ def analysis_cutoff(analysis_type):
     return 0
 
 
-def demux_links(fc, custoutdir, mipoutdir, force, skip_undetermined):
+def demux_links(fc, custoutdir, mipoutdir, demuxdir, force, skip_undetermined):
     """Link FASTQ files from DEMUX output of a flowcell."""
 
     global db_params
     db_params = db.readconfig("/home/hiseq.clinical/.scilifelabrc")
     lims = Lims(BASEURI, USERNAME, PASSWORD)
-    samples = getsamplesfromflowcell(db_params['DEMUXDIR'], fc)
+    samples = getsamplesfromflowcell(demuxdir, fc)
 
     for sample_id in samples.iterkeys():
         family_id = None
@@ -222,7 +225,7 @@ def demux_links(fc, custoutdir, mipoutdir, force, skip_undetermined):
             cust_sample_name = sample_id
 
         if force:
-            fclanes = getsampleinfofromname_glob(fc, db_params['DEMUXDIR'], sample_id)
+            fclanes = getsampleinfofromname_glob(fc, demuxdir, sample_id)
             log.debug(fclanes)
         else:
             dbinfo = getsampleinfofromname(sample_id)
@@ -242,7 +245,7 @@ def demux_links(fc, custoutdir, mipoutdir, force, skip_undetermined):
         path(cust_inbox_outdir).makedirs_p()
         # create symlinks for each fastq file
         for fclane in fclanes:
-            fastqfiles = get_fastq_files(db_params['DEMUXDIR'], fclane, sample_id)
+            fastqfiles = get_fastq_files(demuxdir, fclane['fc'], fclane['lane'], sample_id)
             make_link(
                 fastqfiles=fastqfiles,
                 outputdir=cust_inbox_outdir,
@@ -267,7 +270,7 @@ def demux_links(fc, custoutdir, mipoutdir, force, skip_undetermined):
                 if force:
                     log.info("{sample_id} Passed".format(sample_id=sample_id))
                 else:
-                    log.info("{sample_id} Passed {readcount} M reads\nUsing reads from {fclanes}".format(sample_id=sample_id, readcount=rc, fclanes=fclanes))
+                    log.info("{sample_id} Passed {readcount} M reads: {fclanes}".format(sample_id=sample_id, readcount=rc, fclanes=fclanes))
 
                 # try to create new dir structure
                 sample_outdir = path(mipoutdir).joinpath(cust_name, family_id, seq_type_dir, sample_id, 'fastq')
@@ -275,7 +278,7 @@ def demux_links(fc, custoutdir, mipoutdir, force, skip_undetermined):
 
                 # create symlinks for each fastq file
                 for fclane in fclanes:
-                    fastqfiles = get_fastq_files(db_params['DEMUXDIR'], fclane, sample_id)
+                    fastqfiles = get_fastq_files(demuxdir, fclane['fc'], fclane['lane'], sample_id)
                     make_link(
                         fastqfiles=fastqfiles,
                         outputdir=sample_outdir,
