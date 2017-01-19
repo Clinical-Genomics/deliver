@@ -33,7 +33,7 @@ for run in ${runs[@]}; do
 
       # link the fastq files
       NOW=$(date +"%Y%m%d%H%M%S")
-      deliver demux $FC &> ${UNABASE}${run}/createfastqlinks.${FC}.${NOW}.log
+      deliver mip $FC &> ${UNABASE}${run}/createfastqlinks.${FC}.${NOW}.log
 
       # add teh samples to HK
       add_samples $FC
