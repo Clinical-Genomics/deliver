@@ -22,17 +22,19 @@ from cglims.api import ClinicalLims
 logger = logging.getLogger(__name__)
 
 
-def inbox_links(config, infile, cust, sample_lims_id, outdir):
+def inbox_links(config, infile, sample_lims_id, outdir, cust=None):
 
     lims_api = ClinicalLims(**config['lims'])
-    outdir = outdir + '/{cust}/INBOX/{project_id}/'
+    outdir = outdir + '/{cust}/INBOX/{family_id}/'
     infile_name = path(infile).basename()
     lims_sample = lims_api.sample(sample_lims_id)
     cust_sample_name = lims_sample.name
-    project_id = lims_sample.project.id
+    family_id = lims_sample.udf['familyID']
+    if not cust:
+        cust = lims_sample.udf['customer']
     complete_outdir = path.joinpath(outdir.format(
-        cust=cust, project_id=project_id)
-    )
+        cust=cust, family_id=family_id
+    ))
 
     cust_file_name = rename_file(str(infile_name), sample_lims_id, cust_sample_name)
     path(complete_outdir).makedirs_p()
