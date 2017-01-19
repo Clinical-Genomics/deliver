@@ -148,9 +148,9 @@ def analysis_cutoff(analysis_type):
     Returns: returns the q30 cutoff in percent.
 
     """
-    if analysis_type == 'exomes':
+    if analysis_type == 'wes':
         return 80
-    if analysis_type == 'genomes':
+    if analysis_type == 'wgs':
         return 75
 
     # not recognized, cutoff 0
