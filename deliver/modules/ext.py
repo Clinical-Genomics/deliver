@@ -7,6 +7,9 @@ import logging
 import re
 import gzip
 import time
+
+from cglims.apptag import ApplicationTag
+
 from access import db
 from datetime import datetime
 from glob import glob
@@ -53,39 +56,6 @@ def make_link(source, dest, link_type='hard'):
             os.link(os.path.realpath(source), dest) # make sure to link to orignal file, not a symlink
     except:
         logger.error("Can't create symlink from {} to {}".format(source, dest))
-
-def get_seq_type_dir(sample):
-
-    seq_type_dir = 'exomes'
-
-    try:
-        application_tag = sample.udf["Sequencing Analysis"]
-    except KeyError:
-        application_tag = None
-
-    logger.info('Application tag: {}'.format(application_tag))
-    if application_tag is None:
-        logger.warning("Application tag not defined for {}".format(sample.id))
-        seq_type_dir = 'exomes'
-    else:
-      if len(application_tag) != 10:
-          logger.error("Application tag '{}' is wrong for {}".format(applitcation_tag, sample.id))
-          return None
-
-      seq_type = application_tag[0:3]
-      if seq_type == 'EXX' or seq_type == 'EXO':
-          seq_type_dir = 'exomes'
-      elif seq_type == 'WGX' or seq_type == 'WGS':
-          seq_type_dir = 'genomes'
-      else:
-          logger.error("'{}': unrecognized sequencing type '{}'".format(sample.id, seq_type))
-          return None
-
-    if application_tag == 'RML': # skip Ready Made Libraries
-        logger.warning("Ready Made Library. Skipping link creation for {}".format(sample.id))
-        return None
-
-    return seq_type_dir
 
 def get_family_id(sample):
     try:
@@ -163,7 +133,9 @@ def ext_links(start_dir, outdir):
         sample = get_sample(sample_id)
         family_id = get_family_id(sample)
         cust_name = get_cust_name(sample)
-        seq_type_dir = get_seq_type_dir(sample)
+        raw_apptag = sample.udf['Sequencing Analysis']
+        apptag = ApplicationTag(raw_apptag)
+        seq_type_dir = apptag.analysis_type # get wes|wgs
         if sample.date_received is not None:
             date = datetime.strptime(sample.date_received, "%Y-%m-%d").strftime("%y%m%d")
         else:
