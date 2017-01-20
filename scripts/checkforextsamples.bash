@@ -1,7 +1,7 @@
 #!/bin/bash
 
 set -e
-
+shopt -s expand_aliases
 source ~/.bashrc
 
 EXTDIR=${1?'Please provide the EXTERNAL directory'}
@@ -24,7 +24,7 @@ for SAMPLE in ${EXTDIR}/cust*/*; do
     deliver ext mip $SAMPLE &>> ${SAMPLE}/project.log
 
     # add sample to HK
-    add_sample $SAMPLE
+    add_sample $(basename $SAMPLE)
 
     date +'%Y%m%d%H%M%S' > ${SAMPLE}/delivered.txt
 done
