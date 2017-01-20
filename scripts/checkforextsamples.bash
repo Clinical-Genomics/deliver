@@ -21,7 +21,7 @@ for SAMPLE in ${EXTDIR}/cust*/*; do
     log "Found: $SAMPLE"
 
     # link the sample
-    deliver ext $SAMPLE &>> ${SAMPLE}/project.log
+    deliver ext mip $SAMPLE &>> ${SAMPLE}/project.log
 
     # add sample to HK
     add_sample $SAMPLE

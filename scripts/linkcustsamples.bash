@@ -16,6 +16,6 @@ while read -a LINE; do
 
     echo ${INDIR}/${FASTQ_FILE}
 
-    deliver cust ${INDIR}/${FASTQ_FILE}
+    deliver ext inbox ${INDIR}/${FASTQ_FILE}
 done < ${TICKET_FILE}
 mv $TICKET_FILE ${TICKET_FILE}_complete
