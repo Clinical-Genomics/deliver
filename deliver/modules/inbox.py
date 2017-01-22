@@ -22,21 +22,21 @@ from cglims.api import ClinicalLims
 logger = logging.getLogger(__name__)
 
 
-def inbox_links(config, infile, sample_lims_id, outdir, cust=None):
+def inbox_links(config, infile, sample_id, outdir, cust=None):
 
     lims_api = ClinicalLims(**config['lims'])
     outdir = outdir + '/{cust}/INBOX/{family_id}/'
     infile_name = path(infile).basename()
-    lims_sample = lims_api.sample(sample_lims_id)
-    cust_sample_name = lims_sample.name
-    family_id = lims_sample.udf['familyID']
+    sample = lims_api.sample(sample_id)
+    cust_sample_id = sample.name
+    family_id = sample.udf['familyID']
     if not cust:
-        cust = lims_sample.udf['customer']
+        cust = sample.udf['customer']
     complete_outdir = path.joinpath(outdir.format(
         cust=cust, family_id=family_id
     ))
 
-    cust_file_name = rename_file(str(infile_name), sample_lims_id, cust_sample_name)
+    cust_file_name = rename_file(str(infile_name), sample_id, cust_sample_id)
     path(complete_outdir).makedirs_p()
 
     # link!
@@ -46,8 +46,8 @@ def inbox_links(config, infile, sample_lims_id, outdir, cust=None):
     )
 
 
-def rename_file(file_name, sample_name, cust_sample_name):
-    return file_name.replace(sample_name, cust_sample_name)
+def rename_file(file_name, sample_id, cust_sample_id):
+    return file_name.replace(sample_id, cust_sample_id)
 
 
 def make_link(source, dest, link_type='hard'):
