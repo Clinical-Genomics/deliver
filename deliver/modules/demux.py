@@ -240,8 +240,17 @@ def demux_links(fc, custoutdir, mipoutdir, demuxdir, force, skip_undetermined):
                 else:
                     log.warn("'{sample_id}' did not reach Q30 > {cut_off} for {flowcell}".format(sample_id=sample_id, cut_off=q30_cutoff, flowcell=info['fc']))
 
+        # check the family id
+        try:
+            family_id = sample.udf['familyID']
+        except KeyError:
+            family_id = None
+        if family_id == None and seq_type != 'RML':
+            log.error("'{}' family_id is not set".format(sample_id))
+            continue
+
         # create the customer folders and links regardless of the QC
-        cust_inbox_outdir = path(custoutdir).joinpath(cust_name, 'INBOX', seq_type_dir, cust_sample_name)
+        cust_inbox_outdir = path(custoutdir).joinpath(cust_name, 'INBOX', family_id)
         path(cust_inbox_outdir).makedirs_p()
         # create symlinks for each fastq file
         for fclane in fclanes:
@@ -254,15 +263,6 @@ def demux_links(fc, custoutdir, mipoutdir, demuxdir, force, skip_undetermined):
                 link_type='hard',
                 skip_undetermined=skip_undetermined
             )
-
-        # check the family id
-        try:
-            family_id = sample.udf['familyID']
-        except KeyError:
-            family_id = None
-        if family_id == None and seq_type != 'RML':
-            log.error("'{}' family_id is not set".format(sample_id))
-            continue
 
         # create the links for the analysis
         if readcounts:
