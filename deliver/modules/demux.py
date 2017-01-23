@@ -5,7 +5,6 @@ from __future__ import print_function
 import sys
 import glob
 import re
-import grp
 import logging
 
 from path import path
@@ -15,6 +14,8 @@ from cglims.api import ClinicalSample
 from access import db
 from genologics.lims import *
 from genologics.config import BASEURI, USERNAME, PASSWORD
+
+from ..utils import get_mipname, make_link
 
 log = logging.getLogger(__name__)
 
@@ -62,7 +63,7 @@ def getsampleinfofromname_glob(fc, demuxdir, sample):
 
     return replies
 
-def is_pooled_sample(flowcell, lane):
+def is_pooled_lane(flowcell, lane):
     global db_params
     q = ("SELECT count(samplename) AS sample_count "
         "FROM sample "
@@ -91,57 +92,6 @@ def get_fastq_files(demuxdir, fc, lane, sample_name):
 
     return fastqfiles
 
-
-def make_link(fastqfiles, outputdir, sample_name, fclane, link_type='soft', skip_undetermined=False):
-    for fastqfile in fastqfiles:
-        nameparts = fastqfile.split("/")[-1].split("_")
-
-        # X stuff
-        undetermined = ''
-        if nameparts[1] == 'Undetermined':
-            # skip undeermined for pooled samples
-            if skip_undetermined or is_pooled_sample(fclane['fc'], fclane['lane']):
-                log.info('Skipping pooled undetermined indexes!')
-                continue
-            undetermined = '-Undetermined'
-
-        tile = ''
-        if '-' in nameparts[0]:
-            tile = nameparts[0].split('-')[1].split('t')[1] # H2V2YCCXX-l2t21
-            tile = '-' + tile
-
-        rundir = fastqfile.split("/")[6]
-        date = rundir.split("_")[0]
-
-        newname = "{lane}_{date}_{fc}{tile}{undetermined}_{sample}_{index}_{readdirection}.fastq.gz".format(
-            lane=fclane['lane'],
-            date=date,
-            fc=fclane['fc'],
-            sample=sample_name,
-            index=nameparts[-4],
-            readdirection=nameparts[-2][-1:],
-            undetermined=undetermined,
-            tile=tile
-        )
-
-        # first remove the link - might be pointing to wrong file
-        dest_fastqfile = path(outputdir).joinpath(newname)
-        path(dest_fastqfile).remove_p()
-
-        # then create it
-        try:
-            if link_type == 'soft':
-                log.debug("ln -s {} {} ...".format(fastqfile, dest_fastqfile))
-                path(fastqfile).symlink(dest_fastqfile)
-            else:
-                fastqfile_realpath = path(fastqfile).realpath()
-                log.debug("ln {} {} ...".format(fastqfile_realpath, dest_fastqfile))
-                path(fastqfile_realpath).link(dest_fastqfile)
-                path(dest_fastqfile).chmod(0o644)
-                gid = grp.getgrnam("users").gr_gid
-                path(dest_fastqfile).chown(-1, gid)
-        except:
-            log.error("Can't create symlink for {} in {}".format(sample_name, dest_fastqfile))
 
 def analysis_cutoff(analysis_type):
     """Based on the analysis type (exomes|genomes), return the q30 cutoff
@@ -249,43 +199,43 @@ def demux_links(fc, custoutdir, mipoutdir, demuxdir, force, skip_undetermined):
             log.error("'{}' family_id is not set".format(sample_id))
             continue
 
-        # create the customer folders and links regardless of the QC
-        cust_inbox_outdir = path(custoutdir).joinpath(cust_name, 'INBOX', family_id)
-        path(cust_inbox_outdir).makedirs_p()
-        # create symlinks for each fastq file
-        for fclane in fclanes:
-            fastqfiles = get_fastq_files(demuxdir, fclane['fc'], fclane['lane'], sample_id)
-            make_link(
-                fastqfiles=fastqfiles,
-                outputdir=cust_inbox_outdir,
-                fclane=fclane,
-                sample_name=cust_sample_name,
-                link_type='hard',
-                skip_undetermined=skip_undetermined
-            )
-
         # create the links for the analysis
         if readcounts:
             if force or rc > readcounts: # If enough reads are obtained do
-                if force:
-                    log.info("{sample_id} Passed".format(sample_id=sample_id))
-                else:
-                    log.info("{sample_id} Passed {readcount} M reads: {fclanes}".format(sample_id=sample_id, readcount=rc, fclanes=fclanes))
-
                 # try to create new dir structure
                 sample_outdir = path(mipoutdir).joinpath(cust_name, family_id, seq_type_dir, sample_id, 'fastq')
                 path(sample_outdir).makedirs_p()
 
                 # create symlinks for each fastq file
+                link_results = {} # { fc: # of link }
                 for fclane in fclanes:
+                    if fclane['fc'] not in link_results:
+                        link_results[fclane['fc']] = 0
+
                     fastqfiles = get_fastq_files(demuxdir, fclane['fc'], fclane['lane'], sample_id)
-                    make_link(
-                        fastqfiles=fastqfiles,
-                        outputdir=sample_outdir,
-                        fclane=fclane,
-                        sample_name=sample_id,
-                        skip_undetermined=skip_undetermined
-                    )
+
+                    for fastqfile in fastqfiles:
+                        # skip undeermined for pooled samples
+                        if 'Undetermined' in fastqfile:
+                            if skip_undetermined or is_pooled_lane(fclane['fc'], fclane['lane']):
+                                log.info('Skipping pooled undetermined indexes!')
+                                continue
+
+                        outfile = get_mipname(fastqfile)
+                        outfile = path(sample_outdir).joinpath(outfile)
+
+                        link_rs = make_link(
+                            fastqfile,
+                            outfile,
+                            link_type='soft'
+                        )
+
+                        if link_rs:
+                            link_results[fclane['fc']] += 1
+                
+                link_results_str = ', '.join([ "{} ({} files)".format(fc, files) for fc, files in link_results.items() ])
+                log.info("Linked {} from {}".format(sample_id, link_results_str))
+
             else:                        # Otherwise just present the data
               log.error("{sample_id} FAIL with {readcount} M reads.\n"
                     "Requested with {reqreadcount} M reads.\n"

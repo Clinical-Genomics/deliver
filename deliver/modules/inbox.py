@@ -18,6 +18,8 @@ from path import path
 
 from cglims.api import ClinicalLims
 
+from ..utils import get_mipname, make_link
+
 
 logger = logging.getLogger(__name__)
 
@@ -36,33 +38,26 @@ def inbox_links(config, infile, sample_id, outdir, cust=None):
         cust=cust, family_id=family_id
     ))
 
-    cust_file_name = rename_file(str(infile_name), sample_id, cust_sample_id)
+    if infile_name.endswith('fastq.gz'):
+        # the sample name is in the path, not the file name
+        fastq_mipname = get_mipname(infile)
+        cust_file_name = rename_file(fastq_mipname, sample_id, cust_sample_id)
+    else:
+        cust_file_name = rename_file(str(infile_name), sample_id, cust_sample_id)
     path(complete_outdir).makedirs_p()
 
+    outfile = path.joinpath(complete_outdir, cust_file_name)
+
     # link!
-    make_link(
+    link_rs = make_link(
         infile,
-        path.joinpath(complete_outdir, cust_file_name)
+        outfile,
+        link_type='hard'
     )
+
+    if link_rs:
+        logger.info("Linked {}".format(outfile))
 
 
 def rename_file(file_name, sample_id, cust_sample_id):
     return file_name.replace(sample_id, cust_sample_id)
-
-
-def make_link(source, dest, link_type='hard'):
-    path(dest).remove_p()
-
-    try:
-        if link_type == 'soft':
-            logging.info("ln -s {} {} ...".format(source, dest))
-            path(source).symlink(dest)
-        else:
-            real_source = path(source).realpath()
-            logging.info("ln {} {} ...".format(real_source, dest))
-            path.link(real_source, dest)
-            path(dest).chmod(0o644)
-            gid = grp.getgrnam("users").gr_gid
-            path(dest).chown(-1, gid)
-    except Exception, e: # catch, print, and continue
-        logging.error(repr(e))

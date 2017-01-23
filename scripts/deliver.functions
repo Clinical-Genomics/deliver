@@ -1,0 +1,66 @@
+DEMUX_ROOT=/mnt/hds/proj/bioinfo/DEMUX/
+
+deliver_hk() {
+    declare desc="based on a sample name and category, deliver a file to the cust/INBOX"
+
+    local sample_id=${1?'please provide a sample id'}
+    local category=${2?'please provide a category'}
+    local cat_file=
+
+    cat_file=$(housekeeper get --infer-case --sample ${sample_id} --category ${category})
+    if [[ $? == 0 ]]; then
+        deliver inbox --sample ${sample_id} ${cat_file}
+    else
+        (>&2 echo "ERROR no ${category} found for ${sample_id}")
+    fi
+}
+
+deliver_bamvcf() {
+    # based on a sample name, deliver the bam/bai file to the cust/INBOX
+
+    local sample_id=${1?'please provide a sample id'}
+    local categories=(bam bai vcf)
+    local cat_file
+
+    for category in ${categories[@]}; do
+        $(deliver_hk ${sample_id} ${category})
+    done
+
+    return 0
+}
+
+deliver_bamvcfs() {
+    # based on a case name, deliver all bam/bai:s for all samples of a case
+
+    local case=${1?'please provide a case name'}
+    local samples=($(cglims get ${case} id))
+
+    if [[ ${#samples[@]} == 0 ]]; then
+        (>&2 echo "ERROR no samples found for case ${case}")
+        return 1
+    else
+        for sample_id in ${samples[@]}; do
+            (>&2 echo "working on sample: ${sample_id}")
+            $(deliver_bam ${sample_id})
+        done
+        return 0
+    fi
+}
+
+deliver_fastqs() {
+    # based on a sample id, deliver all fastq files to the cust/INBOX
+
+    sample_id=${1?'please provide a sample id'}; shift
+    fcs="$*"
+
+    (
+        shopt -s nullglob # only nullglob in here
+
+        for fc in "${fcs}"; do
+            for fastq in ${DEMUX_ROOT}/*${fc}/Unalign*/Project_*/Sample_${sample_id}_*/*fastq.gz ${DEMUX_ROOT}/*${fc}/Unalign*/Project_*/Sample_${sample_id}[BF]_*/*fastq.gz; do
+                deliver inbox --sample ${sample_id} ${fastq}
+            done
+        done
+
+    )
+}
