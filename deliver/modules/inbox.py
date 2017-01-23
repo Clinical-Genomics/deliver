@@ -64,5 +64,5 @@ def make_link(source, dest, link_type='hard'):
             path(dest).chmod(0o644)
             gid = grp.getgrnam("users").gr_gid
             path(dest).chown(-1, gid)
-    except:
-        logging.error("Can't create symlink from {} to {}".format(source, dest))
+    except Exception, e: # catch, print, and continue
+        logging.error(repr(e))
