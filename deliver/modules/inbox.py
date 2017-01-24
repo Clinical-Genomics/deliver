@@ -16,7 +16,7 @@ import grp
 from glob import glob
 from path import path
 
-from cglims.api import ClinicalLims
+from cglims.api import ClinicalLims, ClinicalSample
 
 from ..utils import get_mipname, make_link
 
@@ -27,15 +27,22 @@ logger = logging.getLogger(__name__)
 def inbox_links(config, infile, sample_id, outdir, cust=None):
 
     lims_api = ClinicalLims(**config['lims'])
-    outdir = outdir + '/{cust}/INBOX/{family_id}/'
+    outdir = outdir + '/{cust}/INBOX/{group}/{sample}'
     infile_name = path(infile).basename()
     sample = lims_api.sample(sample_id)
+
+    cg_sample = ClinicalSample(sample)
     cust_sample_id = sample.name
-    family_id = sample.udf['familyID']
+    if cg_sample.pipeline == 'mwgs':
+        group = sample.project.id
+    else:
+        group = sample.udf['familyID']
+
     if not cust:
         cust = sample.udf['customer']
+
     complete_outdir = path.joinpath(outdir.format(
-        cust=cust, family_id=family_id
+        cust=cust, group=group, sample=cust_sample_id
     ))
 
     if infile_name.endswith('fastq.gz'):

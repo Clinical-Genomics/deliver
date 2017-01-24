@@ -41,17 +41,17 @@ deliver_bamvcfs() {
     else
         for sample_id in ${samples[@]}; do
             (>&2 echo "working on sample: ${sample_id}")
-            $(deliver_bam ${sample_id})
+            $(deliver_bamvcf ${sample_id})
         done
         return 0
     fi
 }
 
-deliver_fastqs() {
+deliver_fastqs_sample() {
     # based on a sample id, deliver all fastq files to the cust/INBOX
 
-    sample_id=${1?'please provide a sample id'}; shift
-    fcs="$*"
+    sample_id=${1?'please provide a sample id'}
+    fcs=$(cgstats flowcells --sample ${sample_id})
 
     (
         shopt -s nullglob # only nullglob in here
@@ -63,4 +63,18 @@ deliver_fastqs() {
         done
 
     )
+    return 0
+}
+
+deliver_fastqs_project() {
+    # based on a project_id, deliver all fastq files to the cust/INBOX
+
+    project_id=${1?'please provide a project id'}
+    samples=$(cglims get --project ${project_id} id)
+
+    for sample in ${samples[@]}; do
+        $(deliver_fastqs_sample ${sample})
+    done
+
+    return 0
 }

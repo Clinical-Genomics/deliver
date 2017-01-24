@@ -23,13 +23,13 @@ def get_mipname(fastq_file):
     # H3LGFCCXX-l1t21_973470_CGGCTATG_L001_R2_001.fastq.gz
     # H3LGFCCXX-l1t21_Undetermined_CGGCTATG_L001_R1_001.fastq.gz
 
-    index = nameparts[1]
-    fc = nameparts[0].split('-')[0]
+    index = nameparts[2]
+    fc = dirparts[-5].split("_")[-1][1:] # no worries, this'll always work, right?
     lane = int(nameparts[-3][-1:])
     readdirection=nameparts[-2][-1:]
     rundir = dirparts[-5]
     date = rundir.split("_")[0]
-    sample_id = dirparts[-2].split('_')[1]
+    sample_id = dirparts[-2].split("_")[1]
 
     # X stuff
     undetermined = ''
@@ -37,8 +37,8 @@ def get_mipname(fastq_file):
         undetermined = '-Undetermined'
 
     tile = ''
-    if '-' in fc:
-        tile = fc.split('-')[1].split('t')[1] # H2V2YCCXX-l2t21
+    if '-' in nameparts[0]:
+        tile = nameparts[0].split('-')[1].split('t')[1] # H2V2YCCXX-l2t21
         tile = '-' + tile
 
     newname = "{lane}_{date}_{fc}{tile}{undetermined}_{sample}_{index}_{readdirection}.fastq.gz".format(
