@@ -33,7 +33,7 @@ def get_mipname(fastq_file):
 
     # X stuff
     undetermined = ''
-    if index == 'Undetermined':
+    if nameparts[1] == 'Undetermined':
         undetermined = '-Undetermined'
 
     tile = ''
