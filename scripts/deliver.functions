@@ -1,7 +1,7 @@
 DEMUX_ROOT=/mnt/hds/proj/bioinfo/DEMUX/
 
 deliver_hk() {
-    declare desc="based on a sample name and category, deliver a file to the cust/INBOX"
+    # based on a sample name and category, deliver a file to the cust/INBOX
 
     local sample_id=${1?'please provide a sample id'}
     local category=${2?'please provide a category'}
@@ -48,7 +48,7 @@ deliver_bamvcfs() {
 }
 
 deliver_fastqs_sample() {
-    # based on a sample id, deliver all fastq files to the cust/INBOX
+    # based on a sample id, deliver all fastq files of a sample to the cust/INBOX
 
     sample_id=${1?'please provide a sample id'}
     fcs=$(cgstats flowcells --sample ${sample_id})
@@ -67,10 +67,23 @@ deliver_fastqs_sample() {
 }
 
 deliver_fastqs_project() {
-    # based on a project_id, deliver all fastq files to the cust/INBOX
+    # based on a project_id, deliver all fastq files of the sample belonging of the project to the cust/INBOX
 
     project_id=${1?'please provide a project id'}
     samples=$(cglims get --project ${project_id} id)
+
+    for sample in ${samples[@]}; do
+        $(deliver_fastqs_sample ${sample})
+    done
+
+    return 0
+}
+
+deliver_fastqs_fc() {
+    # based on a fc, deliver all fastq files of the samples on a FC to the cust/INBOX
+
+    FC=${1?'please provide a FC id'}
+    samples=$(cgstats samples --flowcell ${FC})
 
     for sample in ${samples[@]}; do
         $(deliver_fastqs_sample ${sample})
