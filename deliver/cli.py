@@ -15,7 +15,7 @@ __version__ = '1.23.0'
 
 
 @click.group()
-@click.option('-l', '--log-level', default='INFO')
+@click.option('-l', '--log-level', default='INFO', envvar='LOGLEVEL')
 @click.option('-c', '--config', type=click.File('r'))
 @click.version_option(version=__version__, prog_name="deliver")
 @click.pass_context
