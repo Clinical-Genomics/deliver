@@ -56,13 +56,13 @@ deliver_fastqs_sample() {
     (
         shopt -s nullglob # only nullglob in here
 
-        for fc in "${fcs}"; do
+        for fc in ${fcs[@]}; do
             for fastq in ${DEMUX_ROOT}/*${fc}/Unalign*/Project_*/Sample_${sample_id}_*/*fastq.gz ${DEMUX_ROOT}/*${fc}/Unalign*/Project_*/Sample_${sample_id}[BF]_*/*fastq.gz; do
                 deliver inbox --sample ${sample_id} ${fastq}
             done
         done
-
     )
+
     return 0
 }
 
@@ -82,12 +82,18 @@ deliver_fastqs_project() {
 deliver_fastqs_fc() {
     # based on a fc, deliver all fastq files of the samples on a FC to the cust/INBOX
 
-    FC=${1?'please provide a FC id'}
-    samples=$(cgstats samples --flowcell ${FC})
+    fc=${1?'please provide a FC id'}
+    samples=$(cgstats samples --flowcell ${fc})
 
-    for sample in ${samples[@]}; do
-        $(deliver_fastqs_sample ${sample})
-    done
+    (
+        shopt -s nullglob # only nullglob in here
+
+        for sample in ${samples[@]}; do
+            for fastq in ${DEMUX_ROOT}/*${fc}/Unalign*/Project_*/Sample_${sample}_*/*fastq.gz ${DEMUX_ROOT}/*${fc}/Unalign*/Project_*/Sample_${sample}[BF]_*/*fastq.gz; do
+                deliver inbox --sample ${sample} ${fastq}
+            done
+        done
+    )
 
     return 0
 }
