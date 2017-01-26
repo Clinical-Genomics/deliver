@@ -19,7 +19,7 @@ deliver_bamvcf() {
     # based on a sample name, deliver the bam/bai file to the cust/INBOX
 
     local sample_id=${1?'please provide a sample id'}
-    local categories=(bam bai vcf)
+    local categories=(bam bai vcf vcf-clinical-sv-bin vcf-clinical-sv-bin-index)
     local cat_file
 
     for category in ${categories[@]}; do
@@ -58,7 +58,8 @@ deliver_fastqs_sample() {
 
         for fc in ${fcs[@]}; do
             for fastq in ${DEMUX_ROOT}/*${fc}/Unalign*/Project_*/Sample_${sample_id}_*/*fastq.gz ${DEMUX_ROOT}/*${fc}/Unalign*/Project_*/Sample_${sample_id}[BF]_*/*fastq.gz; do
-                deliver inbox --sample ${sample_id} ${fastq}
+                lims_sample_id=$(cglims get ${sample_id} id) # make sure we have the lims sample id and not the CG one
+                deliver inbox --sample ${lims_sample_id} ${fastq}
             done
         done
     )
