@@ -1,14 +1,15 @@
 #!/usr/bin/python
 
 from __future__ import print_function
-import sys
-import os
 import logging
 import re
 import gzip
 import time
 
+from path import path
+
 from cglims.apptag import ApplicationTag
+from ..utils.files import make_link
 
 from access import db
 from datetime import datetime
@@ -38,24 +39,6 @@ def get_sample(sample_id):
         logger.error("Sample '{}' was not found in LIMS".format(sample_id))
 
     return None
-
-def make_link(source, dest, link_type='hard'):
-    # remove previous link
-    #try:
-    #    os.remove(dest)
-    #except OSError:
-    #    pass
-
-    # then create it
-    try:
-        if link_type == 'soft':
-            logger.info("ln -s {} {} ...".format(source, dest))
-            os.symlink(source, dest)
-        else:
-            logger.info("ln {} {} ...".format(os.path.realpath(source), dest))
-            os.link(os.path.realpath(source), dest) # make sure to link to orignal file, not a symlink
-    except:
-        logger.error("Can't create symlink from {} to {}".format(source, dest))
 
 def get_family_id(sample):
     try:
@@ -116,8 +99,10 @@ def ext_links(start_dir, outdir):
 
     logger.info('Version: {} {}'.format(__file__, __version__))
 
-    for fastq_full_file_name in glob(os.path.join(start_dir, '*fastq.gz')):
-        fastq_file_name = os.path.basename(fastq_full_file_name)
+    outdir = path(outdir).abspath() # make sure we don't link with the relative path
+
+    for fastq_full_file_name in glob(path(start_dir).joinpath('*fastq.gz')):
+        fastq_file_name = path(fastq_full_file_name).basename()
         fastq_file_name_split = fastq_file_name.split('_')
 
         # get info from the sample file name
@@ -139,7 +124,7 @@ def ext_links(start_dir, outdir):
         if sample.date_received is not None:
             date = datetime.strptime(sample.date_received, "%Y-%m-%d").strftime("%y%m%d")
         else:
-            mtime = os.path.getmtime(fastq_full_file_name)
+            mtime = path(fastq_full_file_name).getmtime()
             date = time.strftime("%y%m%d", time.localtime(mtime))
 
         # some more info
@@ -147,25 +132,21 @@ def ext_links(start_dir, outdir):
             index = get_index(fastq_full_file_name)
 
         # create dest dir
-        complete_outdir = os.path.join(outdir, cust_name, family_id, seq_type_dir, sample_id, 'fastq')
+        complete_outdir = path(outdir).joinpath(cust_name, family_id, seq_type_dir, sample_id, 'fastq')
         out_filename = '_'.join( [lane, date, FC, sample_id, index, direction ])
-        out_full_filename = os.path.join(complete_outdir, out_filename)
+        out_full_filename = path(complete_outdir).joinpath(out_filename)
         logger.debug(complete_outdir)
         logger.debug(out_filename)
 
         # check if file already exists
-        if os.path.isfile(out_full_filename):
+        if path(out_full_filename).isfile():
             logger.info('Skipping creation of {}. Already exists'.format(out_full_filename))
             continue
 
         # create the out dir
-        if not os.path.isdir(complete_outdir):
-            try:
-                logger.info('mkdir -p ' + complete_outdir)
-                os.makedirs(complete_outdir)
-            except OSError:
-                logger.warning('Failed to create {}'.format(complete_outdir))
-                exit()
+        if not path(complete_outdir).isdir():
+            logger.info('mkdir -p ' + complete_outdir)
+            path(complete_outdir).makedir_p()
 
         # link!
         make_link(
@@ -173,7 +154,3 @@ def ext_links(start_dir, outdir):
             out_full_filename,
             'soft'
         )
-
-if __name__ == '__main__':
-    setup_logging('DEBUG')
-    main(sys.argv[1:])
