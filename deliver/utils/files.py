@@ -66,9 +66,6 @@ def make_link(source, dest, link_type='hard'):
             real_source = path(source).realpath()
             logger.debug("ln {} {} ...".format(real_source, dest))
             path(real_source).link(dest)
-            path(dest).chmod(0o644)
-            gid = grp.getgrnam("users").gr_gid
-#            path(dest).chown(-1, gid) # seems to throw an OSError
     except Exception, e: # catch, print, and continue
         logger.error(repr(e))
         return False

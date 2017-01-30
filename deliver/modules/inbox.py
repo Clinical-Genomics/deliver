@@ -61,6 +61,9 @@ def inbox_links(config, infile, sample_id, outdir, cust=None):
         outfile,
         link_type='hard'
     )
+    path(outfile).chmod(0o644)
+    #gid = grp.getgrnam("users").gr_gid
+    #path(dest).chown(-1, gid) # seems to throw an OSError
 
     if link_rs:
         logger.info("Linked {}".format(outfile))
