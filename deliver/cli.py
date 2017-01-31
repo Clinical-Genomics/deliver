@@ -24,6 +24,7 @@ def link(context, log_level, config):
     setup_logging(level=log_level)
     log.info('{}: version {}'.format(__package__, __version__))
     context.obj = yaml.load(config) if config else {}
+    context.obj['log_level'] = log_level
 
 
 @link.command()
