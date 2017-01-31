@@ -7,61 +7,16 @@ import gzip
 import time
 
 from path import path
-
-from cglims.apptag import ApplicationTag
-from ..utils.files import make_link
-
-from access import db
 from datetime import datetime
 from glob import glob
-from genologics.lims import *
-from genologics.config import BASEURI, USERNAME, PASSWORD
+
+from cglims.api import ClinicalLims, ClinicalSample
+from cglims.apptag import ApplicationTag
+from ..utils.files import make_link
 
 __version__ = '1.9.0'
 
 logger = logging.getLogger(__name__)
-
-def get_sample(sample_id):
-    """ Looks up the internal sample ID from an external ID in LIMS
-    args:
-        external_id (str): external sample ID
-
-    return (str, None): internal sample ID or None
-    """
-    params = db.readconfig("/home/hiseq.clinical/.scilifelabrc")
-    lims = Lims(BASEURI, USERNAME, PASSWORD)
-
-    try:
-        sample = Sample(lims, id=sample_id)
-        sample.get(force=True)
-        return sample
-    except:
-        logger.error("Sample '{}' was not found in LIMS".format(sample_id))
-
-    return None
-
-def get_family_id(sample):
-    try:
-        family_id = sample.udf['familyID']
-    except KeyError:
-        family_id = None
-
-    return family_id
-
-def get_cust_name(sample):
-    try:
-        cust_name = sample.udf['customer']
-        if cust_name is not None:
-            cust_name = cust_name.lower()
-    except KeyError:
-        logger.error("'{}' internal customer name is not set".format(sample.id))
-        return None
-
-    if not re.match(r'cust\d{3}', cust_name):
-        logger.error("'{}' does not match an internal customer name".format(cust_name))
-        return None
-
-    return cust_name
 
 def get_index(fastq_file_name):
     with gzip.open(fastq_file_name, 'rb') as f:
@@ -79,26 +34,9 @@ def get_index(fastq_file_name):
 
         return index
 
-def setup_logging(level='INFO'):
-    root_logger = logging.getLogger()
-    root_logger.setLevel(level)
+def ext_links(config, start_dir, outdir):
 
-    # customize formatter, align each column
-    template = "[%(asctime)s] %(name)-25s %(levelname)-8s %(message)s"
-    formatter = logging.Formatter(template)
-
-    # add a basic STDERR handler to the logger
-    console = logging.StreamHandler()
-    console.setLevel(level)
-    console.setFormatter(formatter)
-
-    root_logger.addHandler(console)
-    return root_logger
-
-def ext_links(start_dir, outdir):
-
-    logger.info('Version: {} {}'.format(__file__, __version__))
-
+    lims_api = ClinicalLims(**config['lims'])
     outdir = path(outdir).abspath() # make sure we don't link with the relative path
 
     for fastq_full_file_name in glob(path(start_dir).joinpath('*fastq.gz')):
@@ -115,12 +53,11 @@ def ext_links(start_dir, outdir):
             FC = 'EXTERNALX'
 
         # get info from LIMS
-        sample = get_sample(sample_id)
-        family_id = get_family_id(sample)
-        cust_name = get_cust_name(sample)
-        raw_apptag = sample.udf['Sequencing Analysis']
-        apptag = ApplicationTag(raw_apptag)
-        seq_type_dir = apptag.analysis_type # get wes|wgs
+        sample = lims_api.sample(sample_id)
+        cgsample = ClinicalSample(sample)
+        family_id = sample.udf.get('familyID', None)
+        cust_name = sample.udf['customer']
+        seq_type_dir = cgsample.apptag.analysis_type # get wes|wgs
         if sample.date_received is not None:
             date = datetime.strptime(sample.date_received, "%Y-%m-%d").strftime("%y%m%d")
         else:
@@ -134,23 +71,25 @@ def ext_links(start_dir, outdir):
         # create dest dir
         complete_outdir = path(outdir).joinpath(cust_name, family_id, seq_type_dir, sample_id, 'fastq')
         out_filename = '_'.join( [lane, date, FC, sample_id, index, direction ])
-        out_full_filename = path(complete_outdir).joinpath(out_filename)
-        logger.debug(complete_outdir)
-        logger.debug(out_filename)
+        dest = path(complete_outdir).joinpath(out_filename)
 
         # check if file already exists
-        if path(out_full_filename).isfile():
-            logger.info('Skipping creation of {}. Already exists'.format(out_full_filename))
+        if path(dest).isfile():
+            logger.debug('Skipping creation of {}. Already exists'.format(dest))
             continue
 
         # create the out dir
-        if not path(complete_outdir).isdir():
-            logger.info('mkdir -p ' + complete_outdir)
-            path(complete_outdir).makedir_p()
+        logger.debug('mkdir -p ' + complete_outdir)
+        path(complete_outdir).makedirs_p()
 
         # link!
-        make_link(
+        success = make_link(
             fastq_full_file_name,
-            out_full_filename,
+            dest,
             'soft'
         )
+
+        if success:
+            logger.info("ln {} {} ...".format(fastq_full_file_name, dest))
+        else:
+            logger.error("{} -> {}".format(fastq_full_file_name, dest))

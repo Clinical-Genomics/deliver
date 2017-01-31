@@ -1,5 +1,4 @@
 click
-access==0.0.22
 PyYAML
 psutil
 mysql-python

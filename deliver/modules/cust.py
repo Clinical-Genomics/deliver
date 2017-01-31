@@ -2,14 +2,15 @@
 
 from __future__ import print_function
 import sys
-import os
 import logging
 import logging.handlers
 import re
+
 from StringIO import StringIO
-from access import db
-from genologics.lims import *
-from genologics.config import BASEURI, USERNAME, PASSWORD
+from path import path
+
+from cglims.api import ClinicalLims, ClinicalSample
+from ..utils.files import make_link
 
 __version__ = '1.20.22'
 
@@ -26,106 +27,100 @@ class MalformedCustomerIDException(Exception):
     def __str__(self):
         return repr("Customer name '{}' for '{}' is not correctly formatted in LIMS".format(self.customer, self.sample_id))
 
-def _connect_lims():
-    """ Connects to LIMS and returns Lims object
-
-    Returns:
-        Lims object
-
-    """
-    params = db.readconfig("/home/hiseq.clinical/.scilifelabrc")
-    return Lims(BASEURI, USERNAME, PASSWORD)
-
-def get_internal_id(external_id):
-    """ Looks up the internal sample ID from an external ID in LIMS
+def get_sample(lims_api, external_id):
+    """ Looks up a sample based on an external ID in LIMS
 
     args:
         external_id (str): external sample ID
 
-    Returns (str, None): internal sample ID or None
+    Returns: ClinicalSample, None
     """
 
-    lims = _connect_lims()
-
     try:
-        samples = lims.get_samples(name=external_id)
+        samples = lims_api.get_samples(name=external_id)
     except:
         logger.error("External ID '{}' was not found in LIMS".format(external_id))
         raise ExternalIDNotFoundException("External ID '{}' was not found in LIMS".format(external_id))
 
     # multiple samples could be returned
-    # Take the one that has a **X tag
+    # take those that are marked as externally sequenced
     ext_samples = []
     for sample in samples:
-        try:
-            application_tag = sample.udf["Sequencing Analysis"]
-        except KeyError:
-            continue
+        cgsample = ClinicalSample(sample)
+        apptag = cgsample.apptag
 
-        if application_tag[2] == 'X':
+        if apptag.is_external:
             ext_samples.append(sample)
 
     ext_samples.sort(key=lambda x: x.date_received, reverse=True)
 
     if len(samples) and len(ext_samples) == 0:
-        logger.error("External ID '{}' does not have correct application tag {}".format(external_id, application_tag))
-        raise ExternalIDNotFoundException("External ID '{}' does not have correct application tag {}".format(external_id, application_tag))
+        logger.error("External ID '{}' does not have correct application tag {}".format(external_id, apptag))
+        raise ExternalIDNotFoundException("External ID '{}' does not have correct application tag {}".format(external_id, apptag))
 
-    return ext_samples[0].id
+    return ext_samples.pop()
 
-def get_cust_name(internal_id):
-    """ Looks up the customer name from an internal ID in LIMS
 
-    Args:
-        internal_id (str): the internal sample ID
-
-    Returns (str, None):
-        the customer name or None
-
-    """
-
-    lims = _connect_lims()
-
-    try:
-        sample = Sample(lims, id=internal_id)
-
-        customer = sample.udf['customer']
-        customer = customer.lower()
-        if not re.match(r'cust\d{3}', customer):
-            raise MalformedCustomerIDException(customer, internal_id)
-        return customer
-    except:
-        raise MalformedCustomerIDException(customer, internal_id)
-
-    return None
-
-def make_link(source, dest, link_type='hard'):
-    """ Create a hard or soft link
+def get_parts(filename):
+    """ Determines the FC, lane, external_id, index, date, extension, and direction from a filename.
 
     Args:
-        source (str): path to the source file
-        dest (str): path to the destination file
-        link_type (str, default hard): hard|soft link
+        filename (str): the filename to examine.
 
-    Returns: None
+    Returns (dict)
     """
-    # remove previous link
-    try:
-        os.remove(dest)
-    except OSError:
-        pass
 
-    # then create it
-    try:
-        if link_type == 'soft':
-            logger.info("ln -s {} {} ...".format(source, dest))
-            os.symlink(source, dest)
-        else:
-            logger.info("ln {} {} ...".format(os.path.realpath(source), dest))
-            # unlink before making hardlink
-            os.link(os.path.realpath(source), dest)
-    except:
-        logger.error("Can't create symlink from {} to {}".format(source, dest))
+    # standard values
+    lane  = '1'
+    date  = '0'
+    FC    = '0'
+    index = '0'
+    # direction
+    # external_id
+
+    filename_split = filename.split('_')
+    direction, extension = filename_split[-1].split('.', 1)
+    direction = str(int(direction)) # easy way of removing leading zero's
+
+    # four formats: external-id_direction, lane_external-id_direction, LANE_DATE_FC_SAMPLE_INDEX_DIRECTION, SAMPLE_FC_LANE_DIRECTION_PART
+    if len(filename_split) == 2:
+        logger.info('Found SAMPLE_DIRECTION format: {}'.format(filename))
+
+        external_id = filename_split[:-1]
+    elif len(filename_split) == 3:
+        logger.info('Found LANE_SAMPLE_DIRECTION format: {}'.format(filename))
+
+        lane  = filename_split[0]
+        external_id = filename_split[1:-1]
+    elif len(filename_split) == 6:
+        logger.info('Found LANE_DATE_FC_SAMPLE_INDEX_DIRECTION format: {}'.format(filename))
+
+        date  = filename_split[1]
+        FC    = filename_split[2]
+        index = filename_split[4]
+        lane  = filename_split[0]
+        external_id = filename_split[3]
+    elif len(filename_split) == 5:
+        m = re.match(r'(.*?)_(.*?)_L(\d+)_R(\d+)_(\d+)', filename)
+        if m:
+            logger.info('Found SAMPLE_INDEX_LANE_DIRECTION_PART format: {}'.format(filename))
+
+            if not re.match(r'S\d', m.group(2)):
+                index = m.group(2)
+            lane  = str(int(m.group(3)))
+            external_id = m.group(1)
+            direction = m.group(4)
+
+    return {
+        'lane': lane,
+        'date': date,
+        'FC': FC,
+        'index': index,
+        'external_id': external_id,
+        'direction': direction,
+        'extension': extension
+    }
+
 
 def setup_logging(level='INFO', delayed_logging=False):
     root_logger = logging.getLogger()
@@ -187,7 +182,7 @@ def setup_logfile(output_file):
         root_logger.removeHandler(log_buffer_handler)
         root_logger.addHandler(file_handler)
 
-def cust_links(fastq_full_file_name, outdir):
+def cust_links(config, fastq_full_file_name, outdir):
     """ Based on an input file name:
         * determine what format the file name has
         * pick out sample name, read direction, lane, flowcell, date, index
@@ -198,80 +193,45 @@ def cust_links(fastq_full_file_name, outdir):
         outdir (str): the path to the outdir
 
     """
-    fastq_file_name = os.path.basename(fastq_full_file_name) # get the file name
-    fastq_target_file = os.path.realpath(fastq_full_file_name) # resolve symlinks
-    fastq_file_name_split = fastq_file_name.split('_')
-    direction, extension = fastq_file_name_split[-1].split('.', 1)
+    lims_api = ClinicalLims(**config['lims'])
+    outdir = path(outdir).abspath() # make sure we don't link with the relative path
+
+    fastq_file_name = path(fastq_full_file_name).basename() # get the file name
+    fastq_target_file = path(fastq_full_file_name).realpath() # resolve symlinks
 
     # set up logging
-    log_file = os.path.join(outdir, fastq_file_name + '.log')
-    setup_logging(delayed_logging=True) # make sure we set up a logger buffer we can write to file later
-    logger.info('Version: {} {}'.format(__file__, __version__))
+    log_file = path(outdir).joinpath(fastq_file_name + '.log')
+    log_level = config.get('log_level', 'INFO')
+    setup_logging(level=log_level, delayed_logging=True) # make sure we set up a logger buffer we can write to file later
 
-    # standard values
-    FC = None
-    lane  = '1'
-    date  = '0'
-    FC    = '0'
-    index = '0'
-    direction = str(int(direction)) # easy way of removing leading zero's
+    parts = get_parts(fastq_file_name)
 
-    # four formats: external-id_direction, lane_external-id_direction, LANE_DATE_FC_SAMPLE_INDEX_DIRECTION, SAMPLE_FC_LANE_DIRECTION_PART
-    if len(fastq_file_name_split) == 2:
-        logger.info('Found SAMPLE_DIRECTION format: {}'.format(fastq_file_name))
+    sample = get_sample(lims_api, parts['external_id'])
+    internal_id = sample.id
+    customer = sample.udf['customer']
 
-        external_id = fastq_file_name_split[:-1]
-    elif len(fastq_file_name_split) == 3:
-        logger.info('Found LANE_SAMPLE_DIRECTION format: {}'.format(fastq_file_name))
-
-        lane  = fastq_file_name_split[0]
-        external_id = fastq_file_name_split[1:-1]
-    elif len(fastq_file_name_split) == 6:
-        logger.info('Found LANE_DATE_FC_SAMPLE_INDEX_DIRECTION format: {}'.format(fastq_file_name))
-
-        date  = fastq_file_name_split[1]
-        FC    = fastq_file_name_split[2]
-        index = fastq_file_name_split[4]
-        lane  = fastq_file_name_split[0]
-        external_id = fastq_file_name_split[3]
-    elif len(fastq_file_name_split) == 5:
-        m = re.match(r'(.*?)_(.*?)_L(\d+)_R(\d+)_(\d+)', fastq_file_name)
-        if m:
-            logger.info('Found SAMPLE_INDEX_LANE_DIRECTION_PART format: {}'.format(fastq_file_name))
-
-            if not re.match(r'S\d', m.group(2)):
-                index = m.group(2)
-            lane  = str(int(m.group(3)))
-            external_id = m.group(1)
-            direction = m.group(4)
-
-    internal_id = get_internal_id(external_id)
-
-    out_file_name = '_'.join([lane, date, FC, internal_id, index, direction])
-    out_file_name = '{}.{}'.format(out_file_name, extension)
-
-    customer = get_cust_name(internal_id)
+    out_file_name = '_'.join([
+        parts['lane'], parts['date'], parts['FC'], internal_id, parts['index'], parts['direction']
+    ])
+    out_file_name = '{}.{}'.format(out_file_name, parts['extension'])
 
     # make out dir
-    complete_outdir = os.path.join(outdir, customer, internal_id)
-    if not os.path.isdir(complete_outdir):
-        try:
-            logger.info('mkdir -p ' + complete_outdir)
-            os.makedirs(complete_outdir)
-        except OSError:
-            logger.error('Failed to create {}'.format(complete_outdir))
-            exit()
+    complete_outdir = path(outdir).joinpath(customer, internal_id)
+    path(complete_outdir).mkdir_p()
 
     # link!
-    make_link(
+    dest = path(complete_outdir).joinpath(out_file_name)
+    path(dest).remove_p()
+    success = make_link(
         fastq_target_file,
-        os.path.join(complete_outdir, out_file_name),
+        dest,
         'hard'
     )
 
-    # append the log to the project log
-    setup_logfile(os.path.join(complete_outdir, 'project.log'))
+    if success:
+        logger.info("ln {} {} ...".format(fastq_target_file, dest))
+    else:
+        logger.error("{} -> {}".format(fastq_target_file, dest))
 
-if __name__ == '__main__':
-    setup_logging('DEBUG')
-    main(sys.argv[1:])
+    # append the log to the project log
+    setup_logfile(path(complete_outdir).joinpath('project.log'))
