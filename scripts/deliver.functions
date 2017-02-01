@@ -19,7 +19,12 @@ deliver_bamvcf() {
     # based on a sample name, deliver the bam/bai file to the cust/INBOX
 
     local sample_id=${1?'please provide a sample id'}
-    local categories=(bam bai vcf vcf-clinical-sv-bin vcf-clinical-sv-bin-index)
+    local categories=(bam bai
+                      bcf-raw bcf-raw-index
+                      bcf-raw-sv
+                      vcf vcf-clinical vcf-research
+                      vcf-clinical-sv vcf-research-sv
+                      vcf-clinical-sv-bin vcf-clinical-sv-bin-index)
     local cat_file
 
     for category in ${categories[@]}; do

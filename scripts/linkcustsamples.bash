@@ -1,6 +1,8 @@
 #!/bin/bash
 
 set -e
+shopt -s expand_aliases
+. ~/.bashrc
 
 # check for md5sum file
 # for each line in md5sum file
