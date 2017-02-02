@@ -11,7 +11,7 @@ from .ext import ext
 
 log = logging.getLogger(__name__)
 
-__version__ = '1.24.1'
+__version__ = '1.24.2'
 
 
 @click.group()
