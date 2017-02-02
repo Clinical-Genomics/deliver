@@ -24,26 +24,42 @@ from ..utils import get_mipname, make_link
 logger = logging.getLogger(__name__)
 
 
-def inbox_links(config, infile, sample_id, outdir, cust=None):
+def inbox_links(config, infile, outdir, sample_id=None, project=None, cust=None):
 
     lims_api = ClinicalLims(**config['lims'])
-    outdir = outdir + '/{cust}/INBOX/{group}/{sample}'
     infile_name = path(infile).basename()
-    sample = lims_api.sample(sample_id)
+
+    outdir_parts = {
+        'outdir': outdir,
+        'cust': None,
+        'INBOX': 'INBOX',
+        'group': None
+    }
+
+    if project:
+        outdir_template = '{outdir}/{cust}/INBOX/{group}/'
+        samples = lims_api.get_samples(projectlimsid=project)
+        sample = samples[0]
+        sample_id = sample.id
+    else:
+        outdir_template = '{outdir}/{cust}/INBOX/{group}/{sample}'
+        sample = lims_api.sample(sample_id)
+        outdir_parts['sample'] = sample.name
 
     cg_sample = ClinicalSample(sample)
-    cust_sample_id = sample.name
+
+    if not cust:
+        cust = sample.udf['customer']
+    outdir_parts['cust'] = cust
+
     if cg_sample.pipeline == 'mwgs':
         group = sample.project.id
     else:
         group = sample.udf['familyID']
+    outdir_parts['group'] = group
 
-    if not cust:
-        cust = sample.udf['customer']
-
-    complete_outdir = path.joinpath(outdir.format(
-        cust=cust, group=group, sample=cust_sample_id
-    ))
+    complete_outdir = outdir_template.format(**outdir_parts)
+    cust_sample_id = sample.name
 
     if infile_name.endswith('fastq.gz'):
         # the sample name is in the path, not the file name
@@ -51,8 +67,8 @@ def inbox_links(config, infile, sample_id, outdir, cust=None):
         cust_file_name = rename_file(fastq_mipname, sample_id, cust_sample_id)
     else:
         cust_file_name = rename_file(str(infile_name), sample_id, cust_sample_id)
-    path(complete_outdir).makedirs_p()
 
+    path(complete_outdir).makedirs_p()
     outfile = path.joinpath(complete_outdir, cust_file_name)
 
     # link!
