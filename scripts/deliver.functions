@@ -4,12 +4,12 @@ DEMUX_ROOT=/mnt/hds/proj/bioinfo/DEMUX/
 add_demux() {
     RUNPATH=${1?'Path to the DEMUX FC'}
 
-    if python /mnt/hds/proj/bioinfo/SCRIPTS/xparseunaligned.py ${RUNPATH} &> ${RUNPATH}/LOG/xparseunaligned.`date +'%Y%m%d%H%M%S'`.log; then
+    if /mnt/hds/proj/bioinfo/SERVER/miniconda/envs/oldcgstats/bin/python /mnt/hds/proj/bioinfo/SCRIPTS/xparseunaligned.py ${RUNPATH} &> ${RUNPATH}/LOG/xparseunaligned.`date +'%Y%m%d%H%M%S'`.log; then
         echo "Added to cgstats (clinical-db)"
     else
         (>&2 echo "ERROR failed to add to cgstats (clinical-db)")
     fi
-    if python /mnt/hds/proj/bioinfo/SERVER/apps/deliver/scripts/xparseunaligned.py ${RUNPATH} /mnt/hds/proj/bioinfo/SERVER/apps/deliver/config/databases.yaml; then
+    if /mnt/hds/proj/bioinfo/SERVER/miniconda/bin/python /mnt/hds/proj/bioinfo/SERVER/apps/deliver/scripts/xparseunaligned.py ${RUNPATH} /mnt/hds/proj/bioinfo/SERVER/apps/deliver/config/databases.yaml; then
         echo "Added to cgstats (AWS)"
     else
         (>&2 echo "ERROR failed to add to cgstats (AWS)")
