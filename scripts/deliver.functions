@@ -113,6 +113,19 @@ deliver_fastqs_sample() {
     return 0
 }
 
+deliver_fastqs_case() {
+    # based on a case_id, deliver all fastq files of the sample belonging to a case to the cust/INBOX
+
+    case_id=${1?'please provide a case id'}
+    samples=$(cglims get ${case_id} id)
+
+    for sample in ${samples[@]}; do
+        $(deliver_fastqs_sample ${sample})
+    done
+
+    return 0
+}
+
 deliver_fastqs_project() {
     # based on a project_id, deliver all fastq files of the sample belonging of the project to the cust/INBOX
 
