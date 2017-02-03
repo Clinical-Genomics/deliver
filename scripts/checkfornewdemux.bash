@@ -1,11 +1,12 @@
 #!/bin/bash
 
+shopt -s expand_aliases
 source ~/.bashrc
 
 source /mnt/hds/proj/bioinfo/SCRIPTS/log.bash
 log $(getversion)
 
-MAILTO=bioinfo.clinical@scilifelab.se,anna.zetterlund@scilifelab.se,anna.leinfelt@scilifelab.se,emilia.ottosson@scilifelab.se
+MAILTO=bioinfo.clinical@scilifelab.se,anna.leinfelt@scilifelab.se,emilia.ottosson@scilifelab.se
 UNABASE=/mnt/hds/proj/bioinfo/DEMUX/
 runs=$(ls ${UNABASE})
 for run in ${runs[@]}; do
@@ -31,11 +32,14 @@ for run in ${runs[@]}; do
       fi
       # end add
 
-      # link the fastq files
+      # link the fastq files to MIP_ANALYSIS
       NOW=$(date +"%Y%m%d%H%M%S")
       deliver mip $FC &> ${UNABASE}${run}/createfastqlinks.${FC}.${NOW}.log
 
-      # add teh samples to HK
+      # link the fastq files to cust/INBOX
+      deliver_fastqs_fc ${FC}
+
+      # add the samples to HK
       add_samples $FC
 
       SUBJECT=${FC}
