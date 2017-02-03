@@ -24,7 +24,7 @@ from ..utils import get_mipname, make_link
 logger = logging.getLogger(__name__)
 
 
-def inbox_links(config, infile, outdir, sample_id=None, project=None, cust=None):
+def inbox_links(config, infile, outdir, sample_id=None, project=None, case=None, cust=None):
 
     lims_api = ClinicalLims(**config['lims'])
     infile_name = path(infile).basename()
@@ -40,12 +40,16 @@ def inbox_links(config, infile, outdir, sample_id=None, project=None, cust=None)
         outdir_template = '{outdir}/{cust}/INBOX/{group}/'
         samples = lims_api.get_samples(projectlimsid=project)
         sample = samples[0]
-        sample_id = sample.id
+    elif case:
+        outdir_template = '{outdir}/{cust}/INBOX/{group}/'
+        samples = lims_api.case(*case.split('-', 1))
+        sample = samples[0]
     else:
         outdir_template = '{outdir}/{cust}/INBOX/{group}/{sample}'
         sample = lims_api.sample(sample_id)
         outdir_parts['sample'] = sample.name
 
+    sample_id = sample.id
     cg_sample = ClinicalSample(sample)
 
     if not cust:

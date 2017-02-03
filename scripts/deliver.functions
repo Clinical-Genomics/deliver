@@ -17,6 +17,23 @@ add_demux() {
 
 }
 
+deliver_hk_case() {
+    # based on a sample name and category, deliver a file to the cust/INBOX
+
+    local case=${1?'please provide a case name'}
+    local category=${2?'please provide a category'}
+    local cat_file=
+
+    cat_files=( $(housekeeper get --case ${case} --category ${category}) )
+    if [[ $? == 0 ]]; then
+        for cat_file in ${cat_files[@]}; do
+            deliver inbox --case ${case} ${cat_file}
+        done
+    else
+        (>&2 echo "ERROR no ${category} found for ${project_id}")
+    fi
+}
+
 deliver_hk_sample() {
     # based on a sample name and category, deliver a file to the cust/INBOX
 
@@ -36,18 +53,23 @@ deliver_bamvcf() {
     # based on a sample name, deliver the bam/bai file to the cust/INBOX
 
     local sample_id=${1?'please provide a sample id'}
-    local categories=(bam bai
-                      bcf-raw bcf-raw-index
-                      bcf-raw-sv
-                      vcf vcf-clinical vcf-research
-                      vcf-clinical-bin vcf-clinical-bin-index
-                      vcf-research-bin vcf-research-bin-index
-                      vcf-clinical-sv vcf-research-sv
-                      vcf-clinical-sv-bin vcf-clinical-sv-bin-index)
-    local cat_file
+    local sample_cats=(bam bai)
+    local case_cats=(bcf-raw bcf-raw-index
+                     bcf-raw-sv
+                     vcf vcf-clinical vcf-research
+                     vcf-clinical-bin vcf-clinical-bin-index
+                     vcf-research-bin vcf-research-bin-index
+                     vcf-clinical-sv vcf-research-sv
+                     vcf-clinical-sv-bin vcf-clinical-sv-bin-index)
 
-    for category in ${categories[@]}; do
-        $(deliver_hk ${sample_id} ${category})
+    for category in ${sample_cats[@]}; do
+        $(deliver_hk_sample ${sample_id} ${category})
+    done
+
+    case=$(cglims get ${sample_id} case_id)
+
+    for category in ${case_cats[@]}; do
+        $(deliver_hk_case ${case} ${category})
     done
 
     return 0

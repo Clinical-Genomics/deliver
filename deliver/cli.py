@@ -43,13 +43,14 @@ def mip(flowcell, custoutdir, mipoutdir, demuxdir, force, skip_undetermined):
 @link.command()
 @click.argument('infile', type=click.Path(exists=True))
 @click.option('-s', '--sample', help='Sample name. If set, will deliver to cust/INBOX/{family}/{sample}')
-@click.option('-f', '--project', help='Project ID. If set, will deliver to cust/INBOX/{family}')
-@click.option('-c', '--cust', help='Customer name')
+@click.option('-p', '--project', help='Project ID. If set, will deliver to cust/INBOX/{family}')
+@click.option('-c', '--case', help='case name. If set, will deliver to cust/INBOX/{family}')
+@click.option('--cust', help='Customer name')
 @click.option('--outdir', default='/mnt/hds/proj/', show_default=True, help='Path to customer folders')
 @click.pass_context
-def inbox(context, infile, sample, project, cust, outdir):
+def inbox(context, infile, sample, project, case, cust, outdir):
     """links files to cust/INBOX/project"""
-    inbox_links(context.obj, infile, outdir, sample, project, cust)
+    inbox_links(context.obj, infile, outdir, sample, project, case, cust)
 
 
 @link.command()
