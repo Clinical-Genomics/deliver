@@ -20,14 +20,14 @@ add_demux() {
 deliver_hk_case() {
     # based on a sample name and category, deliver a file to the cust/INBOX
 
-    local case=${1?'please provide a case name'}
+    local case_id=${1?'please provide a case id'}
     local category=${2?'please provide a category'}
     local cat_file=
 
-    cat_files=( $(housekeeper get --case ${case} --category ${category}) )
+    cat_files=( $(housekeeper get --case ${case_id} --category ${category}) )
     if [[ $? == 0 ]]; then
         for cat_file in ${cat_files[@]}; do
-            deliver inbox --case ${case} ${cat_file}
+            deliver inbox --case ${case_id} ${cat_file}
         done
     else
         (>&2 echo "ERROR no ${category} found for ${project_id}")
@@ -66,23 +66,23 @@ deliver_bamvcf() {
         $(deliver_hk_sample ${sample_id} ${category})
     done
 
-    case=$(cglims get ${sample_id} case_id)
+    case_id=$(cglims get ${sample_id} case_id)
 
     for category in ${case_cats[@]}; do
-        $(deliver_hk_case ${case} ${category})
+        $(deliver_hk_case ${case_id} ${category})
     done
 
     return 0
 }
 
 deliver_bamvcfs() {
-    # based on a case name, deliver all bam/bai:s for all samples of a case
+    # based on a case id, deliver all bam/bai:s for all samples of a case
 
-    local case=${1?'please provide a case name'}
-    local samples=($(cglims get ${case} id))
+    local case_id=${1?'please provide a case id'}
+    local samples=($(cglims get ${case_id} id))
 
     if [[ ${#samples[@]} == 0 ]]; then
-        (>&2 echo "ERROR no samples found for case ${case}")
+        (>&2 echo "ERROR no samples found for case ${case_id}")
         return 1
     else
         for sample_id in ${samples[@]}; do
