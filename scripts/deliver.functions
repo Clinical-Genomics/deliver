@@ -1,13 +1,30 @@
 DEMUX_ROOT=/mnt/hds/proj/bioinfo/DEMUX/
 
-deliver_hk() {
+
+add_demux() {
+    RUNPATH=${1?'Path to the DEMUX FC'}
+
+    if python /mnt/hds/proj/bioinfo/SCRIPTS/xparseunaligned.py ${RUNPATH} &> ${RUNPATH}/LOG/xparseunaligned.`date +'%Y%m%d%H%M%S'`.log; then
+        echo "Added to cgstats (clinical-db)"
+    else
+        (>&2 echo "ERROR failed to add to cgstats (clinical-db)")
+    fi
+    if python /mnt/hds/proj/bioinfo/SERVER/apps/deliver/scripts/xparseunaligned.py ${RUNPATH} /mnt/hds/proj/bioinfo/SERVER/apps/deliver/config/databases.yaml; then
+        echo "Added to cgstats (AWS)"
+    else
+        (>&2 echo "ERROR failed to add to cgstats (AWS)")
+    fi
+
+}
+
+deliver_hk_sample() {
     # based on a sample name and category, deliver a file to the cust/INBOX
 
     local sample_id=${1?'please provide a sample id'}
     local category=${2?'please provide a category'}
     local cat_file=
 
-    cat_file=$(housekeeper get --infer-case --sample ${sample_id} --category ${category})
+    cat_file=$(housekeeper get --sample ${sample_id} --category ${category})
     if [[ $? == 0 ]]; then
         deliver inbox --sample ${sample_id} ${cat_file}
     else
@@ -23,6 +40,8 @@ deliver_bamvcf() {
                       bcf-raw bcf-raw-index
                       bcf-raw-sv
                       vcf vcf-clinical vcf-research
+                      vcf-clinical-bin vcf-clinical-bin-index
+                      vcf-research-bin vcf-research-bin-index
                       vcf-clinical-sv vcf-research-sv
                       vcf-clinical-sv-bin vcf-clinical-sv-bin-index)
     local cat_file
