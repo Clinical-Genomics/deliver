@@ -18,7 +18,7 @@ add_demux() {
 }
 
 deliver_hk_case() {
-    # based on a sample name and category, deliver a file to the cust/INBOX
+    # based on a case id and category, deliver a file to the cust/INBOX
 
     local case_id=${1?'please provide a case id'}
     local category=${2?'please provide a category'}
