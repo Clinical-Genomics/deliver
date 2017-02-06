@@ -8,13 +8,9 @@ Deliver files from Housekeeper to the customer's inbox.
 """
 
 from __future__ import print_function
-import sys
 import logging
-import yaml
-import grp
 
-from glob import glob
-from path import path
+from path import Path
 
 from cglims.api import ClinicalLims, ClinicalSample
 
@@ -24,10 +20,11 @@ from ..utils import get_mipname, make_link
 logger = logging.getLogger(__name__)
 
 
-def inbox_links(config, infile, outdir, sample_id=None, project=None, case=None, cust=None):
+def inbox_links(config, infile, outdir, sample_id=None, project=None, case=None,
+                cust=None):
 
     lims_api = ClinicalLims(**config['lims'])
-    infile_name = path(infile).basename()
+    infile_name = Path(infile).basename()
 
     outdir_parts = {
         'outdir': outdir,
@@ -72,8 +69,9 @@ def inbox_links(config, infile, outdir, sample_id=None, project=None, case=None,
     else:
         cust_file_name = rename_file(str(infile_name), sample_id, cust_sample_id)
 
-    path(complete_outdir).makedirs_p()
-    outfile = path.joinpath(complete_outdir, cust_file_name)
+    complete_outpath = Path(complete_outdir)
+    complete_outpath.makedirs_p()
+    outfile = complete_outpath.joinpath(cust_file_name)
 
     # link!
     link_rs = make_link(
@@ -81,9 +79,9 @@ def inbox_links(config, infile, outdir, sample_id=None, project=None, case=None,
         outfile,
         link_type='hard'
     )
-    path(outfile).chmod(0o644)
+    Path(outfile).chmod(0o644)
     #gid = grp.getgrnam("users").gr_gid
-    #path(dest).chown(-1, gid) # seems to throw an OSError
+    #Path(dest).chown(-1, gid) # seems to throw an OSError
 
     if link_rs:
         logger.info("Linked {}".format(outfile))

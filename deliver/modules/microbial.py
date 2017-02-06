@@ -12,7 +12,7 @@ Deliver FASTQ files to be run with the microbial pipeline.
 import logging
 import re
 
-from path import path
+from path import Path
 from cglims.api import ClinicalLims, ClinicalSample
 from clinstatsdb.db import api
 from clinstatsdb.db.models import Demux, Flowcell, Sample, Unaligned
@@ -49,7 +49,7 @@ def link_microbial(config, flowcell=None, project=None, sample=None,
         lims_data = get_limsinfo(lims_sample)
         project_id = lims_data['project_id']
         susy_project_id = lims_data['project_name'].split(' ')[0]
-        sample_root = path(microbial_root).joinpath(project_id, lims_sample.id)
+        sample_root = Path(microbial_root).joinpath(project_id, lims_sample.id)
         if not dry_run:
             if sample_root.exists():
                 log.info("removing dir: %s", sample_root)
@@ -62,7 +62,7 @@ def link_microbial(config, flowcell=None, project=None, sample=None,
         for fastq, new_loc in files:
             log.info("linking file: %s -> %s", fastq, new_loc)
             if not dry_run:
-                path(fastq).symlink(new_loc)
+                Path(fastq).symlink(new_loc)
 
 
 def flowcell_samples(csdb_manager, flowcell_id):
@@ -105,7 +105,7 @@ def from_sample(csdb_manager, demux_root, sample_root, project_id, lims_id):
         fastqs = get_fastqs(demux_root, flowcell_id, project_id, lims_id)
         for fastq_file in fastqs:
             new_name = rename_fastq(fastq_file, flowcell_id, lims_id)
-            new_loc = path(sample_root).joinpath(new_name)
+            new_loc = Path(sample_root).joinpath(new_name)
             yield fastq_file, new_loc
 
 
@@ -121,7 +121,7 @@ def get_flowcells(csdb_manager, lims_id):
 
 def get_fastqs(demux_root, flowcell_id, project_id, lims_id):
     """Get FASTQ files for a sample."""
-    demux_path = path(demux_root)
+    demux_path = Path(demux_root)
     fastqs = demux_path.glob("*{}/Unaligned*/Project_{}/Sample_{}_*/*.fastq.gz"
                              .format(flowcell_id, project_id, lims_id))
     # skip files with "Undertermined" in the filename
@@ -153,4 +153,5 @@ def get_limsinfo(lims_sample):
     project_id = lims_sample.project.id
     project_name = lims_sample.project.name
     customer = lims_sample.udf['customer']
-    return {'customer': customer, 'project_name': project_name, 'project_id': project_id, 'app_tag': app_tag}
+    return {'customer': customer, 'project_name': project_name,
+            'project_id': project_id, 'app_tag': app_tag}

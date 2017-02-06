@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
-
-import grp
 import logging
 
-from path import path
+from path import Path
 
 
 logger = logging.getLogger(__name__)
@@ -24,9 +22,10 @@ def get_mipname(fastq_file):
     # H3LGFCCXX-l1t21_Undetermined_CGGCTATG_L001_R1_001.fastq.gz
 
     index = nameparts[2]
-    fc = dirparts[-5].split("_")[-1][1:] # no worries, this'll always work, right?
+    # no worries, this'll always work, right?
+    fc = dirparts[-5].split("_")[-1][1:]
     lane = int(nameparts[-3][-1:])
-    readdirection=nameparts[-2][-1:]
+    readdirection = nameparts[-2][-1:]
     rundir = dirparts[-5]
     date = rundir.split("_")[0]
     sample_id = dirparts[-2].split("_")[1]
@@ -38,7 +37,8 @@ def get_mipname(fastq_file):
 
     tile = ''
     if '-' in nameparts[0]:
-        tile = nameparts[0].split('-')[1].split('t')[1] # H2V2YCCXX-l2t21
+        # H2V2YCCXX-l2t21
+        tile = nameparts[0].split('-')[1].split('t')[1]
         tile = '-' + tile
 
     newname = "{lane}_{date}_{fc}{tile}{undetermined}_{sample}_{index}_{readdirection}.fastq.gz".format(
@@ -56,18 +56,19 @@ def get_mipname(fastq_file):
 
 
 def make_link(source, dest, link_type='hard'):
-    path(dest).remove_p()
+    Path(dest).remove_p()
 
     try:
         if link_type == 'soft':
             logger.debug("ln -s {} {} ...".format(source, dest))
-            path(source).symlink(dest)
+            Path(source).symlink(dest)
         else:
-            real_source = path(source).realpath()
+            real_source = Path(source).realpath()
             logger.debug("ln {} {} ...".format(real_source, dest))
-            path(real_source).link(dest)
-    except Exception, e: # catch, print, and continue
-        logger.error(repr(e))
+            Path(real_source).link(dest)
+    except Exception as error:
+        # catch, print, and continue
+        logger.error(repr(error))
         return False
 
     return True

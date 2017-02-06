@@ -1,13 +1,10 @@
 #!/usr/bin/python
-
 from __future__ import print_function
-import sys
 import logging
 import logging.handlers
 import re
 
-from StringIO import StringIO
-from path import path
+from path import Path
 
 from cglims.api import ClinicalLims, ClinicalSample
 from ..utils.files import make_link
@@ -16,8 +13,10 @@ __version__ = '1.20.22'
 
 logger = logging.getLogger(__name__)
 
+
 class ExternalIDNotFoundException(Exception):
     pass
+
 
 class MalformedCustomerIDException(Exception):
     def __init__(self, customer, sample_id):
@@ -25,7 +24,9 @@ class MalformedCustomerIDException(Exception):
         self.sample_id = sample_id
 
     def __str__(self):
-        return repr("Customer name '{}' for '{}' is not correctly formatted in LIMS".format(self.customer, self.sample_id))
+        return repr("Customer name '{}' for '{}' is not correctly formatted in LIMS"
+                    .format(self.customer, self.sample_id))
+
 
 def get_sample(lims_api, external_id):
     """ Looks up a sample based on an external ID in LIMS
@@ -40,7 +41,8 @@ def get_sample(lims_api, external_id):
         samples = lims_api.get_samples(name=external_id)
     except:
         logger.error("External ID '{}' was not found in LIMS".format(external_id))
-        raise ExternalIDNotFoundException("External ID '{}' was not found in LIMS".format(external_id))
+        raise ExternalIDNotFoundException("External ID '{}' was not found in LIMS"
+                                          .format(external_id))
 
     # multiple samples could be returned
     # take those that are marked as externally sequenced
@@ -55,8 +57,11 @@ def get_sample(lims_api, external_id):
     ext_samples.sort(key=lambda x: x.date_received, reverse=True)
 
     if len(samples) and len(ext_samples) == 0:
-        logger.error("External ID '{}' does not have correct application tag {}".format(external_id, apptag))
-        raise ExternalIDNotFoundException("External ID '{}' does not have correct application tag {}".format(external_id, apptag))
+        logger.error("External ID '{}' does not have correct application tag {}"
+                     .format(external_id, apptag))
+        msg = ("External ID '{}' does not have correct application tag {}"
+               .format(external_id, apptag))
+        raise ExternalIDNotFoundException(msg)
 
     return ext_samples.pop()
 
@@ -80,7 +85,7 @@ def get_parts(filename):
 
     filename_split = filename.split('_')
     direction, extension = filename_split[-1].split('.', 1)
-    direction = str(int(direction)) # easy way of removing leading zero's
+    direction = str(int(direction))  # easy way of removing leading zero's
 
     # four formats: external-id_direction, lane_external-id_direction, LANE_DATE_FC_SAMPLE_INDEX_DIRECTION, SAMPLE_FC_LANE_DIRECTION_PART
     if len(filename_split) == 2:
@@ -90,10 +95,11 @@ def get_parts(filename):
     elif len(filename_split) == 3:
         logger.info('Found LANE_SAMPLE_DIRECTION format: {}'.format(filename))
 
-        lane  = filename_split[0]
+        lane = filename_split[0]
         external_id = filename_split[1:-1]
     elif len(filename_split) == 6:
-        logger.info('Found LANE_DATE_FC_SAMPLE_INDEX_DIRECTION format: {}'.format(filename))
+        logger.info('Found LANE_DATE_FC_SAMPLE_INDEX_DIRECTION format: {}'
+                    .format(filename))
 
         date  = filename_split[1]
         FC    = filename_split[2]
@@ -103,11 +109,12 @@ def get_parts(filename):
     elif len(filename_split) == 5:
         m = re.match(r'(.*?)_(.*?)_L(\d+)_R(\d+)_(\d+)', filename)
         if m:
-            logger.info('Found SAMPLE_INDEX_LANE_DIRECTION_PART format: {}'.format(filename))
+            logger.info('Found SAMPLE_INDEX_LANE_DIRECTION_PART format: {}'
+                        .format(filename))
 
             if not re.match(r'S\d', m.group(2)):
                 index = m.group(2)
-            lane  = str(int(m.group(3)))
+            lane = str(int(m.group(3)))
             external_id = m.group(1)
             direction = m.group(4)
 
@@ -148,6 +155,7 @@ def setup_logging(level='INFO', delayed_logging=False):
 
     return root_logger
 
+
 def setup_logfile(output_file):
     """Sets up the log file by replacing the MemoryHandler from the logger
     with a FileHandler.
@@ -182,6 +190,7 @@ def setup_logfile(output_file):
         root_logger.removeHandler(log_buffer_handler)
         root_logger.addHandler(file_handler)
 
+
 def cust_links(config, fastq_full_file_name, outdir):
     """ Based on an input file name:
         * determine what format the file name has
@@ -194,15 +203,16 @@ def cust_links(config, fastq_full_file_name, outdir):
 
     """
     lims_api = ClinicalLims(**config['lims'])
-    outdir = path(outdir).abspath() # make sure we don't link with the relative path
+    outdir = Path(outdir).abspath() # make sure we don't link with the relative path
 
-    fastq_file_name = path(fastq_full_file_name).basename() # get the file name
-    fastq_target_file = path(fastq_full_file_name).realpath() # resolve symlinks
+    fastq_file_name = Path(fastq_full_file_name).basename() # get the file name
+    fastq_target_file = Path(fastq_full_file_name).realpath() # resolve symlinks
 
     # set up logging
-    log_file = path(outdir).joinpath(fastq_file_name + '.log')
+    log_file = Path(outdir).joinpath(fastq_file_name + '.log')
     log_level = config.get('log_level', 'INFO')
-    setup_logging(level=log_level, delayed_logging=True) # make sure we set up a logger buffer we can write to file later
+    # make sure we set up a logger buffer we can write to file later
+    setup_logging(level=log_level, delayed_logging=True)
 
     parts = get_parts(fastq_file_name)
 
@@ -216,12 +226,12 @@ def cust_links(config, fastq_full_file_name, outdir):
     out_file_name = '{}.{}'.format(out_file_name, parts['extension'])
 
     # make out dir
-    complete_outdir = path(outdir).joinpath(customer, internal_id)
-    path(complete_outdir).mkdir_p()
+    complete_outdir = Path(outdir).joinpath(customer, internal_id)
+    Path(complete_outdir).mkdir_p()
 
     # link!
-    dest = path(complete_outdir).joinpath(out_file_name)
-    path(dest).remove_p()
+    dest = Path(complete_outdir).joinpath(out_file_name)
+    Path(dest).remove_p()
     success = make_link(
         fastq_target_file,
         dest,
@@ -234,4 +244,4 @@ def cust_links(config, fastq_full_file_name, outdir):
         logger.error("{} -> {}".format(fastq_target_file, dest))
 
     # append the log to the project log
-    setup_logfile(path(complete_outdir).joinpath('project.log'))
+    setup_logfile(Path(complete_outdir).joinpath('project.log'))

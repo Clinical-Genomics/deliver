@@ -7,7 +7,7 @@ import glob
 import re
 import logging
 
-from path import path
+from path import Path
 
 from cglims.apptag import ApplicationTag
 from cglims.api import ClinicalSample
@@ -20,6 +20,7 @@ from ..utils import get_mipname, make_link
 log = logging.getLogger(__name__)
 
 db_params = []
+
 
 def getsamplesfromflowcell(demuxdir, flwc):
     samples = glob.glob("{demuxdir}*{flowcell}/Unalign*/Project_*/Sample_*"
@@ -47,6 +48,7 @@ def getsampleinfofromname(sample):
        replies = dbc.generalquery( query )
     return replies
 
+
 def getsampleinfofromname_glob(fc, demuxdir, sample):
     samples = glob.glob("{demuxdir}/*/Unalign*/Project_*/Sample_{sample}*/*fastq.gz"
                         .format(demuxdir=demuxdir, sample=sample))
@@ -59,9 +61,10 @@ def getsampleinfofromname_glob(fc, demuxdir, sample):
         lanes.add(lane)
 
     for lane in lanes:
-        replies.append( { 'fc': fc, 'lane': lane } )
+        replies.append({'fc': fc, 'lane': lane})
 
     return replies
+
 
 def is_pooled_lane(flowcell, lane):
     global db_params
@@ -92,7 +95,8 @@ def get_fastq_files(demuxdir, fc, lane, sample_name):
         )))
 
     if not fastqfiles:
-        log.error('No fastq files found for {} on FC {} on lane {}'.format(sample_name, fc, lane))
+        log.error("No fastq files found for {} on FC {} on lane {}"
+                  .format(sample_name, fc, lane))
 
     return fastqfiles
 
@@ -151,10 +155,11 @@ def demux_links(fc, custoutdir, mipoutdir, demuxdir, force, skip_undetermined):
         requested_reads = application_tag.reads / 1000000
         seq_type = application_tag.sequencing
 
-        readcounts = .75 * float(requested_reads)    # Accepted readcount is 75% of ordered million reads
+        # Accepted readcount is 75% of ordered million reads
+        readcounts = .75 * float(requested_reads)
         raw_apptag = sample.udf['Sequencing Analysis']
         apptag = ApplicationTag(raw_apptag)
-        seq_type_dir = apptag.analysis_type # get wes|wgs
+        seq_type_dir = apptag.analysis_type  # get wes|wgs
         q30_cutoff = analysis_cutoff(seq_type_dir)
 
         try:
@@ -163,7 +168,7 @@ def demux_links(fc, custoutdir, mipoutdir, demuxdir, force, skip_undetermined):
                 cust_name = cust_name.lower()
         except KeyError:
             cust_name = None
-        if cust_name == None:
+        if cust_name is None:
             log.error("'{}' internal customer name is not set".format(sample_id))
             continue
         elif not re.match(r'cust\d{3}', cust_name):
@@ -207,8 +212,8 @@ def demux_links(fc, custoutdir, mipoutdir, demuxdir, force, skip_undetermined):
         if readcounts:
             if force or rc > readcounts: # If enough reads are obtained do
                 # try to create new dir structure
-                sample_outdir = path(mipoutdir).joinpath(cust_name, family_id, seq_type_dir, sample_id, 'fastq')
-                path(sample_outdir).makedirs_p()
+                sample_outdir = Path(mipoutdir).joinpath(cust_name, family_id, seq_type_dir, sample_id, 'fastq')
+                Path(sample_outdir).makedirs_p()
 
                 # create symlinks for each fastq file
                 link_results = {} # { fc: # of link }
@@ -226,7 +231,7 @@ def demux_links(fc, custoutdir, mipoutdir, demuxdir, force, skip_undetermined):
                                 continue
 
                         outfile = get_mipname(fastqfile)
-                        outfile = path(sample_outdir).joinpath(outfile)
+                        outfile = Path(sample_outdir).joinpath(outfile)
 
                         link_rs = make_link(
                             fastqfile,
@@ -236,16 +241,19 @@ def demux_links(fc, custoutdir, mipoutdir, demuxdir, force, skip_undetermined):
 
                         if link_rs:
                             link_results[fclane['fc']] += 1
-                
+
                 link_results_str = ', '.join([ "{} ({} files)".format(fc, files) for fc, files in link_results.items() ])
                 log.info("Linked {} from {}".format(sample_id, link_results_str))
 
             else:                        # Otherwise just present the data
-              log.error("{sample_id} FAIL with {readcount} M reads.\n"
-                    "Requested with {reqreadcount} M reads.\n"
-                    "These flowcells summarized {fclanes}".format(sample_id=sample_id, readcount=rc, fclanes=fclanes, reqreadcount=readcounts))
+                log.error("{sample_id} FAIL with {readcount} M reads.\n"
+                          "Requested with {reqreadcount} M reads.\n"
+                          "These flowcells summarized {fclanes}"
+                          .format(sample_id=sample_id, readcount=rc,
+                                  fclanes=fclanes, reqreadcount=readcounts))
         else:
             log.error("{} - no analysis parameter specified in lims".format(sample_id))
+
 
 if __name__ == '__main__':
     main(sys.argv[1:])
