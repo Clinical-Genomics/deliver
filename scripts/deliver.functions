@@ -149,7 +149,7 @@ deliver_fastqs_fc() {
         shopt -s nullglob # only nullglob in here
 
         for sample in ${samples[@]}; do
-            for fastq in ${DEMUX_ROOT}/*${fc}/Unalign*/Project_*/Sample_${sample}_*/*fastq.gz ${DEMUX_ROOT}/*${fc}/Unalign*/Project_*/Sample_${sample}[BF]_*/*fastq.gz; do
+            for fastq in ${DEMUX_ROOT}/*${fc}/Unalign*/Project_*/Sample_${sample}_*/*fastq.gz ${DEMUX_ROOT}/*${fc}/Unalign*/Project_*/Sample_${sample}/*fastq.gz ${DEMUX_ROOT}/*${fc}/Unalign*/Project_*/Sample_${sample}[BF]_*/*fastq.gz; do
                 deliver inbox --sample ${sample} ${fastq}
             done
         done
