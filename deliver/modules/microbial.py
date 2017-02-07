@@ -39,8 +39,14 @@ def link_microbial(config, flowcell=None, project=None, sample=None,
         raise ValueError("must supply flowcell, project or sample!")
 
     lims_samples = (lims_api.sample(lims_id) for lims_id in lims_ids)
-    relevant_samples = (sample for sample in lims_samples
-                        if ClinicalSample(sample).pipeline == 'mwgs')
+    relevant_samples = []
+    for sample in lims_samples:
+        cgsample = ClinicalSample(sample)
+        if cgsample.pipeline == 'mwgs':
+            relevant_samples.append(sample)
+        else:
+            log.warning('Skipping {} (pipeline: {}) (apptag: {})'.\
+                      format(sample.id, cgsample.pipeline, cgsample.apptag))
 
     for lims_sample in relevant_samples:
         log.info("working on sample: %s", lims_sample.id)
