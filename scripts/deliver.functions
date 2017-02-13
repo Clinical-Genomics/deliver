@@ -103,7 +103,8 @@ deliver_fastqs_sample() {
         shopt -s nullglob # only nullglob in here
 
         for fc in ${fcs[@]}; do
-            for fastq in ${DEMUX_ROOT}/*${fc}/Unalign*/Project_*/Sample_${sample_id}_*/*fastq.gz ${DEMUX_ROOT}/*${fc}/Unalign*/Project_*/Sample_${sample_id}[BF]_*/*fastq.gz; do
+            fastq_files=( $(deliver ls ${fc} --sample ${sample_id}) )
+            for fastq in ${fastq_files[@]}; do
                 lims_sample_id=$(cglims get ${sample_id} id) # make sure we have the lims sample id and not the CG one
                 deliver inbox --sample ${lims_sample_id} ${fastq}
             done
@@ -148,9 +149,11 @@ deliver_fastqs_fc() {
     (
         shopt -s nullglob # only nullglob in here
 
-        for sample in ${samples[@]}; do
-            for fastq in ${DEMUX_ROOT}/*${fc}/Unalign*/Project_*/Sample_${sample}_*/*fastq.gz ${DEMUX_ROOT}/*${fc}/Unalign*/Project_*/Sample_${sample}/*fastq.gz ${DEMUX_ROOT}/*${fc}/Unalign*/Project_*/Sample_${sample}[BF]_*/*fastq.gz; do
-                deliver inbox --sample ${sample} ${fastq}
+        for sample_id in ${samples[@]}; do
+            lims_sample_id=$(cglims get ${sample_id} id) # make sure we have the lims sample id and not the CG one
+            fastq_files=( $(deliver ls ${fc} --sample ${sample_id}) )
+            for fastq in ${fastq_files[@]}; do
+                deliver inbox --sample ${lims_sample_id} ${fastq}
             done
         done
     )

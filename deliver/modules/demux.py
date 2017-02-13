@@ -68,6 +68,8 @@ def getsampleinfofromname_glob(fc, demuxdir, sample):
 
 def is_pooled_lane(flowcell, lane):
     global db_params
+    if not db_params:
+        db_params = db.readconfig("/home/hiseq.clinical/.scilifelabrc")
     q = ("SELECT count(samplename) AS sample_count "
         "FROM sample "
         "JOIN unaligned ON sample.sample_id = unaligned.sample_id "
@@ -80,7 +82,7 @@ def is_pooled_lane(flowcell, lane):
     return True if int(replies[0]['sample_count']) > 1 else False
 
 
-def get_fastq_files(demuxdir, fc, lane, sample_name):
+def get_fastq_files(demuxdir, fc, lane='?', sample_name='*'):
     fastqfiles = glob.glob(
         "{demuxdir}*{fc}/Unalign*/Project_*/Sample_{sample_name}_*/*L00{lane}*gz".format(
           demuxdir=demuxdir, fc=fc, sample_name=sample_name, lane=lane

@@ -4,14 +4,16 @@ import click
 import yaml
 
 from .exc import MissingFlowcellError
-from .modules.demux import demux_links
+from .modules.demux import demux_links, is_pooled_lane, get_fastq_files
 from .modules.inbox import inbox_links
 from .modules.microbial import link_microbial
+from .utils.fastq import get_lane, is_undetermined
 from .ext import ext
 
 log = logging.getLogger(__name__)
 
 __version__ = '1.26.6'
+DEMUXDIR='/mnt/hds/proj/bioinfo/DEMUX/'
 
 
 @click.group()
@@ -22,7 +24,6 @@ __version__ = '1.26.6'
 def link(context, log_level, config):
     """Make linking of FASTQ/BAM files easier!"""
     setup_logging(level=log_level)
-    log.info('{}: version {}'.format(__package__, __version__))
     context.obj = yaml.load(config) if config else {}
     context.obj['log_level'] = log_level
 
@@ -31,7 +32,7 @@ def link(context, log_level, config):
 @click.argument('flowcell', nargs=1)
 @click.option('--custoutdir', default='/mnt/hds/proj/', show_default=True, type=click.Path(exists=True), help='path to customer folders')
 @click.option('--mipoutdir', default='/mnt/hds/proj/bioinfo/MIP_ANALYSIS/customers/', show_default=True, type=click.Path(exists=True), help='path to MIP_ANALYSIS')
-@click.option('--demuxdir', default='/mnt/hds/proj/bioinfo/DEMUX/', show_default=True, type=click.Path(exists=True), help='path to DEMUX')
+@click.option('--demuxdir', default=DEMUXDIR, show_default=True, type=click.Path(exists=True), help='path to DEMUX')
 @click.option('--force', is_flag=True, help='Link regardless of QC. BEWARE that Undetermined indexes will be linked as well even if pooled sample!')
 @click.option('--skip-undetermined', is_flag=True, help='Skip linking undetermined.')
 @click.help_option()
@@ -70,6 +71,35 @@ def microbial(context, root_dir, sample, flowcell, dry_run, project):
     except MissingFlowcellError as error:
         log.error("can't find flowcell: %s", error.message)
         context.abort()
+
+
+@link.command()
+@click.argument('flowcell', required=True)
+@click.argument('lane', required=True)
+def pooled(flowcell, lane):
+    """Return whether or not this lane is pooled."""
+
+    import sys
+    if is_pooled_lane(flowcell, lane):
+        sys.exit(0)
+    else:
+        sys.exit(1)
+
+
+@link.command()
+@click.argument('flowcell')
+@click.option('-l', '--lane', default='?')
+@click.option('-s', '--sample', default='*')
+@click.option('-f', '--force', is_flag=True, default=False, help='List all fastq files, including undetermined')
+@click.pass_context
+def ls(context, flowcell, lane, sample, force):
+    """List the fastq files."""
+    fastq_files = get_fastq_files(DEMUXDIR, flowcell, lane, sample)
+
+    for fastq_file in fastq_files:
+        link_me = force or not (is_pooled_lane(flowcell, get_lane(fastq_file)) and is_undetermined(fastq_file))
+        if link_me:
+            click.echo(fastq_file)
 
 
 def setup_logging(level='INFO'):
