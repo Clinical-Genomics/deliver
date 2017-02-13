@@ -12,7 +12,7 @@ from .ext import ext
 
 log = logging.getLogger(__name__)
 
-__version__ = '1.26.6'
+__version__ = '1.27.0'
 DEMUXDIR='/mnt/hds/proj/bioinfo/DEMUX/'
 
 
