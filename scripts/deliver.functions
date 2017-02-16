@@ -99,13 +99,21 @@ deliver_fastqs_sample() {
     sample_id=${1?'please provide a sample id'}
     fcs=$(cgstats flowcells --sample ${sample_id})
 
+    (>&2 echo "Found following FCs for ${sample_id}:")
+    (>&2 echo ${fcs[@]})
+
     (
         shopt -s nullglob # only nullglob in here
+
+        lims_sample_id=$(cglims get ${sample_id} id 2> /dev/null) # make sure we have the lims sample id and not the CG one
+        if [[ -z "${lims_sample_id}" ]]; then
+            (>&2 echo "ERROR: 'cglims get ${sample_id} id' did not yield any results!")
+            return 1
+        fi
 
         for fc in ${fcs[@]}; do
             fastq_files=( $(deliver ls ${fc} --sample ${sample_id}) )
             for fastq in ${fastq_files[@]}; do
-                lims_sample_id=$(cglims get ${sample_id} id) # make sure we have the lims sample id and not the CG one
                 deliver inbox --sample ${lims_sample_id} ${fastq}
             done
         done
@@ -120,6 +128,9 @@ deliver_fastqs_case() {
     case_id=${1?'please provide a case id'}
     samples=$(cglims get ${case_id} id)
 
+    (>&2 echo "Found following samples:")
+    (>&2 echo ${samples[@]})
+
     for sample in ${samples[@]}; do
         $(deliver_fastqs_sample ${sample})
     done
@@ -133,6 +144,9 @@ deliver_fastqs_project() {
     project_id=${1?'please provide a project id'}
     samples=$(cglims get --project ${project_id} id)
 
+    (>&2 echo "Found following samples:")
+    (>&2 echo ${samples[@]})
+
     for sample in ${samples[@]}; do
         $(deliver_fastqs_sample ${sample})
     done
@@ -145,6 +159,9 @@ deliver_fastqs_fc() {
 
     fc=${1?'please provide a FC id'}
     samples=$(cgstats samples --flowcell ${fc})
+
+    (>&2 echo "Found following samples:")
+    (>&2 echo ${samples[@]})
 
     (
         shopt -s nullglob # only nullglob in here
