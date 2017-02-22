@@ -87,10 +87,10 @@ def pooled(flowcell, lane):
 
 
 @link.command()
-@click.argument('flowcell')
+@click.option('-f', '--flowcell', default='*')
 @click.option('-l', '--lane', default='?')
 @click.option('-s', '--sample', default='*')
-@click.option('-f', '--force', is_flag=True, default=False, help='List all fastq files, including undetermined')
+@click.option('-F', '--force', is_flag=True, default=False, help='List all fastq files, including undetermined')
 @click.pass_context
 def ls(context, flowcell, lane, sample, force):
     """List the fastq files."""
