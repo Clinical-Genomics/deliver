@@ -115,7 +115,7 @@ deliver_fastqs_sample() {
         fi
 
         for fc in ${fcs[@]}; do
-            fastq_files=( $(deliver ls ${fc} --sample ${sample_id}) )
+            fastq_files=( $(deliver ls --flowcell ${fc} --sample ${sample_id}) )
             for fastq in ${fastq_files[@]}; do
                 deliver inbox --sample ${lims_sample_id} ${fastq}
             done
@@ -171,7 +171,7 @@ deliver_fastqs_fc() {
 
         for sample_id in ${samples[@]}; do
             lims_sample_id=$(cglims get ${sample_id} id) # make sure we have the lims sample id and not the CG one
-            fastq_files=( $(deliver ls ${fc} --sample ${sample_id}) )
+            fastq_files=( $(deliver ls --flowcell ${fc} --sample ${sample_id}) )
             for fastq in ${fastq_files[@]}; do
                 deliver inbox --sample ${lims_sample_id} ${fastq}
             done
