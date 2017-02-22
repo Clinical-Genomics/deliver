@@ -11,7 +11,10 @@ log() {
 }
 
 
-cases=$(scout cases --institute cust002 --finished)
+cases=$(housekeeper runs --output case --limit 1000 --after `date +'%Y-%m-%d' -d '15 days ago'`)
 for case in ${cases[@]}; do
+    case=${case%% - *}
+    cust=${case%%-*}
+    if [[ $cust != 'cust002' ]]; then continue; fi
     deliver_bamvcfs ${case}
 done
