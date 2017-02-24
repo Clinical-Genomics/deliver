@@ -22,10 +22,16 @@ log = logging.getLogger(__name__)
 db_params = []
 
 
-def getsamplesfromflowcell(demuxdir, flwc):
-    samples = glob.glob("{demuxdir}*{flowcell}/Unalign*/Project_*/Sample_*"
-                        .format(demuxdir=demuxdir, flowcell=flwc))
+def getsamplesfromflowcell(demuxdir, flowcell):
     fc_samples = {}
+    demuxdir_glob = "{demuxdir}*{flowcell}/".format(demuxdir=demuxdir, flowcell=flowcell)
+
+    if not glob.glob(demuxdir_glob):
+        log.error('Directory not found: {}'.format(demuxdir_glob))
+        return fc_samples
+
+    samples = glob.glob("{demuxdir}*{flowcell}/Unalign*/Project_*/Sample_*"
+                        .format(demuxdir=demuxdir, flowcell=flowcell))
     for sample in samples:
         sample = sample.split("/")[-1].split("_")[1]
         # remove reprep (B) and reception control fail (F) letters from
@@ -128,6 +134,10 @@ def demux_links(fc, custoutdir, mipoutdir, demuxdir, force, skip_undetermined):
     db_params = db.readconfig("/home/hiseq.clinical/.scilifelabrc")
     lims = Lims(BASEURI, USERNAME, PASSWORD)
     samples = getsamplesfromflowcell(demuxdir, fc)
+
+    if not samples:
+        log.error('No samples found for {}'.format(fc))
+        exit(1)
 
     for sample_id in samples.iterkeys():
         family_id = None
