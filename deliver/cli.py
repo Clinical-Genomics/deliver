@@ -4,7 +4,7 @@ import click
 import yaml
 
 from .exc import MissingFlowcellError
-from .modules.demux import demux_links, is_pooled_lane, get_fastq_files
+from .modules.demux import demux_links, is_pooled_lane, get_fastq_files, getsampleinfo
 from .modules.inbox import inbox_links
 from .modules.microbial import link_microbial
 from .utils.fastq import get_lane, is_undetermined
@@ -87,14 +87,29 @@ def pooled(flowcell, lane):
 
 
 @link.command()
-@click.option('-f', '--flowcell', default='*')
-@click.option('-l', '--lane', default='?')
-@click.option('-s', '--sample', default='*')
+@click.option('-f', '--flowcell', default=None)
+@click.option('-l', '--lane', default=None)
+@click.option('-s', '--sample', default=None)
+@click.option('-c', '--check', is_flag=True, default=True, help='Check expected fastq files with cgstats')
 @click.option('-F', '--force', is_flag=True, default=False, help='List all fastq files, including undetermined')
 @click.pass_context
-def ls(context, flowcell, lane, sample, force):
+def ls(context, flowcell, lane, sample, check, force):
     """List the fastq files."""
-    fastq_files = get_fastq_files(DEMUXDIR, flowcell, lane, sample)
+
+    fastq_files = []
+    if check:
+        samples = getsampleinfo(flowcell, lane, sample)
+        for rs in samples:
+            flowcell = rs['flowcell']
+            lane = rs['lane']
+            sample = rs['samplename']
+            fastq_files.extend(get_fastq_files(DEMUXDIR, flowcell, lane, sample))
+    else:
+        flowcell = flowcell if flowcell else '*'
+        lane = lane if lane else '?'
+        sample = sample if sample else '*'
+        fastq_files = get_fastq_files(DEMUXDIR, flowcell, lane, sample)
+
 
     for fastq_file in fastq_files:
         link_me = force or not (is_pooled_lane(flowcell, get_lane(fastq_file)) and is_undetermined(fastq_file))

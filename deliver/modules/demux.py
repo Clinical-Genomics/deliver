@@ -41,6 +41,28 @@ def getsamplesfromflowcell(demuxdir, flowcell):
     return fc_samples
 
 
+def getsampleinfo(flowcell=None, lane=None, sample=None):
+    global db_params
+    if not db_params:
+        db_params = db.readconfig("/home/hiseq.clinical/.scilifelabrc")
+    query = (" SELECT samplename, flowcellname AS flowcell, lane " +
+             " FROM sample, unaligned, flowcell, demux " +
+             " WHERE sample.sample_id = unaligned.sample_id AND unaligned.demux_id = demux.demux_id " +
+             " AND demux.flowcell_id = flowcell.flowcell_id ")
+    if sample:
+        query += " AND (samplename LIKE '{sample}\_%' OR samplename = '{sample}' OR samplename LIKE '{sample}B\_%' OR samplename LIKE '{sample}F\_%')".format(sample=sample)
+
+    if flowcell:
+        query += " AND flowcellname = '{flowcell}'".format(flowcell=flowcell)
+
+    if lane:
+        query += " AND lane = {lane}".format(lane=lane)
+
+    with db.dbconnect(db_params['CLINICALDBHOST'], db_params['CLINICALDBPORT'], db_params['STATSDB'], db_params['CLINICALDBUSER'], db_params['CLINICALDBPASSWD']) as dbc:
+       replies = dbc.generalquery( query )
+    return replies
+
+
 def getsampleinfofromname(sample):
     global db_params
     query = (" SELECT sample.sample_id AS id, samplename, flowcellname AS fc, " +
@@ -90,15 +112,15 @@ def is_pooled_lane(flowcell, lane):
 
 def get_fastq_files(demuxdir, fc='*', lane='?', sample_name='*'):
     fastqfiles = glob.glob(
-        "{demuxdir}*{fc}/Unalign*/Project_*/Sample_{sample_name}_*/*L00{lane}*gz".format(
+        "{demuxdir}*{fc}/Unalign*/Project_*/Sample_{sample_name}_*/*L00{lane}*fastq.gz".format(
           demuxdir=demuxdir, fc=fc, sample_name=sample_name, lane=lane
         ))
     fastqfiles.extend(glob.glob(
-        "{demuxdir}*{fc}/Unalign*/Project_*/Sample_{sample_name}/*L00{lane}*gz".format(
+        "{demuxdir}*{fc}/Unalign*/Project_*/Sample_{sample_name}/*L00{lane}*fastq.gz".format(
           demuxdir=demuxdir, fc=fc, sample_name=sample_name, lane=lane
         )))
     fastqfiles.extend(glob.glob(
-        "{demuxdir}*{fc}/Unalign*/Project_*/Sample_{sample_name}[BF]_*/*L00{lane}*gz".format(
+        "{demuxdir}*{fc}/Unalign*/Project_*/Sample_{sample_name}[BF]_*/*L00{lane}*fastq.gz".format(
           demuxdir=demuxdir, fc=fc, sample_name=sample_name, lane=lane
         )))
 
