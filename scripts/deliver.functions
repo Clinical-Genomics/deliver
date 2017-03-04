@@ -185,6 +185,7 @@ rm_fastqs_project() {
     for sample_id in ${samples[@]}; do
         fastq_files=( $(deliver ls --sample ${sample_id}) )
         for fastq in ${fastq_files[@]}; do
+            echo "rm $(readlink -e ${fastq})"
             rm $(readlink -e ${fastq})
         done
     done
