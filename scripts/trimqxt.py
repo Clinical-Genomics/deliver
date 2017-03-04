@@ -10,7 +10,7 @@ import datetime
 import shutil
 from access import db, lims
 
-__version__ = '1.27.9'
+__version__ = '1.27.10'
 
 logger = logging.getLogger(__name__)
 
