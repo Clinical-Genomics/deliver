@@ -63,7 +63,11 @@ deliver_bamvcf() {
                      vcf-clinical-bin vcf-clinical-bin-index
                      vcf-research-bin vcf-research-bin-index
                      vcf-clinical-sv vcf-research-sv
-                     vcf-clinical-sv-bin vcf-clinical-sv-bin-index)
+                     vcf-clinical-sv-bin vcf-clinical-sv-bin-index
+                     gbcf gbcf-index
+                     no-acmg-vcf acmg-vcf
+                     no-acmg-sv-vcf acmg-sv-vcf
+                     )
 
     for category in ${sample_cats[@]}; do
         $(deliver_hk_sample ${sample_id} ${category})
@@ -185,6 +189,7 @@ rm_fastqs_project() {
     for sample_id in ${samples[@]}; do
         fastq_files=( $(deliver ls --sample ${sample_id}) )
         for fastq in ${fastq_files[@]}; do
+            echo $fastq
             echo "rm $(readlink -e ${fastq})"
             rm $(readlink -e ${fastq})
         done
