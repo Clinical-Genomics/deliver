@@ -112,15 +112,15 @@ def is_pooled_lane(flowcell, lane):
 
 def get_fastq_files(demuxdir, fc='*', lane='?', sample_name='*'):
     fastqfiles = glob.glob(
-        "{demuxdir}*{fc}/Unalign*/Project_*/Sample_{sample_name}_*/*L00{lane}*fastq.gz".format(
+        "{demuxdir}/*{fc}/Unalign*/Project_*/Sample_{sample_name}_*/*L00{lane}*fastq.gz".format(
           demuxdir=demuxdir, fc=fc, sample_name=sample_name, lane=lane
         ))
     fastqfiles.extend(glob.glob(
-        "{demuxdir}*{fc}/Unalign*/Project_*/Sample_{sample_name}/*L00{lane}*fastq.gz".format(
+        "{demuxdir}/*{fc}/Unalign*/Project_*/Sample_{sample_name}/*L00{lane}*fastq.gz".format(
           demuxdir=demuxdir, fc=fc, sample_name=sample_name, lane=lane
         )))
     fastqfiles.extend(glob.glob(
-        "{demuxdir}*{fc}/Unalign*/Project_*/Sample_{sample_name}[BF]_*/*L00{lane}*fastq.gz".format(
+        "{demuxdir}/*{fc}/Unalign*/Project_*/Sample_{sample_name}[BF]_*/*L00{lane}*fastq.gz".format(
           demuxdir=demuxdir, fc=fc, sample_name=sample_name, lane=lane
         )))
 

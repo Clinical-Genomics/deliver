@@ -16,9 +16,11 @@ from path import Path
 from cglims.api import ClinicalLims, ClinicalSample
 from clinstatsdb.db import api
 from clinstatsdb.db.models import Demux, Flowcell, Sample, Unaligned
+from sqlalchemy import or_
 from sqlalchemy.orm.exc import NoResultFound
 
 from deliver.exc import MissingFlowcellError
+from deliver.modules.demux import get_fastq_files
 
 log = logging.getLogger(__name__)
 
@@ -121,17 +123,18 @@ def get_flowcells(csdb_manager, lims_id):
                      .join(Flowcell.demuxes)
                      .join(Demux.unaligned)
                      .join(Unaligned.sample)
-                     .filter(Sample.samplename.like("{}_%".format(lims_id))))
+                     .filter(
+                         or_(Sample.samplename.like("{}_%".format(lims_id)), Sample.samplename.like("{}".format(lims_id)))
+                     ))
     return query
 
 
 def get_fastqs(demux_root, flowcell_id, project_id, lims_id):
     """Get FASTQ files for a sample."""
     demux_path = Path(demux_root)
-    fastqs = demux_path.glob("*{}/Unaligned*/Project_{}/Sample_{}_*/*.fastq.gz"
-                             .format(flowcell_id, project_id, lims_id))
+    fastqs = get_fastq_files(demuxdir=demux_root, fc=flowcell_id, sample_name=lims_id)
     # skip files with "Undertermined" in the filename
-    relevant_files = (fastq_path for fastq_path in fastqs
+    relevant_files = (Path(fastq_path) for fastq_path in fastqs
                       if '_Undetermined_' not in fastq_path)
     return relevant_files
 
