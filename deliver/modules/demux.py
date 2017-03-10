@@ -238,7 +238,7 @@ def demux_links(fc, custoutdir, mipoutdir, demuxdir, force, skip_undetermined):
             family_id = sample.udf['familyID']
         except KeyError:
             family_id = None
-        if family_id == None and seq_type != 'RML':
+        if family_id == 'NA' or (family_id == None and seq_type != 'RML'):
             log.error("'{}' family_id is not set".format(sample_id))
             continue
 
