@@ -78,18 +78,22 @@ def getsampleinfofromname(sample):
 
 
 def getsampleinfofromname_glob(fc, demuxdir, sample):
-    samples = glob.glob("{demuxdir}/*/Unalign*/Project_*/Sample_{sample}*/*fastq.gz"
+    fastqs = glob.glob("{demuxdir}/*/Unalign*/Project_*/Sample_{sample}*/*fastq.gz"
                         .format(demuxdir=demuxdir, sample=sample))
 
     replies = []
-    lanes = set()
-    for sample in samples:
+    fcs = {} # fc: lanes
+    for sample in fastqs:
         sample_split = sample.split("/")[-1].split("_")
-        lane = int(sample_split[3][1:])
-        lanes.add(lane)
+        fc = sample.split('/')[-5][-9:]
+        if fc not in fcs:
+            fcs[fc] = set()
+        lane = int(sample_split[2][1:])
+        fcs[fc].add(lane)
 
-    for lane in lanes:
-        replies.append({'fc': fc, 'lane': lane})
+    for fc, lanes in fcs.items():
+        for lane in lanes:
+            replies.append({'fc': fc, 'lane': lane})
 
     return replies
 
@@ -238,8 +242,12 @@ def demux_links(fc, custoutdir, mipoutdir, demuxdir, force, skip_undetermined):
             family_id = sample.udf['familyID']
         except KeyError:
             family_id = None
-        if family_id == 'NA' or (family_id == None and seq_type != 'RML'):
+        if family_id == 'NA' or family_id == None:
             log.error("'{}' family_id is not set".format(sample_id))
+            continue
+
+        if seq_type == 'RML':
+            log.error("'{}' is RML - skipping".format(sample_id))
             continue
 
         # create the links for the analysis
