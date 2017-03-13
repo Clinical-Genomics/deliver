@@ -34,7 +34,7 @@ for run in ${runs[@]}; do
 
       # link the fastq files to MIP_ANALYSIS
       NOW=$(date +"%Y%m%d%H%M%S")
-      deliver mip $FC &> ${UNABASE}${run}/createfastqlinks.${FC}.${NOW}.log
+      deliver mip --flowcell $FC &> ${UNABASE}${run}/createfastqlinks.${FC}.${NOW}.log
       deliver microbial --flowcell $FC &> ${UNABASE}${run}/microbial.${FC}.${NOW}.log
 
       # link the fastq files to cust/INBOX
