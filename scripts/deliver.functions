@@ -1,5 +1,11 @@
 DEMUX_ROOT=/mnt/hds/proj/bioinfo/DEMUX/
+EXT_ROOT=/mnt/hds/proj/bioinfo/EXTERNAL/
 
+
+log() {
+    NOW=$(date +"%Y%m%d%H%M%S")
+    echo "[${NOW}] $@"
+}
 
 add_demux() {
     RUNPATH=${1?'Path to the DEMUX FC'}
@@ -198,6 +204,88 @@ rm_fastqs_project() {
             echo "rm $(readlink -e ${fastq})"
             rm $(readlink -e ${fastq})
         done
+    done
+
+    return 0
+}
+
+import_cust_samples() {
+    indir=${1?'please provide the md5sum directory'}
+
+    for md5sum_file in ${indir}/*md5sum; do
+        (>&2 echo "Found: $md5sum_file")
+        $(import_cust_sample ${md5sum_file})
+    done
+}
+
+import_cust_sample() {
+    ticket_file=${1?'please provide a md5sum file: ${ticketID}.md5sum'}
+    indir=$(readlink -f $(dirname "${ticket_file}"))
+
+    while read -a LINE; do
+        md5sum=${LINE[0]}
+        fastq_file=${LINE[1]}
+        fastq_file=${fastq_file##*/}
+
+        (>&2 echo ${indir}/${fastq_file})
+
+        deliver ext inbox ${indir}/${fastq_file}
+    done < ${ticket_file}
+    mv $ticket_file ${ticket_file}_complete
+}
+
+import_ext_samples() {
+    ext_dir=${1-$EXT_ROOT}
+
+    for sample_dir in ${ext_dir}/cust*/*; do
+        if [[ -e ${sample_dir}/delivered.txt ]]; then
+            (>&2 echo "Delivered: ${sample_dir}")
+            continue
+        fi
+        $(import_ext_sample $(basename ${sample_dir}))
+    done
+}
+
+import_ext_sample() {
+    sample_id=${1?'please provide a sample_id'}
+    ext_dir=${2-$EXT_ROOT}
+    cust_id=$(cglims get ${sample_id} customer)
+
+    sample_dir="${ext_dir}/${cust_id}/${sample_id}"
+
+    if [[ -e ${sample_dir}/delivered.txt ]]; then
+        (>&2 echo "Delivered: ${sample_dir}")
+        continue
+    fi
+
+    (>&2 echo "Found: ${sample_dir}")
+
+    # link the sample
+    deliver ext mip ${sample_dir} | tee >> ${sample_dir}/project.log
+
+    # add sample to HK
+    add_sample $sample_id
+
+    date +'%Y%m%d%H%M%S' > ${sample_dir}/delivered.txt
+}
+
+import_sample_as_ext() {
+    # based on a sample_id, import the sample as an external sample
+
+    sample_id=${1?'please provide a sample id'}
+    cust_id=$(cglims get ${sample_id} customer)
+    name=$(cglims get ${sample_id} name)
+
+    fastqs=$(deliver ls --sample ${sample_id})
+
+    # link to our INBOX first .. with a proper name
+    for fastq in ${fastqs[@]}; do
+        deliver inbox --outdir /mnt/hds/proj/INBOX/ --sample ${sample_id} ${fastq}
+    done
+
+    # now import to EXTERNAL
+    for inbox_fastq in /mnt/hds/proj/INBOX/${cust_id}/INBOX/*/${name}/*.fastq.gz; do
+        deliver ext inbox ${inbox_fastq}
     done
 
     return 0
