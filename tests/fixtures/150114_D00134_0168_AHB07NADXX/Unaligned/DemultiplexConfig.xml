@@ -1,0 +1,31 @@
+<DemultiplexConfig>
+  <Software Version="bcl2fastq-1.8.4" CmdAndArgs="/usr/local/bin/configureBclToFastq.pl --sample-sheet /home/clinical/RUNS/150114_D00134_0168_AHB07NADXX/Data/Intensities/BaseCalls/SampleSheet.csv --use-bases-mask Y101,I6n,Y101 --fastq-cluster-count 0 --input-dir /home/clinical/RUNS/150114_D00134_0168_AHB07NADXX/Data/Intensities/BaseCalls --output-dir /home/clinical/DEMUX/150114_D00134_0168_AHB07NADXX/Unaligned" Name="configureBclToFastq.pl">
+    <Software Version="1.18.61.0" Name="RTA">
+      <Software Version="1.18.61.0" Name="RTA">
+        <Software Version="2.2.38" Platform="HiSeq" Name="HiSeq Control Software" />
+      </Software>
+    </Software>
+  </Software>
+  <FlowcellInfo ID="HB07NADXX" Operator="NN" Recipe="R1" Desc="">
+    <Lane Number="1">
+      <Sample ProjectId="959191" Control="N" Index="ACAGTG" SampleId="SIB911A2_sureselect5" Desc="959191" Ref="hg19" />
+      <Sample ProjectId="504910" Control="N" Index="CGATGT" SampleId="SIB914A2_sureselect2" Desc="504910" Ref="hg19" />
+      <Sample ProjectId="504910" Control="N" Index="CTTGTA" SampleId="SIB914A12_sureselect12" Desc="504910" Ref="hg19" />
+      <Sample ProjectId="504910" Control="N" Index="GAAACC" SampleId="SIB914A15_sureselect15" Desc="504910" Ref="hg19" />
+      <Sample ProjectId="454557" Control="N" Index="GCCAAT" SampleId="SIB910A3_sureselect6" Desc="454557" Ref="hg19" />
+      <Sample ProjectId="504910" Control="N" Index="GGCTAC" SampleId="SIB914A11_sureselect11" Desc="504910" Ref="hg19" />
+      <Sample ProjectId="959191" Control="N" Index="TGACCA" SampleId="SIB911A1_sureselect4" Desc="959191" Ref="hg19" />
+      <Sample ProjectId="Undetermined_indices" Control="N" Index="Undetermined" SampleId="lane1" Desc="Clusters with unmatched barcodes for lane 1" Ref="unknown" />
+    </Lane>
+    <Lane Number="2">
+      <Sample ProjectId="959191" Control="N" Index="ACAGTG" SampleId="SIB911A2_sureselect5" Desc="959191" Ref="hg19" />
+      <Sample ProjectId="504910" Control="N" Index="CGATGT" SampleId="SIB914A2_sureselect2" Desc="504910" Ref="hg19" />
+      <Sample ProjectId="504910" Control="N" Index="CTTGTA" SampleId="SIB914A12_sureselect12" Desc="504910" Ref="hg19" />
+      <Sample ProjectId="504910" Control="N" Index="GAAACC" SampleId="SIB914A15_sureselect15" Desc="504910" Ref="hg19" />
+      <Sample ProjectId="454557" Control="N" Index="GCCAAT" SampleId="SIB910A3_sureselect6" Desc="454557" Ref="hg19" />
+      <Sample ProjectId="504910" Control="N" Index="GGCTAC" SampleId="SIB914A11_sureselect11" Desc="504910" Ref="hg19" />
+      <Sample ProjectId="959191" Control="N" Index="TGACCA" SampleId="SIB911A1_sureselect4" Desc="959191" Ref="hg19" />
+      <Sample ProjectId="Undetermined_indices" Control="N" Index="Undetermined" SampleId="lane2" Desc="Clusters with unmatched barcodes for lane 2" Ref="unknown" />
+    </Lane>
+  </FlowcellInfo>
+</DemultiplexConfig>

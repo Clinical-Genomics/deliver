@@ -23,7 +23,7 @@ db_params = []
 
 
 def getsamplesfromflowcell(demuxdir, flowcell):
-    fc_samples = {}
+    fc_samples = set()
     demuxdir_glob = "{demuxdir}*{flowcell}/".format(demuxdir=demuxdir, flowcell=flowcell)
 
     if not glob.glob(demuxdir_glob):
@@ -37,8 +37,8 @@ def getsamplesfromflowcell(demuxdir, flowcell):
         # remove reprep (B) and reception control fail (F) letters from
         # the samplename
         sample = sample.rstrip('BF')
-        fc_samples[sample] = ''
-    return fc_samples
+        fc_samples.add(sample)
+    return sorted(list(fc_samples))
 
 
 def getsampleinfo(flowcell=None, lane=None, sample=None):
@@ -153,19 +153,24 @@ def analysis_cutoff(analysis_type):
     return 0
 
 
-def demux_links(fc, custoutdir, mipoutdir, demuxdir, force, skip_undetermined):
+def demux_links(fc, sample, project, mipoutdir, demuxdir, force, skip_undetermined):
     """Link FASTQ files from DEMUX output of a flowcell."""
 
     global db_params
     db_params = db.readconfig("/home/hiseq.clinical/.scilifelabrc")
     lims = Lims(BASEURI, USERNAME, PASSWORD)
-    samples = getsamplesfromflowcell(demuxdir, fc)
 
-    if not samples:
-        log.error('No samples found for {}'.format(fc))
-        exit(1)
+    if sample:
+        samples = [sample]
+    elif project:
+        pass
+    elif fc:
+        samples = getsamplesfromflowcell(demuxdir, fc)
+        if not samples:
+            log.error('No samples found for {}'.format(fc))
+            exit(1)
 
-    for sample_id in samples.iterkeys():
+    for sample_id in samples:
         family_id = None
         cust_name = None
 

@@ -1,0 +1,256 @@
+# This file contains information about your system that is useful for
+# diagnosing a problem you may have. For technical assistance, please
+# contact the Illumina Customer Support team <techsupport@illumina.com>
+# and send them this file.
+
+$_System = {
+  'PID' : '47668',
+  'OS' : 'linux',
+  'PERL_VERSION' : 'v5.10.1',
+  'PERL_EXECUTABLE' : '/usr/bin/perl'
+};
+
+$_ID-string = 'bcl2fastq-1.8.4';
+
+$_Program = '/usr/local/bin/configureBclToFastq.pl';
+
+$_Command-line = [
+  '--sample-sheet',
+  'tests/fixtures/150114_D00134_0168_AHB07NADXX/Data/Intensities/BaseCalls/SampleSheet.csv',
+  '--use-bases-mask',
+  'Y101,I6n,Y101',
+  '--fastq-cluster-count',
+  '0',
+  '--input-dir',
+  'tests/fixtures/150114_D00134_0168_AHB07NADXX/Data/Intensities/BaseCalls',
+  '--output-dir',
+  'DEMUX/150114_D00134_0168_AHB07NADXX/Unaligned'
+];
+
+$_Locations = [
+  '/usr/local/lib/bcl2fastq-1.8.4/perl',
+  '/usr/local/lib64/perl5',
+  '/usr/local/share/perl5',
+  '/usr/lib64/perl5/vendor_perl',
+  '/usr/share/perl5/vendor_perl',
+  '/usr/lib64/perl5',
+  '/usr/share/perl5',
+  '.'
+];
+
+$_Modules = [
+  '/usr/lib64/perl5/Config.pm',
+  '/usr/lib64/perl5/Config_git.pl',
+  '/usr/lib64/perl5/Config_heavy.pl',
+  '/usr/lib64/perl5/Cwd.pm',
+  '/usr/lib64/perl5/Data/Dumper.pm',
+  '/usr/lib64/perl5/DynaLoader.pm',
+  '/usr/lib64/perl5/Fcntl.pm',
+  '/usr/lib64/perl5/File/Glob.pm',
+  '/usr/lib64/perl5/IO.pm',
+  '/usr/lib64/perl5/IO/File.pm',
+  '/usr/lib64/perl5/IO/Handle.pm',
+  '/usr/lib64/perl5/IO/Seekable.pm',
+  '/usr/lib64/perl5/List/Util.pm',
+  '/usr/lib64/perl5/POSIX.pm',
+  '/usr/lib64/perl5/Scalar/Util.pm',
+  '/usr/lib64/perl5/XML/Parser.pm',
+  '/usr/lib64/perl5/XML/Parser/Expat.pm',
+  '/usr/lib64/perl5/XML/Parser/Style/Tree.pm',
+  '/usr/lib64/perl5/XSLoader.pm',
+  '/usr/lib64/perl5/auto/POSIX/autosplit.ix',
+  '/usr/lib64/perl5/auto/POSIX/load_imports.al',
+  '/usr/lib64/perl5/lib.pm',
+  '/usr/lib64/perl5/re.pm',
+  '/usr/local/lib/bcl2fastq-1.8.4/perl/Casava/Alignment.pm',
+  '/usr/local/lib/bcl2fastq-1.8.4/perl/Casava/Alignment/Config.pm',
+  '/usr/local/lib/bcl2fastq-1.8.4/perl/Casava/BaseCalls.pm',
+  '/usr/local/lib/bcl2fastq-1.8.4/perl/Casava/Common/IOLib.pm',
+  '/usr/local/lib/bcl2fastq-1.8.4/perl/Casava/Common/Log.pm',
+  '/usr/local/lib/bcl2fastq-1.8.4/perl/Casava/Common/Utils.pm',
+  '/usr/local/lib/bcl2fastq-1.8.4/perl/Casava/Demultiplex.pm',
+  '/usr/local/lib/bcl2fastq-1.8.4/perl/Casava/Demultiplex/DemultiplexConfig.pm',
+  '/usr/local/lib/bcl2fastq-1.8.4/perl/Casava/Demultiplex/Dx.pm',
+  '/usr/local/lib/bcl2fastq-1.8.4/perl/Casava/Demultiplex/SampleSheet.pm',
+  '/usr/local/lib/bcl2fastq-1.8.4/perl/Casava/Demultiplex/SampleSheet/Csv.pm',
+  '/usr/local/lib/bcl2fastq-1.8.4/perl/Casava/Demultiplex/SampleSheet/Make.pm',
+  '/usr/local/lib/bcl2fastq-1.8.4/perl/Casava/Demultiplex/SampleSheet/Xml.pm',
+  '/usr/local/lib/bcl2fastq-1.8.4/perl/Casava/Intensities.pm',
+  '/usr/share/perl5/AutoLoader.pm',
+  '/usr/share/perl5/Carp.pm',
+  '/usr/share/perl5/Exporter.pm',
+  '/usr/share/perl5/Exporter/Heavy.pm',
+  '/usr/share/perl5/File/Basename.pm',
+  '/usr/share/perl5/File/Copy.pm',
+  '/usr/share/perl5/File/Path.pm',
+  '/usr/share/perl5/File/Spec.pm',
+  '/usr/share/perl5/File/Spec/Unix.pm',
+  '/usr/share/perl5/Getopt/Long.pm',
+  '/usr/share/perl5/Pod/Escapes.pm',
+  '/usr/share/perl5/Pod/InputObjects.pm',
+  '/usr/share/perl5/Pod/Parser.pm',
+  '/usr/share/perl5/Pod/Select.pm',
+  '/usr/share/perl5/Pod/Simple.pm',
+  '/usr/share/perl5/Pod/Simple/BlackBox.pm',
+  '/usr/share/perl5/Pod/Simple/LinkSection.pm',
+  '/usr/share/perl5/Pod/Text.pm',
+  '/usr/share/perl5/Pod/Usage.pm',
+  '/usr/share/perl5/SelectSaver.pm',
+  '/usr/share/perl5/Symbol.pm',
+  '/usr/share/perl5/Term/ANSIColor.pm',
+  '/usr/share/perl5/Text/ParseWords.pm',
+  '/usr/share/perl5/Tie/Hash.pm',
+  '/usr/share/perl5/UNIVERSAL.pm',
+  '/usr/share/perl5/XML/Simple.pm',
+  '/usr/share/perl5/base.pm',
+  '/usr/share/perl5/bytes.pm',
+  '/usr/share/perl5/constant.pm',
+  '/usr/share/perl5/integer.pm',
+  '/usr/share/perl5/overload.pm',
+  '/usr/share/perl5/strict.pm',
+  '/usr/share/perl5/unicore/Canonical.pl',
+  '/usr/share/perl5/unicore/Exact.pl',
+  '/usr/share/perl5/unicore/PVA.pl',
+  '/usr/share/perl5/unicore/To/Fold.pl',
+  '/usr/share/perl5/unicore/lib/gc_sc/Digit.pl',
+  '/usr/share/perl5/unicore/lib/gc_sc/SpacePer.pl',
+  '/usr/share/perl5/utf8.pm',
+  '/usr/share/perl5/utf8_heavy.pl',
+  '/usr/share/perl5/vars.pm',
+  '/usr/share/perl5/warnings.pm',
+  '/usr/share/perl5/warnings/register.pm'
+];
+
+$_Environment = {
+  'HOME' : '/home/hiseq.clinical',
+  'LOGNAME' : 'hiseq.clinical',
+  'SHLVL' : '3',
+  '_' : '/usr/local/bin/configureBclToFastq.pl',
+  'PATH' : '/usr/bin:/bin',
+  'SHELL' : '/bin/sh',
+  'PWD' : '/home/hiseq.clinical',
+  'USER' : 'hiseq.clinical',
+  'LANG' : 'en_US.UTF-8'
+};
+
+$_Mask = 'YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY,IIIIIIn,YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY';
+
+$_Barcodes/Lanes = {
+                     '1' => {
+                              'CGATGT' => {
+                                            'CONTROL' => 'N',
+                                            'SPECIES' => 'hg19',
+                                            'DESCRIPTION' => '504910',
+                                            'SAMPLE_ID' => 'SIB914A2_sureselect2',
+                                            'PROJECT_ID' => '504910'
+                                          },
+                              'ACAGTG' => {
+                                            'CONTROL' => 'N',
+                                            'SPECIES' => 'hg19',
+                                            'DESCRIPTION' => '959191',
+                                            'SAMPLE_ID' => 'SIB911A2_sureselect5',
+                                            'PROJECT_ID' => '959191'
+                                          },
+                              'CTTGTA' => {
+                                            'CONTROL' => 'N',
+                                            'SPECIES' => 'hg19',
+                                            'DESCRIPTION' => '504910',
+                                            'SAMPLE_ID' => 'SIB914A12_sureselect12',
+                                            'PROJECT_ID' => '504910'
+                                          },
+                              'GGCTAC' => {
+                                            'CONTROL' => 'N',
+                                            'SPECIES' => 'hg19',
+                                            'DESCRIPTION' => '504910',
+                                            'SAMPLE_ID' => 'SIB914A11_sureselect11',
+                                            'PROJECT_ID' => '504910'
+                                          },
+                              'GAAACC' => {
+                                            'CONTROL' => 'N',
+                                            'SPECIES' => 'hg19',
+                                            'DESCRIPTION' => '504910',
+                                            'SAMPLE_ID' => 'SIB914A15_sureselect15',
+                                            'PROJECT_ID' => '504910'
+                                          },
+                              'Undetermined' => {
+                                                  'CONTROL' => 'N',
+                                                  'SPECIES' => 'unknown',
+                                                  'DESCRIPTION' => 'Clusters with unmatched barcodes for lane 1',
+                                                  'SAMPLE_ID' => 'lane1',
+                                                  'PROJECT_ID' => 'Undetermined_indices'
+                                                },
+                              'GCCAAT' => {
+                                            'CONTROL' => 'N',
+                                            'SPECIES' => 'hg19',
+                                            'DESCRIPTION' => '454557',
+                                            'SAMPLE_ID' => 'SIB910A3_sureselect6',
+                                            'PROJECT_ID' => '454557'
+                                          },
+                              'TGACCA' => {
+                                            'CONTROL' => 'N',
+                                            'SPECIES' => 'hg19',
+                                            'DESCRIPTION' => '959191',
+                                            'SAMPLE_ID' => 'SIB911A1_sureselect4',
+                                            'PROJECT_ID' => '959191'
+                                          }
+                            },
+                     '2' => {
+                              'CGATGT' => {
+                                            'CONTROL' => 'N',
+                                            'SPECIES' => 'hg19',
+                                            'DESCRIPTION' => '504910',
+                                            'SAMPLE_ID' => 'SIB914A2_sureselect2',
+                                            'PROJECT_ID' => '504910'
+                                          },
+                              'ACAGTG' => {
+                                            'CONTROL' => 'N',
+                                            'SPECIES' => 'hg19',
+                                            'DESCRIPTION' => '959191',
+                                            'SAMPLE_ID' => 'SIB911A2_sureselect5',
+                                            'PROJECT_ID' => '959191'
+                                          },
+                              'CTTGTA' => {
+                                            'CONTROL' => 'N',
+                                            'SPECIES' => 'hg19',
+                                            'DESCRIPTION' => '504910',
+                                            'SAMPLE_ID' => 'SIB914A12_sureselect12',
+                                            'PROJECT_ID' => '504910'
+                                          },
+                              'GGCTAC' => {
+                                            'CONTROL' => 'N',
+                                            'SPECIES' => 'hg19',
+                                            'DESCRIPTION' => '504910',
+                                            'SAMPLE_ID' => 'SIB914A11_sureselect11',
+                                            'PROJECT_ID' => '504910'
+                                          },
+                              'GAAACC' => {
+                                            'CONTROL' => 'N',
+                                            'SPECIES' => 'hg19',
+                                            'DESCRIPTION' => '504910',
+                                            'SAMPLE_ID' => 'SIB914A15_sureselect15',
+                                            'PROJECT_ID' => '504910'
+                                          },
+                              'Undetermined' => {
+                                                  'CONTROL' => 'N',
+                                                  'SPECIES' => 'unknown',
+                                                  'DESCRIPTION' => 'Clusters with unmatched barcodes for lane 2',
+                                                  'SAMPLE_ID' => 'lane2',
+                                                  'PROJECT_ID' => 'Undetermined_indices'
+                                                },
+                              'GCCAAT' => {
+                                            'CONTROL' => 'N',
+                                            'SPECIES' => 'hg19',
+                                            'DESCRIPTION' => '454557',
+                                            'SAMPLE_ID' => 'SIB910A3_sureselect6',
+                                            'PROJECT_ID' => '454557'
+                                          },
+                              'TGACCA' => {
+                                            'CONTROL' => 'N',
+                                            'SPECIES' => 'hg19',
+                                            'DESCRIPTION' => '959191',
+                                            'SAMPLE_ID' => 'SIB911A1_sureselect4',
+                                            'PROJECT_ID' => '959191'
+                                          }
+                            }
+                   };
+
