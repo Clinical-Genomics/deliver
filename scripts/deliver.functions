@@ -186,6 +186,11 @@ rm_fastqs_project() {
     (>&2 echo "Found following samples:")
     (>&2 echo ${samples[@]})
 
+    read -p "Are you sure? [y/n] " ANSWER
+    if [[ $ASNWER != 'y' ]]; then
+        return 1
+    fi
+
     for sample_id in ${samples[@]}; do
         fastq_files=( $(deliver ls --sample ${sample_id}) )
         for fastq in ${fastq_files[@]}; do
