@@ -193,7 +193,7 @@ rm_fastqs_project() {
     (>&2 echo ${samples[@]})
 
     read -p "Are you sure? [y/n] " ANSWER
-    if [[ $ASNWER != 'y' ]]; then
+    if [[ $ANSWER != 'y' ]]; then
         return 1
     fi
 
