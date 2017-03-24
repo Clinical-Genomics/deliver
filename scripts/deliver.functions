@@ -79,7 +79,7 @@ deliver_bamvcf() {
         $(deliver_hk_sample ${sample_id} ${category})
     done
 
-    case_id=$(cglims get --minimal ${sample_id} case_id)
+    case_id=$(cglims get ${sample_id} case_id)
 
     for category in ${case_cats[@]}; do
         $(deliver_hk_case ${case_id} ${category})
@@ -249,7 +249,7 @@ import_ext_samples() {
 import_ext_sample() {
     sample_id=${1?'please provide a sample_id'}
     ext_dir=${2-$EXT_ROOT}
-    cust_id=$(cglims get --mininal ${sample_id} customer)
+    cust_id=$(cglims get ${sample_id} customer)
 
     sample_dir="${ext_dir}/${cust_id}/${sample_id}"
 
@@ -273,8 +273,8 @@ import_sample_as_ext() {
     # based on a sample_id, import the sample as an external sample
 
     sample_id=${1?'please provide a sample id'}
-    cust_id=$(cglims get --minimal ${sample_id} customer)
-    name=$(cglims get --minimal ${sample_id} name)
+    cust_id=$(cglims get ${sample_id} customer)
+    name=$(cglims get ${sample_id} name)
 
     fastqs=$(deliver ls --sample ${sample_id})
 
