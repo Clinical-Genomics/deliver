@@ -79,7 +79,7 @@ deliver_bamvcf() {
         $(deliver_hk_sample ${sample_id} ${category})
     done
 
-    case_id=$(cglims get ${sample_id} case_id)
+    case_id=$(cglims get --minimal ${sample_id} case_id)
 
     for category in ${case_cats[@]}; do
         $(deliver_hk_case ${case_id} ${category})
@@ -92,7 +92,7 @@ deliver_bamvcfs() {
     # based on a case id, deliver all bam/bai:s for all samples of a case
 
     local case_id=${1?'please provide a case id'}
-    local samples=($(cglims get ${case_id} id))
+    local samples=($(cglims get --minimal ${case_id} id))
 
     if [[ ${#samples[@]} == 0 ]]; then
         (>&2 echo "ERROR samples not found for case ${case_id}")
@@ -115,9 +115,9 @@ deliver_fastqs_sample() {
     (>&2 echo "Found following FCs for ${sample_id}:")
     (>&2 echo ${fcs[@]})
 
-    lims_sample_id=$(cglims get ${sample_id} id 2> /dev/null) # make sure we have the lims sample id and not the CG one
+    lims_sample_id=$(cglims get --minimal ${sample_id} id 2> /dev/null) # make sure we have the lims sample id and not the CG one
     if [[ -z "${lims_sample_id}" ]]; then
-        (>&2 echo "ERROR: 'cglims get ${sample_id} id' did not yield any results!")
+        (>&2 echo "ERROR: 'cglims get --minimal ${sample_id} id' did not yield any results!")
         return 1
     fi
 
@@ -135,7 +135,7 @@ deliver_fastqs_case() {
     # based on a case_id, deliver all fastq files of the sample belonging to a case to the cust/INBOX
 
     case_id=${1?'please provide a case id'}
-    samples=$(cglims get ${case_id} id)
+    samples=$(cglims get --minimal ${case_id} id)
 
     (>&2 echo "Found following samples:")
     (>&2 echo ${samples[@]})
@@ -151,7 +151,7 @@ deliver_fastqs_project() {
     # based on a project_id, deliver all fastq files of the sample belonging of the project to the cust/INBOX
 
     project_id=${1?'please provide a project id'}
-    samples=$(cglims get --project ${project_id} id)
+    samples=$(cglims get --minimal --project ${project_id} id)
 
     (>&2 echo "Found following samples:")
     (>&2 echo ${samples[@]})
@@ -173,7 +173,7 @@ deliver_fastqs_fc() {
     (>&2 echo ${samples[@]})
 
     for sample_id in ${samples[@]}; do
-        lims_sample_id=$(cglims get ${sample_id} id) # make sure we have the lims sample id and not the CG one
+        lims_sample_id=$(cglims get --minimal ${sample_id} id) # make sure we have the lims sample id and not the CG one
         fastq_files=( $(deliver ls --flowcell ${fc} --sample ${sample_id}) )
         for fastq in ${fastq_files[@]}; do
             deliver inbox --sample ${lims_sample_id} ${fastq}
@@ -187,7 +187,7 @@ rm_fastqs_project() {
     # based on a project_id, deliver all fastq files of the sample belonging of the project to the cust/INBOX
 
     project_id=${1?'please provide a project id'}
-    samples=$(cglims get --project ${project_id} id)
+    samples=$(cglims get --minimal --project ${project_id} id)
 
     (>&2 echo "Found following samples:")
     (>&2 echo ${samples[@]})
@@ -249,7 +249,7 @@ import_ext_samples() {
 import_ext_sample() {
     sample_id=${1?'please provide a sample_id'}
     ext_dir=${2-$EXT_ROOT}
-    cust_id=$(cglims get ${sample_id} customer)
+    cust_id=$(cglims get --mininal ${sample_id} customer)
 
     sample_dir="${ext_dir}/${cust_id}/${sample_id}"
 
@@ -273,8 +273,8 @@ import_sample_as_ext() {
     # based on a sample_id, import the sample as an external sample
 
     sample_id=${1?'please provide a sample id'}
-    cust_id=$(cglims get ${sample_id} customer)
-    name=$(cglims get ${sample_id} name)
+    cust_id=$(cglims get --minimal ${sample_id} customer)
+    name=$(cglims get --minimal ${sample_id} name)
 
     fastqs=$(deliver ls --sample ${sample_id})
 
