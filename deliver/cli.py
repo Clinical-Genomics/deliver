@@ -2,6 +2,7 @@
 import logging
 import click
 import yaml
+import coloredlogs
 
 from .exc import MissingFlowcellError
 from .modules.demux import demux_links, is_pooled_lane, get_fastq_files, getsampleinfo
@@ -119,6 +120,7 @@ def ls(context, flowcell, lane, sample, check, force):
 
 
 def setup_logging(level='INFO'):
+    coloredlogs.install(level=level)
     root_logger = logging.getLogger()
     root_logger.setLevel(level)
 
