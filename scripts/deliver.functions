@@ -252,9 +252,10 @@ rm_empty_reads_fastq_pair() {
 
 rm_empty_reads_fastq_pair_dir() {
     indir=${1?'please provide an input directory'}
+    outdir=$2
 
     for fastq in ${indir}/*_1.fastq.gz; do
-        $(rm_empty_reads_fastq_pair ${fastq})
+        $(rm_empty_reads_fastq_pair ${fastq} ${outdir}) 
     done
 }
 
