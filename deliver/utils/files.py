@@ -20,8 +20,10 @@ def get_mipname(fastq_file):
 
     # H3LGFCCXX-l1t21_973470_CGGCTATG_L001_R2_001.fastq.gz
     # H3LGFCCXX-l1t21_Undetermined_CGGCTATG_L001_R1_001.fastq.gz
+    # RNA1460A10_dual10_TCCGGAGA-ATAGAGGC_L001_R1_001.fastq.gz
+    # RNA1460A10_TCCGGAGA-ATAGAGGC_L001_R1_001.fastq.gz
 
-    index = nameparts[2]
+    index = nameparts[-4]
     # no worries, this'll always work, right?
     fc = dirparts[-5].split("_")[-1][1:]
     lane = int(nameparts[-3][-1:])

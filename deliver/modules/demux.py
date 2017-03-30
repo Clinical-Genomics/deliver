@@ -88,7 +88,7 @@ def getsampleinfofromname_glob(fc, demuxdir, sample):
         fc = sample.split('/')[-5][-9:]
         if fc not in fcs:
             fcs[fc] = set()
-        lane = int(sample_split[2][1:])
+        lane = int(sample_split[-3][1:])
         fcs[fc].add(lane)
 
     for fc, lanes in fcs.items():
