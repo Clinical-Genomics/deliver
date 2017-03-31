@@ -311,7 +311,7 @@ import_ext_sample() {
     (>&2 echo "Found: ${sample_dir}")
 
     # link the sample
-    deliver ext mip ${sample_dir} | tee >> ${sample_dir}/project.log
+    deliver ext mip ${sample_dir} |& tee -a ${sample_dir}/project.log
 
     # add sample to HK
     add_sample $sample_id
