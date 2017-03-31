@@ -76,13 +76,13 @@ deliver_bamvcf() {
                      )
 
     for category in ${sample_cats[@]}; do
-        $(deliver_hk_sample ${sample_id} ${category})
+        deliver_hk_sample ${sample_id} ${category}
     done
 
     case_id=$(cglims get ${sample_id} case_id)
 
     for category in ${case_cats[@]}; do
-        $(deliver_hk_case ${case_id} ${category})
+        deliver_hk_case ${case_id} ${category}
     done
 
     return 0
@@ -100,7 +100,7 @@ deliver_bamvcfs() {
     else
         for sample_id in ${samples[@]}; do
             (>&2 echo "working on sample: ${sample_id}")
-            $(deliver_bamvcf ${sample_id})
+            deliver_bamvcf ${sample_id}
         done
         return 0
     fi
@@ -141,7 +141,7 @@ deliver_fastqs_case() {
     (>&2 echo ${samples[@]})
 
     for sample in ${samples[@]}; do
-        $(deliver_fastqs_sample ${sample})
+        deliver_fastqs_sample ${sample}
     done
 
     return 0
@@ -157,7 +157,7 @@ deliver_fastqs_project() {
     (>&2 echo ${samples[@]})
 
     for sample in ${samples[@]}; do
-        $(deliver_fastqs_sample ${sample})
+        deliver_fastqs_sample ${sample}
     done
 
     return 0
@@ -255,7 +255,7 @@ rm_empty_reads_fastq_pair_dir() {
     outdir=$2
 
     for fastq in ${indir}/*_1.fastq.gz; do
-        $(rm_empty_reads_fastq_pair ${fastq} ${outdir}) 
+        rm_empty_reads_fastq_pair ${fastq} ${outdir}
     done
 }
 
@@ -264,7 +264,7 @@ import_cust_samples() {
 
     for md5sum_file in ${indir}/*md5sum; do
         (>&2 echo "Found: $md5sum_file")
-        $(import_cust_sample ${md5sum_file})
+        import_cust_sample ${md5sum_file}
     done
 }
 
@@ -292,7 +292,7 @@ import_ext_samples() {
             (>&2 echo "Delivered: ${sample_dir}")
             continue
         fi
-        $(import_ext_sample $(basename ${sample_dir}))
+        import_ext_sample $(basename ${sample_dir})
     done
 }
 
@@ -305,10 +305,10 @@ import_ext_sample() {
 
     if [[ -e ${sample_dir}/delivered.txt ]]; then
         (>&2 echo "Delivered: ${sample_dir}")
-        continue
+        return
     fi
 
-    (>&2 echo "Found: ${sample_dir}")
+    (>&2 echo "Importing to MIP_ANALYSIS: ${sample_dir}")
 
     # link the sample
     deliver ext mip ${sample_dir} |& tee -a ${sample_dir}/project.log
