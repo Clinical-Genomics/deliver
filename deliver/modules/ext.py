@@ -91,6 +91,6 @@ def ext_links(config, start_dir, outdir):
         success = make_link(fastq_full_file_name, dest, 'soft')
 
         if success:
-            logger.info("ln {} {} ...".format(fastq_full_file_name, dest))
+            logger.info("ln -s {} {} ...".format(fastq_full_file_name, dest))
         else:
             logger.error("{} -> {}".format(fastq_full_file_name, dest))
