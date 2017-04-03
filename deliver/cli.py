@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+
+import sys
 import logging
 import click
 import yaml
@@ -80,7 +82,6 @@ def microbial(context, root_dir, sample, flowcell, dry_run, project):
 def pooled(flowcell, lane):
     """Return whether or not this lane is pooled."""
 
-    import sys
     if is_pooled_lane(flowcell, lane):
         sys.exit(0)
     else:
@@ -111,6 +112,8 @@ def ls(context, flowcell, lane, sample, check, force):
         sample = sample if sample else '*'
         fastq_files = get_fastq_files(DEMUXDIR, flowcell, lane, sample)
 
+    if not fastq_files:
+        sys.exit(1)
 
     for fastq_file in fastq_files:
         link_me = force or not (is_pooled_lane(flowcell, get_lane(fastq_file)) and is_undetermined(fastq_file))
