@@ -99,11 +99,36 @@ deliver_bamvcfs() {
         return 1
     else
         for sample_id in ${samples[@]}; do
-            (>&2 echo "working on sample: ${sample_id}")
+            (>&2 echo "Working on sample: ${sample_id}")
             deliver_bamvcf ${sample_id}
         done
         return 0
     fi
+}
+
+deliver_all_bamvcfs() {
+    # deliver all bamvcfs from the past 7 days
+    days=${1-7}
+    onlycust=${2}
+
+    cases=($(housekeeper runs --output case --limit 1000 --after $(date +'%Y-%m-%d' -d "$days days ago")))
+    if [[ $? != 0 ]]; then
+        (>&2 echo "No cases found for past ${days} day(s)")
+        return 1
+    fi
+
+    (>&2 echo "Working on cases: ${cases[@]}")
+    for case in "${cases[@]}"; do
+        if ! [[ $case =~ cust* ]]; then continue; fi
+        (>&2 echo "Working on case: $case")
+        if ! [[ -z ${onlycust} ]]; then
+            cust=${case%%-*}
+            if [[ ${cust} != ${onlycust} ]]; then
+                continue
+            fi
+        fi
+        deliver_bamvcfs ${case}
+    done
 }
 
 deliver_fastqs_sample() {
