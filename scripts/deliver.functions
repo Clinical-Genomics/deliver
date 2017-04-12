@@ -24,7 +24,7 @@ add_demux() {
 }
 
 deliver_hk_case() {
-    # based on a case id and category, deliver a file to the cust/INBOX
+    # deliver files based on a case id and a housekeeper category to the cust/INBOX
 
     local case_id=${1?'please provide a case id'}
     local category=${2?'please provide a category'}
@@ -42,7 +42,7 @@ deliver_hk_case() {
 }
 
 deliver_hk_sample() {
-    # based on a sample name and category, deliver a file to the cust/INBOX
+    # Deliver files based on a sample id and a housekeeper category to the cust/INBOX
 
     local sample_id=${1?'please provide a sample id'}
     local category=${2?'please provide a category'}
@@ -59,7 +59,7 @@ deliver_hk_sample() {
 }
 
 deliver_bamvcf() {
-    # based on a sample name, deliver the bam/bai file to the cust/INBOX
+    # Based on a sample id, deliver the bam/bai:s and vcfs to the cust/INBOX
 
     local sample_id=${1?'please provide a sample id'}
     local sample_cats=(bam bai)
@@ -89,7 +89,7 @@ deliver_bamvcf() {
 }
 
 deliver_bamvcfs() {
-    # based on a case id, deliver all bam/bai:s for all samples of a case
+    # Deliver files based on a sample id and a housekeeper category to the cust/INBOX
 
     local case_id=${1?'please provide a case id'}
     local samples=($(cglims get --minimal ${case_id} id))
@@ -107,7 +107,7 @@ deliver_bamvcfs() {
 }
 
 deliver_all_bamvcfs() {
-    # deliver all bamvcfs from the past 7 days
+    # Deliver all bamvcfs from the past 7 days
     days=${1-7}
     onlycust=${2}
 
@@ -209,7 +209,7 @@ deliver_fastqs_fc() {
 }
 
 rm_fastqs_project() {
-    # based on a project_id, deliver all fastq files of the sample belonging of the project to the cust/INBOX
+    # Based on a project_id, rm all fastq files of the sample belonging of the project from DEMUX/$run
 
     project_id=${1?'please provide a project id'}
     samples=$(cglims get --minimal --project ${project_id} id)
@@ -235,6 +235,7 @@ rm_fastqs_project() {
 }
 
 rm_empty_reads_fastq_pair() {
+    # Based on a fastq file pair, remove all empty reads and put them in $2/clean
     fastq_1=${1?'please provide a path to a fastq file read dir 1'}
     fastq_2=${fastq_1/_1.fastq.gz/_2.fastq.gz}
 
@@ -276,6 +277,7 @@ rm_empty_reads_fastq_pair() {
 }
 
 rm_empty_reads_fastq_pair_dir() {
+    # Run rm_empty_reads_fastq_pair on a directory of fastq file pairs
     indir=${1?'please provide an input directory'}
     outdir=$2
 
@@ -285,6 +287,7 @@ rm_empty_reads_fastq_pair_dir() {
 }
 
 import_cust_samples() {
+    # Run import_cust_sample on each file listed in a md5sum file found in $indir
     indir=${1?'please provide the md5sum directory'}
 
     for md5sum_file in ${indir}/*md5sum; do
@@ -294,6 +297,7 @@ import_cust_samples() {
 }
 
 import_cust_sample() {
+    # For each file in a $md5sum_file, link the file to EXTERNAL
     ticket_file=${1?'please provide a md5sum file: ${ticketID}.md5sum'}
     indir=$(readlink -f $(dirname "${ticket_file}"))
 
@@ -310,6 +314,7 @@ import_cust_sample() {
 }
 
 import_ext_samples() {
+    # Link all not yet linked files in EXTERNAL to MIP_ANALYSIS
     ext_dir=${1-$EXT_ROOT}
 
     for sample_dir in ${ext_dir}/cust*/*; do
@@ -322,6 +327,7 @@ import_ext_samples() {
 }
 
 import_ext_sample() {
+    # Link all files of a sample from EXTERNAL to MIP_ANALYSIS
     sample_id=${1?'please provide a sample_id'}
     ext_dir=${2-$EXT_ROOT}
     cust_id=$(cglims get ${sample_id} customer)
