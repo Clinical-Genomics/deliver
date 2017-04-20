@@ -238,42 +238,50 @@ rm_empty_reads_fastq_pair() {
     # Based on a fastq file pair, remove all empty reads and put them in $2/clean
     fastq_1=${1?'please provide a path to a fastq file read dir 1'}
     fastq_2=${fastq_1/_1.fastq.gz/_2.fastq.gz}
-
     outdir=$2
-    if [[ -z ${outdir} ]]; then
-        outdir=$(dirname ${fastq_1})/clean/
-    fi
-    (>&2 echo "mkdir -f ${outdir}")
-    mkdir -p ${outdir}
 
-    ids_to_exclude=${outdir}/ids_to_exclude
-    for fastq_file in "${fastq_1}" "${fastq_2}"; do
-        fastq_file_name=$(basename ${fastq_file})
-        (>&2 echo "bioawk -cfastx 'length($seq) == 0 {print \"@\"$name}' $fastq_file >> ${ids_to_exclude}")
-        bioawk -cfastx 'length($seq) == 0 {print "@"$name}' $fastq_file >> ${ids_to_exclude}
-    done
-    (>&2 echo "echo $(sort -u ${ids_to_exclude}) > ${ids_to_exclude}")
-    echo $(sort -u ${ids_to_exclude}) > ${ids_to_exclude}
-    (>&2 echo "sed -i '/^$/d' ${ids_to_exclude}")
-    sed -i '/^$/d' ${ids_to_exclude}
-    ids_to_exclude_count=$(wc -l ${ids_to_exclude})
-    ids_to_exclude_count=${ids_to_exclude_count%% *}
-    if [[ ${ids_to_exclude_count} -gt 0 ]]; then
+    (
+
+        set -eu -o pipefail
+
+        if [[ -z ${outdir} ]]; then
+            outdir=$(dirname ${fastq_1})/clean/
+        fi
+        (>&2 echo "mkdir -f ${outdir}")
+        mkdir -p ${outdir}
+
+        ids_to_exclude=${outdir}/ids_to_exclude
         for fastq_file in "${fastq_1}" "${fastq_2}"; do
             fastq_file_name=$(basename ${fastq_file})
-            (>&2 echo "gzip -d -c ${fastq_file} | paste - - - - | grep -v -f ${ids_to_exclude} | tr '\t' '\n' | gzip --best > '${outdir}/${fastq_file_name}'")
-            gzip -d -c ${fastq_file} | paste - - - - | grep -v -f ${ids_to_exclude} | tr "\t" "\n" | gzip --best > "${outdir}/${fastq_file_name}"
+            (>&2 echo "bioawk -cfastx 'length(\$seq) == 0 {print \"@\"\$name}' $fastq_file >> ${ids_to_exclude}")
+            if ! bioawk -cfastx 'length($seq) == 0 {print "@"$name}' $fastq_file >> ${ids_to_exclude}; then
+                return 2
+            fi
         done
-        rm ${ids_to_exclude}
-        return 0
-    else
-        (>&2 echo "mv ${fastq_1} ${outdir}")
-        mv ${fastq_1} ${outdir}
-        (>&2 echo "mv ${fastq_2} ${outdir}")
-        mv ${fastq_2} ${outdir}
-        rm ${ids_to_exclude}
-        return 1
-    fi
+        (>&2 echo "echo $(sort -u ${ids_to_exclude}) > ${ids_to_exclude}")
+        echo $(sort -u ${ids_to_exclude}) > ${ids_to_exclude}
+        (>&2 echo "sed -i '/^$/d' ${ids_to_exclude}")
+        sed -i '/^$/d' ${ids_to_exclude}
+        ids_to_exclude_count=$(wc -l ${ids_to_exclude})
+        ids_to_exclude_count=${ids_to_exclude_count%% *}
+        if [[ ${ids_to_exclude_count} -gt 0 ]]; then
+            for fastq_file in "${fastq_1}" "${fastq_2}"; do
+                fastq_file_name=$(basename ${fastq_file})
+                (>&2 echo "gzip -d -c ${fastq_file} | paste - - - - | grep -v -f ${ids_to_exclude} | tr '\t' '\n' | gzip --best > '${outdir}/${fastq_file_name}'")
+                gzip -d -c ${fastq_file} | paste - - - - | grep -v -f ${ids_to_exclude} | tr "\t" "\n" | gzip --best > "${outdir}/${fastq_file_name}"
+            done
+            rm ${ids_to_exclude}
+            return 0
+        else
+            (>&2 echo "mv ${fastq_1} ${outdir}")
+            mv ${fastq_1} ${outdir}
+            (>&2 echo "mv ${fastq_2} ${outdir}")
+            mv ${fastq_2} ${outdir}
+            rm ${ids_to_exclude}
+            return 1
+        fi
+    
+    )
 }
 
 rm_empty_reads_fastq_pair_dir() {
