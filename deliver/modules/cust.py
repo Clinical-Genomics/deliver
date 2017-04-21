@@ -54,7 +54,7 @@ def get_sample(lims_api, external_id):
         if apptag.is_external:
             ext_samples.append(sample)
 
-    ext_samples.sort(key=lambda x: x.date_received, reverse=True)
+    ext_samples.sort(key=lambda x: x.date_received, reverse=False)
 
     if len(samples) and len(ext_samples) == 0:
         logger.error("External ID '{}' does not have correct application tag {}"
