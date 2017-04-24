@@ -267,8 +267,8 @@ rm_empty_reads_fastq_pair() {
         if [[ ${ids_to_exclude_count} -gt 0 ]]; then
             for fastq_file in "${fastq_1}" "${fastq_2}"; do
                 fastq_file_name=$(basename ${fastq_file})
-                (>&2 echo "gzip -d -c ${fastq_file} | paste - - - - | grep -v -f ${ids_to_exclude} | tr '\t' '\n' | gzip --best > '${outdir}/${fastq_file_name}'")
-                gzip -d -c ${fastq_file} | paste - - - - | grep -v -f ${ids_to_exclude} | tr "\t" "\n" | gzip --best > "${outdir}/${fastq_file_name}"
+                (>&2 echo "gzip -d -c ${fastq_file} | paste - - - - | grep -v -f ${ids_to_exclude} | tr '\t' '\n' | gzip > '${outdir}/${fastq_file_name}'")
+                gzip -d -c ${fastq_file} | paste - - - - | grep -v -f ${ids_to_exclude} | tr "\t" "\n" | gzip > "${outdir}/${fastq_file_name}"
             done
             rm ${ids_to_exclude}
             return 0
