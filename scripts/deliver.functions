@@ -258,8 +258,8 @@ rm_empty_reads_fastq_pair() {
                 return 2
             fi
         done
-        (>&2 echo "echo $(sort -u ${ids_to_exclude}) > ${ids_to_exclude}")
-        echo $(sort -u ${ids_to_exclude}) > ${ids_to_exclude}
+        (>&2 echo "echo \"\$(sort -u ${ids_to_exclude})\" > ${ids_to_exclude}")
+        echo "$(sort -u ${ids_to_exclude})" > ${ids_to_exclude}
         (>&2 echo "sed -i '/^$/d' ${ids_to_exclude}")
         sed -i '/^$/d' ${ids_to_exclude}
         ids_to_exclude_count=$(wc -l ${ids_to_exclude})
