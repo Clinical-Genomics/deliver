@@ -202,7 +202,7 @@ def demux_links(fc, sample, project, mipoutdir, demuxdir, force, skip_undetermin
         try:
             seq_type_dir = app_tag.sequencing_type  # get wes|wgs
         except UnknownSequencingTypeError as e:
-            log.error('{} {}'.format(sample, e)) 
+            log.error('{} {}'.format(sample, e))
             continue
         q30_cutoff = analysis_cutoff(seq_type_dir)
 

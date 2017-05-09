@@ -6,6 +6,19 @@ from path import Path
 
 logger = logging.getLogger(__name__)
 
+def get_mip_fastq_path(config, sample_id):
+    """Takes a sample name and returns the path to the fastq file in the MIP_ANALYSIS structure"""
+    lims_api = ClinicalLims(**config['lims'])
+    mip_dir = config['mip_root']
+
+    sample = lims_api.sample(sample_id)
+    cgsample = ClinicalSample(sample)
+
+    family_id = sample.udf.get('familyID', None)
+    seq_type_dir= cgsample.apptag.analysis_type
+
+    return Path(mip_dir).joinpath(cust_name, family_id, seq_type_dir, sample_id, 'fastq')
+
 
 def get_mipname(fastq_file):
     """Takes a demux fastq file and returns a MIP compatible fastq file
