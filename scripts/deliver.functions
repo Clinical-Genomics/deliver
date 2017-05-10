@@ -379,3 +379,15 @@ import_sample_as_ext() {
 
     return 0
 }
+
+reimport_ext_case() {
+    case_id=${1?'please provide a case id'}
+    sample_ids=( $(cglims get ${case_id} id) )
+
+    cust_id=${case_id%%-*}
+    for sample_id in ${sample_ids[@]}; do
+        (>&2 echo rm ${EXT_ROOT}/${cust_id}/${sample_id}/delivered.txt)
+        rm ${EXT_ROOT}/${cust_id}/${sample_id}/delivered.txt
+    done
+    import_ext_samples
+}
