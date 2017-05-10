@@ -5,7 +5,7 @@ import logging
 import click
 import yaml
 
-from .exc import MissingFlowcellError
+from .exc import MissingFlowcellError, MissingFastqFilesError
 from .modules.demux import demux_links, is_pooled_lane, get_fastq_files, getsampleinfo
 from .modules.inbox import inbox_links
 from .modules.microbial import link_microbial
@@ -14,7 +14,7 @@ from .ext import ext
 
 log = logging.getLogger(__name__)
 
-__version__ = '1.30.11'
+__version__ = '1.30.12'
 DEMUXDIR='/mnt/hds/proj/bioinfo/DEMUX/'
 
 
@@ -98,6 +98,7 @@ def pooled(flowcell, lane):
 def ls(context, flowcell, lane, sample, check, force):
     """List the fastq files."""
 
+    exit_code = 0
     fastq_files = []
     if check:
         samples = getsampleinfo(flowcell, lane, sample)
@@ -105,12 +106,20 @@ def ls(context, flowcell, lane, sample, check, force):
             flowcell = rs['flowcell']
             lane = rs['lane']
             sample = rs['samplename']
-            fastq_files.extend(get_fastq_files(DEMUXDIR, flowcell, lane, sample))
+            try:
+                fastq_files.extend(get_fastq_files(DEMUXDIR, flowcell, lane, sample))
+            except MissingFastqFilesError as e:
+                log.error(e)
+                exit_code = 1
     else:
         flowcell = flowcell if flowcell else '*'
         lane = lane if lane else '?'
         sample = sample if sample else '*'
-        fastq_files = get_fastq_files(DEMUXDIR, flowcell, lane, sample)
+        try:
+            fastq_files = get_fastq_files(DEMUXDIR, flowcell, lane, sample)
+        except MissingFastqFilesError as e:
+            log.error(e)
+            exit_code = 1
 
     if not fastq_files:
         sys.exit(1)
@@ -119,6 +128,8 @@ def ls(context, flowcell, lane, sample, check, force):
         link_me = force or not (is_pooled_lane(flowcell, get_lane(fastq_file)) and is_undetermined(fastq_file))
         if link_me:
             click.echo(fastq_file)
+
+    sys.exit(exit_code)
 
 
 def setup_logging(level='INFO'):
