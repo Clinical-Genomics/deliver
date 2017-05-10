@@ -388,6 +388,6 @@ reimport_ext_case() {
     for sample_id in ${sample_ids[@]}; do
         (>&2 echo rm ${EXT_ROOT}/${cust_id}/${sample_id}/delivered.txt)
         rm ${EXT_ROOT}/${cust_id}/${sample_id}/delivered.txt
+        import_ext_sample ${sample_id}
     done
-    import_ext_samples
 }
