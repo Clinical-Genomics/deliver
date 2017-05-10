@@ -5,11 +5,12 @@ import logging
 import click
 import yaml
 
-from .exc import MissingFlowcellError
-from .modules.demux import demux_links, is_pooled_lane, get_fastq_files, getsampleinfo
+from .exc import MissingFlowcellError, MissingFastqFilesError
+from .modules.demux import demux_links, is_pooled_lane, get_fastq_files
 from .modules.inbox import inbox_links
 from .modules.microbial import link_microbial
 from .utils.fastq import get_lane, is_undetermined
+from .utils.cgstats import getsampleinfo
 from .ext import ext
 
 log = logging.getLogger(__name__)
@@ -105,12 +106,20 @@ def ls(context, flowcell, lane, sample, check, force):
             flowcell = rs['flowcell']
             lane = rs['lane']
             sample = rs['samplename']
-            fastq_files.extend(get_fastq_files(DEMUXDIR, flowcell, lane, sample))
+            try:
+                fastq_files.extend(get_fastq_files(DEMUXDIR, flowcell, lane, sample, check=False))
+            except MissingFastqFilesError as e:
+                log.error(e)
+                exit_code = 1
     else:
         flowcell = flowcell if flowcell else '*'
         lane = lane if lane else '?'
         sample = sample if sample else '*'
-        fastq_files = get_fastq_files(DEMUXDIR, flowcell, lane, sample)
+        try:
+            fastq_files.extend(get_fastq_files(DEMUXDIR, flowcell, lane, sample, check=False))
+        except MissingFastqFilesError as e:
+            log.error(e)
+            exit_code = 1
 
     if not fastq_files:
         sys.exit(1)

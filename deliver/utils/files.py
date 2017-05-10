@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 import logging
+from glob import glob
 
 from path import Path
-
+from deliver.exc import MissingFastqFilesError
+from .cgstats import getsampleinfo
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +20,44 @@ def get_mip_fastq_path(config, sample_id):
     seq_type_dir= cgsample.apptag.analysis_type
 
     return Path(mip_dir).joinpath(cust_name, family_id, seq_type_dir, sample_id, 'fastq')
+
+
+def get_fastq_files(demuxdir, flowcell='*', lane='?', sample_id='*', check=True):
+
+    def _get_files(demuxdir, flowcell, lane, sample_id):
+        fastqfiles = glob(
+            "{demuxdir}/*{flowcell}/Unalign*/Project_*/Sample_{sample_id}_*/*L00{lane}*fastq.gz".format(
+              demuxdir=demuxdir, flowcell=flowcell, sample_id=sample_id, lane=lane
+            ))
+        fastqfiles.extend(glob(
+            "{demuxdir}/*{flowcell}/Unalign*/Project_*/Sample_{sample_id}/*L00{lane}*fastq.gz".format(
+              demuxdir=demuxdir, flowcell=flowcell, sample_id=sample_id, lane=lane
+            )))
+        fastqfiles.extend(glob(
+            "{demuxdir}/*{flowcell}/Unalign*/Project_*/Sample_{sample_id}[BF]_*/*L00{lane}*fastq.gz".format(
+              demuxdir=demuxdir, flowcell=flowcell, sample_id=sample_id, lane=lane
+            )))
+        if not fastqfiles:
+            raise MissingFastqFilesError("No fastq files found for {} on flowcell {} on lane {}"
+                                         .format(sample_id, flowcell, lane))
+
+        return fastqfiles
+
+    fastqfiles = []
+    if check:
+        sample_rs = getsampleinfo(flowcell, lane, sample_id)
+        for rs in sample_rs:
+            flowcell = rs['flowcell']
+            lane = rs['lane']
+            sample_id = rs['samplename']
+            fastqfiles.extend(_get_files(demuxdir, flowcell, lane, sample_id))
+    else:
+        flowcell = flowcell if flowcell else '*'
+        lane = lane if lane else '?'
+        sample_id = sample_id if sample_id else '*'
+        fastqfiles.extend(_get_files(demuxdir, flowcell, lane, sample_id))
+
+    return fastqfiles
 
 
 def get_mipname(fastq_file):

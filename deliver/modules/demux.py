@@ -16,11 +16,11 @@ from access import db
 from genologics.lims import *
 from genologics.config import BASEURI, USERNAME, PASSWORD
 
-from ..utils import get_mipname, make_link
+from ..utils import get_mipname, make_link, get_fastq_files
+from ..utils.cgstats import getsampleinfo
 
 log = logging.getLogger(__name__)
-
-db_params = []
+db_params = db.readconfig("/home/hiseq.clinical/.scilifelabrc")
 
 
 def getsamplesfromflowcell(demuxdir, flowcell):
@@ -40,28 +40,6 @@ def getsamplesfromflowcell(demuxdir, flowcell):
         sample = sample.rstrip('BF')
         fc_samples.add(sample)
     return sorted(list(fc_samples))
-
-
-def getsampleinfo(flowcell=None, lane=None, sample=None):
-    global db_params
-    if not db_params:
-        db_params = db.readconfig("/home/hiseq.clinical/.scilifelabrc")
-    query = (" SELECT samplename, flowcellname AS flowcell, lane " +
-             " FROM sample, unaligned, flowcell, demux " +
-             " WHERE sample.sample_id = unaligned.sample_id AND unaligned.demux_id = demux.demux_id " +
-             " AND demux.flowcell_id = flowcell.flowcell_id ")
-    if sample:
-        query += " AND (samplename LIKE '{sample}\_%' OR samplename = '{sample}' OR samplename LIKE '{sample}B\_%' OR samplename LIKE '{sample}F\_%')".format(sample=sample)
-
-    if flowcell:
-        query += " AND flowcellname = '{flowcell}'".format(flowcell=flowcell)
-
-    if lane:
-        query += " AND lane = {lane}".format(lane=lane)
-
-    with db.dbconnect(db_params['CLINICALDBHOST'], db_params['CLINICALDBPORT'], db_params['STATSDB'], db_params['CLINICALDBUSER'], db_params['CLINICALDBPASSWD']) as dbc:
-       replies = dbc.generalquery( query )
-    return replies
 
 
 def getsampleinfofromname(sample):
@@ -115,27 +93,6 @@ def is_pooled_lane(flowcell, lane):
     return True if int(replies[0]['sample_count']) > 1 else False
 
 
-def get_fastq_files(demuxdir, fc='*', lane='?', sample_name='*'):
-    fastqfiles = glob.glob(
-        "{demuxdir}/*{fc}/Unalign*/Project_*/Sample_{sample_name}_*/*L00{lane}*fastq.gz".format(
-          demuxdir=demuxdir, fc=fc, sample_name=sample_name, lane=lane
-        ))
-    fastqfiles.extend(glob.glob(
-        "{demuxdir}/*{fc}/Unalign*/Project_*/Sample_{sample_name}/*L00{lane}*fastq.gz".format(
-          demuxdir=demuxdir, fc=fc, sample_name=sample_name, lane=lane
-        )))
-    fastqfiles.extend(glob.glob(
-        "{demuxdir}/*{fc}/Unalign*/Project_*/Sample_{sample_name}[BF]_*/*L00{lane}*fastq.gz".format(
-          demuxdir=demuxdir, fc=fc, sample_name=sample_name, lane=lane
-        )))
-
-    if not fastqfiles:
-        log.error("No fastq files found for {} on FC {} on lane {}"
-                  .format(sample_name, fc, lane))
-
-    return fastqfiles
-
-
 def analysis_cutoff(analysis_type):
     """Based on the analysis type (exomes|genomes), return the q30 cutoff
 
@@ -158,7 +115,6 @@ def demux_links(fc, sample, project, mipoutdir, demuxdir, force, skip_undetermin
     """Link FASTQ files from DEMUX output of a flowcell."""
 
     global db_params
-    db_params = db.readconfig("/home/hiseq.clinical/.scilifelabrc")
     lims = Lims(BASEURI, USERNAME, PASSWORD)
 
     if sample:
@@ -265,7 +221,7 @@ def demux_links(fc, sample, project, mipoutdir, demuxdir, force, skip_undetermin
                     if fclane['fc'] not in link_results:
                         link_results[fclane['fc']] = 0
 
-                    fastqfiles = get_fastq_files(demuxdir, fclane['fc'], fclane['lane'], sample_id)
+                    fastqfiles = get_fastq_files(demuxdir, flowcell=fclane['fc'], lane=fclane['lane'], sample_id=sample_id)
 
                     for fastqfile in fastqfiles:
                         # skip undeermined for pooled samples
