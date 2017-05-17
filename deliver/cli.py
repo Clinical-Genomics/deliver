@@ -5,7 +5,7 @@ import logging
 import click
 import yaml
 
-from .exc import MissingFlowcellError, MissingFastqFilesError
+from .exc import MissingFlowcellError
 from .modules.demux import demux_links, is_pooled_lane, get_fastq_files, getsampleinfo
 from .modules.inbox import inbox_links
 from .modules.microbial import link_microbial
@@ -98,7 +98,6 @@ def pooled(flowcell, lane):
 def ls(context, flowcell, lane, sample, check, force):
     """List the fastq files."""
 
-    exit_code = 0
     fastq_files = []
     if check:
         samples = getsampleinfo(flowcell, lane, sample)
@@ -106,20 +105,12 @@ def ls(context, flowcell, lane, sample, check, force):
             flowcell = rs['flowcell']
             lane = rs['lane']
             sample = rs['samplename']
-            try:
-                fastq_files.extend(get_fastq_files(DEMUXDIR, flowcell, lane, sample))
-            except MissingFastqFilesError as e:
-                log.error(e)
-                exit_code = 1
+            fastq_files.extend(get_fastq_files(DEMUXDIR, flowcell, lane, sample))
     else:
         flowcell = flowcell if flowcell else '*'
         lane = lane if lane else '?'
         sample = sample if sample else '*'
-        try:
-            fastq_files = get_fastq_files(DEMUXDIR, flowcell, lane, sample)
-        except MissingFastqFilesError as e:
-            log.error(e)
-            exit_code = 1
+        fastq_files = get_fastq_files(DEMUXDIR, flowcell, lane, sample)
 
     if not fastq_files:
         sys.exit(1)
@@ -128,8 +119,6 @@ def ls(context, flowcell, lane, sample, check, force):
         link_me = force or not (is_pooled_lane(flowcell, get_lane(fastq_file)) and is_undetermined(fastq_file))
         if link_me:
             click.echo(fastq_file)
-
-    sys.exit(exit_code)
 
 
 def setup_logging(level='INFO'):

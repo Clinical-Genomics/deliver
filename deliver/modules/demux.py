@@ -11,6 +11,7 @@ from path import Path
 
 from cglims.apptag import ApplicationTag
 from cglims.api import ClinicalSample
+from cglims.exc import UnknownSequencingTypeError
 from access import db
 from genologics.lims import *
 from genologics.config import BASEURI, USERNAME, PASSWORD
@@ -187,22 +188,22 @@ def demux_links(fc, sample, project, mipoutdir, demuxdir, force, skip_undetermin
                 continue
 
         clinical_sample = ClinicalSample(sample)
-        application_tag = clinical_sample.apptag
+        app_tag = clinical_sample.apptag
+        log.debug('Application tag: {}'.format(app_tag))
 
         if clinical_sample.pipeline == 'mwgs':
             log.info("skipping microbial sample: {}".format(sample_id))
             continue
 
-        log.debug('Application tag: {}'.format(application_tag))
-
-        requested_reads = application_tag.reads / 1000000
-        seq_type = application_tag.sequencing
-
         # Accepted readcount is 75% of ordered million reads
+        requested_reads = app_tag.reads / 1000000
         readcounts = .75 * float(requested_reads)
-        raw_apptag = sample.udf['Sequencing Analysis']
-        apptag = ApplicationTag(raw_apptag)
-        seq_type_dir = apptag.analysis_type  # get wes|wgs
+
+        try:
+            seq_type_dir = app_tag.sequencing_type  # get wes|wgs
+        except UnknownSequencingTypeError as e:
+            log.error('{} {}'.format(sample, e)) 
+            continue
         q30_cutoff = analysis_cutoff(seq_type_dir)
 
         try:
@@ -249,10 +250,6 @@ def demux_links(fc, sample, project, mipoutdir, demuxdir, force, skip_undetermin
             family_id = None
         if family_id == 'NA' or family_id == None:
             log.error("'{}' family_id is not set".format(sample_id))
-            continue
-
-        if seq_type == 'RML':
-            log.error("'{}' is RML - skipping".format(sample_id))
             continue
 
         # create the links for the analysis
