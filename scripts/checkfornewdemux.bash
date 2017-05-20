@@ -19,7 +19,8 @@ for run in ${runs[@]}; do
 
       # add an X FC to clinstatsdb - because the permanent tunnel is not active on the nodes.
       if [[ -d "${UNABASE}${run}/l1t11" ]]; then
-        log ${run} "python /mnt/hds/proj/bioinfo/SCRIPTS/xparseunaligned.py ${UNABASE}${run} &> ${UNABASE}${run}/LOG/xparseunaligned.`date +'%Y%m%d%H%M%S'`.log"
+        log ${run} "/mnt/hds/proj/bioinfo/SERVER/miniconda/envs/oldcgstats/bin/python /mnt/hds/proj/bioinfo/SCRIPTS/xparseunaligned.py ${UNABASE}${run} &> ${UNABASE}${run}/LOG/xparseunaligned.`date +'%Y%m%d%H%M%S'`.log"
+        log ${run} "/mnt/hds/proj/bioinfo/SERVER/miniconda/bin/python /mnt/hds/proj/bioinfo/SERVER/apps/deliver/scripts/xparseunaligned.py ${UNABASE}${run} /mnt/hds/proj/bioinfo/SERVER/apps/deliver/config/databases.yaml"
         /mnt/hds/proj/bioinfo/SERVER/miniconda/envs/oldcgstats/bin/python /mnt/hds/proj/bioinfo/SCRIPTS/xparseunaligned.py ${UNABASE}${run} &> ${UNABASE}${run}/LOG/xparseunaligned.`date +'%Y%m%d%H%M%S'`.log
         /mnt/hds/proj/bioinfo/SERVER/miniconda/bin/python /mnt/hds/proj/bioinfo/SERVER/apps/deliver/scripts/xparseunaligned.py ${UNABASE}${run} /mnt/hds/proj/bioinfo/SERVER/apps/deliver/config/databases.yaml
         # create stats per project
