@@ -62,7 +62,7 @@ def ext_links(config, start_dir, outdir):
         family_id = sample.udf.get('familyID', None)
         cust_name = sample.udf['customer']
         # get wes|wgs
-        seq_type_dir = cgsample.apptag.analysis_type
+        seq_type_dir = cgsample.apptag.sequencing_type
         if sample.date_received is not None:
             date = datetime.strptime(sample.date_received, "%Y-%m-%d").strftime("%y%m%d")
         else:
