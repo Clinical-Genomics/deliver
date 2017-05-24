@@ -200,7 +200,7 @@ def demux_links(fc, sample, project, mipoutdir, demuxdir, force, skip_undetermin
         readcounts = .75 * float(requested_reads)
 
         try:
-            seq_type_dir = app_tag.sequencing_type  # get wes|wgs
+            seq_type_dir = app_tag.sequencing_type_mip  # get wes|wgs
         except UnknownSequencingTypeError as e:
             log.error('{} {}'.format(sample, e)) 
             continue
