@@ -1,8 +1,8 @@
 #!/bin/bash
 
+shopt -s expand_aliases
+source ~/.bashrc
 set -e
-
-FILETYPE=TUMOR
 
 FASTQ_DIR=${1?'Please provide a sample directory.'}
 
@@ -23,6 +23,8 @@ for FASTQ in ${FASTQ_DIR}/*_1.fastq.gz; do
     FC=${FASTQ_PARTS[2]}
     SAMPLE=${FASTQ_PARTS[3]}
     INDEX=${FASTQ_PARTS[4]}
+    CASE=$(cglims get --external ${SAMPLE} familyID)
+    CASE=${CASE//fam}
     break
 done
 
@@ -30,8 +32,13 @@ cd $FASTQ_DIR
 
 for READ_DIRECTION in 1 2; do
 
+    FILETYPE=control
+    if [[ $(cglims get --external ${SAMPLE} tumor) == 'yes' ]]; then
+        FILETYPE=tumor
+    fi
+
     # create the MH file name
-    MH_FASTQ_FILENAME="${SAMPLE}_${FILETYPE}_${INDEX}_${READ_DIRECTION}"
+    MH_FASTQ_FILENAME="${CASE}_${FILETYPE}_${INDEX}_${READ_DIRECTION}"
     MH_FASTQ_FILE="${MH_FASTQ_FILENAME}.fastq.gz"
     FASTQ_FILES="*_${READ_DIRECTION}.fastq.gz"
 
@@ -53,10 +60,11 @@ for READ_DIRECTION in 1 2; do
 done
 
 # signal completion
-echo "touch ${FASTQ_DIR}/${SAMPLE}_complete"
-touch ${FASTQ_DIR}/${SAMPLE}_complete
+CASE_COMPLETE="${CASE}_complete"
+echo "touch ${FASTQ_DIR}/${CASE_COMPLETE}"
+touch ${FASTQ_DIR}/${CASE_COMPLETE}
 
-echo "lftp sftp://SFL:@ftp.de.molecularhealth.com/upload/ -e 'put ${SAMPLE}_complete; bye;'"
-lftp sftp://SFL:@ftp.de.molecularhealth.com/upload/ -e "put ${SAMPLE}_complete; bye;"
+echo "lftp sftp://SFL:@ftp.de.molecularhealth.com/upload/ -e 'put ${CASE_COMPLETE}; bye;'"
+lftp sftp://SFL:@ftp.de.molecularhealth.com/upload/ -e "put ${CASE_COMPLETE}; bye;"
 
 # don't remove the _complete file to signal we have delivered
