@@ -3,12 +3,33 @@
 shopt -s expand_aliases
 source ~/.bashrc
 
-source /mnt/hds/proj/bioinfo/SCRIPTS/log.bash
-log $(getversion)
+########
+# VARS #
+########
 
 MAILTO=bioinfo.clinical@scilifelab.se,anna.leinfelt@scilifelab.se,emilia.ottosson@scilifelab.se
+ERROR_EMAIL=kenny.billiau@scilifelab.se
 UNABASE=/mnt/hds/proj/bioinfo/DEMUX/
 runs=$(ls ${UNABASE})
+
+#############
+# FUNCTIONS #
+#############
+
+log() {
+    local NOW=$(date +"%Y%m%d%H%M%S")
+    echo "[$NOW] $@"
+}
+
+failed() {
+    echo ${FC} | mail -s "ERROR delivery ${FC}" ${EMAIL}
+}
+trap failed ERR
+
+########
+# MAIN #
+########
+
 for run in ${runs[@]}; do
     if [ -f ${UNABASE}${run}/copycomplete.txt ]; then
         if [ -f ${UNABASE}${run}/delivery.txt ]; then
@@ -19,17 +40,15 @@ for run in ${runs[@]}; do
   
             # add an X FC to clinstatsdb - because the permanent tunnel is not active on the nodes.
             if [[ -d "${UNABASE}${run}/l1t11" ]]; then
-                log ${run} "/mnt/hds/proj/bioinfo/SERVER/miniconda/envs/oldcgstats/bin/python /mnt/hds/proj/bioinfo/SCRIPTS/xparseunaligned.py ${UNABASE}${run} &> ${UNABASE}${run}/LOG/xparseunaligned.`date +'%Y%m%d%H%M%S'`.log"
-                log ${run} "/mnt/hds/proj/bioinfo/SERVER/miniconda/bin/python /mnt/hds/proj/bioinfo/SERVER/apps/deliver/scripts/xparseunaligned.py ${UNABASE}${run} /mnt/hds/proj/bioinfo/SERVER/apps/deliver/config/databases.yaml"
-                /mnt/hds/proj/bioinfo/SERVER/miniconda/envs/oldcgstats/bin/python /mnt/hds/proj/bioinfo/SCRIPTS/xparseunaligned.py ${UNABASE}${run} &> ${UNABASE}${run}/LOG/xparseunaligned.`date +'%Y%m%d%H%M%S'`.log
-                /mnt/hds/proj/bioinfo/SERVER/miniconda/bin/python /mnt/hds/proj/bioinfo/SERVER/apps/deliver/scripts/xparseunaligned.py ${UNABASE}${run} /mnt/hds/proj/bioinfo/SERVER/apps/deliver/config/databases.yaml
+                cgstats add --machine X ${UNABASE}${run}
                 # create stats per project
                 for PROJECT in ${UNABASE}${run}/Unaligned/Project*; do
                     PROJECT=$(basename $PROJECT)
                     PROJECT_NR=${PROJECT##*_}
-                    log ${run} "python /mnt/hds/proj/bioinfo/SCRIPTS/selectdemux.py $PROJECT_NR $FC &> ${UNABASE}${run}/stats-${PROJECT_NR}-${FC}.txt"
-                    python /mnt/hds/proj/bioinfo/SCRIPTS/selectdemux.py $PROJECT_NR $FC &> ${UNABASE}${run}/stats-${PROJECT_NR}-${FC}.txt
+                    cgstats select --project ${PROJECT_NR} ${FC} &> ${UNABASE}${run}/stats-${PROJECT_NR}-${FC}.txt
                 done
+                # create stats per lane
+                cgstats select ${FC} &> ${UNABASE}${run}/stats.txt
             fi
             # end add
   
