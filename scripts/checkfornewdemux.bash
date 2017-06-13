@@ -10,46 +10,43 @@ MAILTO=bioinfo.clinical@scilifelab.se,anna.leinfelt@scilifelab.se,emilia.ottosso
 UNABASE=/mnt/hds/proj/bioinfo/DEMUX/
 runs=$(ls ${UNABASE})
 for run in ${runs[@]}; do
-  if [ -f ${UNABASE}${run}/copycomplete.txt ]; then
-    if [ -f ${UNABASE}${run}/delivery.txt ]; then
-      log ${run} 'copy is complete and delivery has already started'
+    if [ -f ${UNABASE}${run}/copycomplete.txt ]; then
+        if [ -f ${UNABASE}${run}/delivery.txt ]; then
+            log ${run} 'copy is complete and delivery has already started'
+        else
+            log ${run} 'copy is complete delivery is started' > ${UNABASE}${run}/delivery.txt
+            FC=$(echo ${run} | awk 'BEGIN {FS="/"} {split($(NF-1),arr,"_");print substr(arr[4],2,length(arr[4]))}')
+  
+            # add an X FC to clinstatsdb - because the permanent tunnel is not active on the nodes.
+            if [[ -d "${UNABASE}${run}/l1t11" ]]; then
+                log ${run} "/mnt/hds/proj/bioinfo/SERVER/miniconda/envs/oldcgstats/bin/python /mnt/hds/proj/bioinfo/SCRIPTS/xparseunaligned.py ${UNABASE}${run} &> ${UNABASE}${run}/LOG/xparseunaligned.`date +'%Y%m%d%H%M%S'`.log"
+                log ${run} "/mnt/hds/proj/bioinfo/SERVER/miniconda/bin/python /mnt/hds/proj/bioinfo/SERVER/apps/deliver/scripts/xparseunaligned.py ${UNABASE}${run} /mnt/hds/proj/bioinfo/SERVER/apps/deliver/config/databases.yaml"
+                /mnt/hds/proj/bioinfo/SERVER/miniconda/envs/oldcgstats/bin/python /mnt/hds/proj/bioinfo/SCRIPTS/xparseunaligned.py ${UNABASE}${run} &> ${UNABASE}${run}/LOG/xparseunaligned.`date +'%Y%m%d%H%M%S'`.log
+                /mnt/hds/proj/bioinfo/SERVER/miniconda/bin/python /mnt/hds/proj/bioinfo/SERVER/apps/deliver/scripts/xparseunaligned.py ${UNABASE}${run} /mnt/hds/proj/bioinfo/SERVER/apps/deliver/config/databases.yaml
+                # create stats per project
+                for PROJECT in ${UNABASE}${run}/Unaligned/Project*; do
+                    PROJECT=$(basename $PROJECT)
+                    PROJECT_NR=${PROJECT##*_}
+                    log ${run} "python /mnt/hds/proj/bioinfo/SCRIPTS/selectdemux.py $PROJECT_NR $FC &> ${UNABASE}${run}/stats-${PROJECT_NR}-${FC}.txt"
+                    python /mnt/hds/proj/bioinfo/SCRIPTS/selectdemux.py $PROJECT_NR $FC &> ${UNABASE}${run}/stats-${PROJECT_NR}-${FC}.txt
+                done
+            fi
+            # end add
+  
+            # link the fastq files to MIP_ANALYSIS
+            NOW=$(date +"%Y%m%d%H%M%S")
+            deliver mip --flowcell $FC &> ${UNABASE}${run}/createfastqlinks.${FC}.${NOW}.log
+            deliver microbial --flowcell $FC &> ${UNABASE}${run}/microbial.${FC}.${NOW}.log
+  
+            # link the fastq files to cust/INBOX
+            deliver_fastqs_fc ${FC}
+  
+            SUBJECT=${FC}
+            # send an email on completion
+            log "column -t ${UNABASE}${run}/stats*.txt | mail -s 'Run ${SUBJECT} COMPLETE!' ${MAILTO}"
+            column -t ${UNABASE}${run}/stats*.txt | mail -s "Run ${SUBJECT} COMPLETE!" ${MAILTO}
+        fi
     else
-      log ${run} 'copy is complete delivery is started' > ${UNABASE}${run}/delivery.txt
-      FC=$(echo ${run} | awk 'BEGIN {FS="/"} {split($(NF-1),arr,"_");print substr(arr[4],2,length(arr[4]))}')
-
-      # add an X FC to clinstatsdb - because the permanent tunnel is not active on the nodes.
-      if [[ -d "${UNABASE}${run}/l1t11" ]]; then
-        log ${run} "/mnt/hds/proj/bioinfo/SERVER/miniconda/envs/oldcgstats/bin/python /mnt/hds/proj/bioinfo/SCRIPTS/xparseunaligned.py ${UNABASE}${run} &> ${UNABASE}${run}/LOG/xparseunaligned.`date +'%Y%m%d%H%M%S'`.log"
-        log ${run} "/mnt/hds/proj/bioinfo/SERVER/miniconda/bin/python /mnt/hds/proj/bioinfo/SERVER/apps/deliver/scripts/xparseunaligned.py ${UNABASE}${run} /mnt/hds/proj/bioinfo/SERVER/apps/deliver/config/databases.yaml"
-        /mnt/hds/proj/bioinfo/SERVER/miniconda/envs/oldcgstats/bin/python /mnt/hds/proj/bioinfo/SCRIPTS/xparseunaligned.py ${UNABASE}${run} &> ${UNABASE}${run}/LOG/xparseunaligned.`date +'%Y%m%d%H%M%S'`.log
-        /mnt/hds/proj/bioinfo/SERVER/miniconda/bin/python /mnt/hds/proj/bioinfo/SERVER/apps/deliver/scripts/xparseunaligned.py ${UNABASE}${run} /mnt/hds/proj/bioinfo/SERVER/apps/deliver/config/databases.yaml
-        # create stats per project
-        for PROJECT in ${UNABASE}${run}/Unaligned/Project*; do
-          PROJECT=$(basename $PROJECT)
-          PROJECT_NR=${PROJECT##*_}
-          log ${run} "python /mnt/hds/proj/bioinfo/SCRIPTS/selectdemux.py $PROJECT_NR $FC &> ${UNABASE}${run}/stats-${PROJECT_NR}-${FC}.txt"
-          python /mnt/hds/proj/bioinfo/SCRIPTS/selectdemux.py $PROJECT_NR $FC &> ${UNABASE}${run}/stats-${PROJECT_NR}-${FC}.txt
-        done
-      fi
-      # end add
-
-      # link the fastq files to MIP_ANALYSIS
-      NOW=$(date +"%Y%m%d%H%M%S")
-      deliver mip --flowcell $FC &> ${UNABASE}${run}/createfastqlinks.${FC}.${NOW}.log
-      deliver microbial --flowcell $FC &> ${UNABASE}${run}/microbial.${FC}.${NOW}.log
-
-      # link the fastq files to cust/INBOX
-      deliver_fastqs_fc ${FC}
-
-      # add the samples to HK
-      add_samples $FC
-
-      SUBJECT=${FC}
-      # send an email on completion
-      log "column -t ${UNABASE}${run}/stats*.txt | mail -s 'Run ${SUBJECT} COMPLETE!' ${MAILTO}"
-      column -t ${UNABASE}${run}/stats*.txt | mail -s "Run ${SUBJECT} COMPLETE!" ${MAILTO}
+        log ${run} 'is not yet completely copied'
     fi
-  else
-    log ${run} 'is not yet completely copied'
-  fi
 done
