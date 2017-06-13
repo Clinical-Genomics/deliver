@@ -339,6 +339,7 @@ import_ext_sample() {
     sample_id=${1?'please provide a sample_id'}
     ext_dir=${2-$EXT_ROOT}
     cust_id=$(cglims get ${sample_id} customer)
+    case_id=$(cglims get ${sample_id} case_id)
 
     sample_dir="${ext_dir}/${cust_id}/${sample_id}"
 
@@ -353,7 +354,7 @@ import_ext_sample() {
     deliver ext mip ${sample_dir} |& tee -a ${sample_dir}/project.log
 
     # add sample to HK
-    add_sample $sample_id
+    cg update ${case_id}
 
     date +'%Y%m%d%H%M%S' > ${sample_dir}/delivered.txt
 }
