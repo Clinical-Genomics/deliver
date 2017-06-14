@@ -4,7 +4,7 @@ Deliver files from Housekeeper to the customer's inbox.
 
 => INPUT: cust name, sample name, housekeeper file (bam, vcf, bcf, ...)
 
-=> CONFIG: root_dir, clinstatsdb_connection
+=> CONFIG: root_dir, cgstats_connection
 """
 
 from __future__ import print_function

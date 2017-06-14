@@ -3,5 +3,5 @@ PyYAML
 psutil
 mysql-python
 cglims
-clinstatsdb
+cgstats
 path.py

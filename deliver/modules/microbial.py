@@ -4,7 +4,7 @@ Deliver FASTQ files to be run with the microbial pipeline.
 
 => INPUT: flowcell
 
-=> CONFIG: root_dir, clinstatsdb_connection
+=> CONFIG: root_dir, cgstats_connection
 => INFO:
      - FASTQ: flowcell, lims_id
      - LINK: project_id, sample_name, fastq_files
@@ -14,8 +14,8 @@ import re
 
 from path import Path
 from cglims.api import ClinicalLims, ClinicalSample
-from clinstatsdb.db import api
-from clinstatsdb.db.models import Demux, Flowcell, Sample, Unaligned
+from cgstats.db import api
+from cgstats.db.models import Demux, Flowcell, Sample, Unaligned
 from sqlalchemy import or_
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -29,7 +29,7 @@ def link_microbial(config, flowcell=None, project=None, sample=None,
                    dry_run=False):
     """Link FASTQ files for microbial samples."""
     lims_api = ClinicalLims(**config['lims'])
-    manager = api.connect(config['clinstatsdb_uri'])
+    manager = api.connect(config['cgstats_uri'])
 
     if sample:
         lims_ids = [sample]
