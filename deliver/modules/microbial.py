@@ -93,7 +93,7 @@ def project_samples(lims_api, project_id):
 
 def get_samples(flowcell):
     """Return LIMS ids for all microbial samples on a flowcell."""
-    for demux in flowcell.demuxes:
+    for demux in flowcell.demux:
         for unaligned in demux.unaligned:
             sample_name = unaligned.sample.samplename
             # skip the dummy samples to catch the undetermined indexes of HiSeq2500
@@ -120,7 +120,7 @@ def from_sample(csdb_manager, demux_root, sample_root, project_id, lims_id):
 def get_flowcells(csdb_manager, lims_id):
     """Get demux info about a sample."""
     query = (Flowcell.query
-                     .join(Flowcell.demuxes)
+                     .join(Flowcell.demux)
                      .join(Demux.unaligned)
                      .join(Unaligned.sample)
                      .filter(
