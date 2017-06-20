@@ -38,10 +38,11 @@ def link(context, log_level, config):
 @click.option('--demuxdir', default=DEMUXDIR, show_default=True, type=click.Path(exists=True), help='path to DEMUX')
 @click.option('--force', is_flag=True, help='Link regardless of QC. BEWARE that Undetermined indexes will be linked as well even if pooled sample!')
 @click.option('--skip-undetermined', is_flag=True, help='Skip linking undetermined.')
+@click.option('--sequencing-type', type=click.Choice(['wes', 'wgs']), help='Overwrite sequencing type directory.')
 @click.help_option()
-def mip(flowcell, sample, project, outdir, demuxdir, force, skip_undetermined):
+def mip(flowcell, sample, project, outdir, demuxdir, force, skip_undetermined, sequencing_type):
     """Links from DEMUX to MIP_ANALYSIS and customer folder"""
-    demux_links(flowcell, sample, project, outdir, demuxdir, force, skip_undetermined)
+    demux_links(flowcell, sample, project, outdir, demuxdir, force, skip_undetermined, sequencing_type)
 
 
 @link.command()

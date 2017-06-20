@@ -154,7 +154,7 @@ def analysis_cutoff(analysis_type):
     return 0
 
 
-def demux_links(fc, sample, project, mipoutdir, demuxdir, force, skip_undetermined):
+def demux_links(fc, sample, project, mipoutdir, demuxdir, force, skip_undetermined, sequencing_type):
     """Link FASTQ files from DEMUX output of a flowcell."""
 
     global db_params
@@ -199,11 +199,14 @@ def demux_links(fc, sample, project, mipoutdir, demuxdir, force, skip_undetermin
         requested_reads = app_tag.reads / 1000000
         readcounts = .75 * float(requested_reads)
 
-        try:
-            seq_type_dir = app_tag.sequencing_type_mip  # get wes|wgs
-        except UnknownSequencingTypeError as e:
-            log.error('{} {}'.format(sample, e)) 
-            continue
+        if sequencing_type:
+            seq_type_dir = sequencing_type
+        else:
+            try:
+                seq_type_dir = app_tag.sequencing_type_mip  # get wes|wgs
+            except UnknownSequencingTypeError as e:
+                log.error('{} {}'.format(sample, e)) 
+                continue
         q30_cutoff = analysis_cutoff(seq_type_dir)
 
         try:
