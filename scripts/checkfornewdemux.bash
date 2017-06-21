@@ -48,7 +48,7 @@ for run in ${runs[@]}; do
                     cgstats select --project ${PROJECT_NR} ${FC} &> ${UNABASE}${run}/stats-${PROJECT_NR}-${FC}.txt
                 done
                 # create stats per lane
-                cgstats select ${FC} &> ${UNABASE}${run}/stats.txt
+                cgstats lanestats ${UNABASE}${run} &> ${UNABASE}${run}/stats.txt
             fi
             # end add
   
