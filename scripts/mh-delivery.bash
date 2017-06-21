@@ -22,7 +22,7 @@ for FASTQ in ${FASTQ_DIR}/*_1.fastq.gz; do
     DATE=${FASTQ_PARTS[1]}
     FC=${FASTQ_PARTS[2]}
     SAMPLE=${FASTQ_PARTS[3]}
-    INDEX=${FASTQ_PARTS[4]}
+    BARCODE=$(cglims get --external ${SAMPLE} name)
     CASE=$(cglims get --external ${SAMPLE} familyID)
     CASE=${CASE//fam}
     break
@@ -38,7 +38,7 @@ for READ_DIRECTION in 1 2; do
     fi
 
     # create the MH file name
-    MH_FASTQ_FILENAME="${CASE}_${FILETYPE}_${INDEX}_${READ_DIRECTION}"
+    MH_FASTQ_FILENAME="${CASE}_${FILETYPE}_${BARCODE}_${READ_DIRECTION}"
     MH_FASTQ_FILE="${MH_FASTQ_FILENAME}.fastq.gz"
     FASTQ_FILES="*_${READ_DIRECTION}.fastq.gz"
 
