@@ -5,6 +5,8 @@ source ~/.bashrc
 set -e
 
 FASTQ_DIR=${1?'Please provide a sample directory.'}
+CC_EMAILS="martin.maerz@molecularhealth.com"
+EMAILS="kenny.billiau@scilifelab.se CustomerCareEU@molecularhealth.com"
 
 if [[ -f $FASTQ_DIR ]]; then
     echo >&2 "'${FASTQ_DIR}' is a file, not a directory. Aborting."
@@ -66,5 +68,8 @@ touch ${FASTQ_DIR}/${CASE_COMPLETE}
 
 echo "lftp sftp://SFL:@ftp.de.molecularhealth.com/upload/ -e 'put ${CASE_COMPLETE}; bye;'"
 lftp sftp://SFL:@ftp.de.molecularhealth.com/upload/ -e "put ${CASE_COMPLETE}; bye;"
+
+echo "echo 'SciLifeLab ${CASE} ${BARCODE} uploaded!' | mail -s 'SciLifeLab ${CASE} ${BARCODE} uploaded!' -c ${CC_EMAILS} ${EMAILS}"
+echo "SciLifeLab ${CASE} ${BARCODE} uploaded!" | mail -s "SciLifeLab ${CASE} ${BARCODE} uploaded!" -c ${CC_EMAILS} ${EMAILS}
 
 # don't remove the _complete file to signal we have delivered
