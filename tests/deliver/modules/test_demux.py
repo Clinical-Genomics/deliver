@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 
-from deliver.modules.demux import getsamplesfromflowcell, getsampleinfofromname_glob
+from tempfile import mkdtemp
+from path import Path
+
+from deliver.modules.demux import getsamplesfromflowcell, getsampleinfofromname_glob, demux_links
 
 def test_getsamplesfromflowcell():
     demux_dir = 'tests/fixtures/'
@@ -32,3 +35,13 @@ def test_getsampleinfofromname_glob():
         { 'fc': 'HB07NADXX', 'lane': 1 },
         { 'fc': 'HB07NADXX', 'lane': 2 }
     ]
+
+def test_linking():
+    mipoutdir=mkdtemp()
+    demuxdir='tests/fixtures/'
+    demux_links(fc='HB07NADXX', sample='SIB914A11', project=None, mipoutdir=mipoutdir, demuxdir=demuxdir, force=True, skip_undetermined=False)
+
+    assert Path(mipoutdir).joinpath('cust003', '14043', 'wes', 'SIB914A11', 'fastq', '1_150114_HB07NADXX_SIB914A11_GGCTAC_1.fastq.gz').islink()
+    assert Path(mipoutdir).joinpath('cust003', '14043', 'wes', 'SIB914A11', 'fastq', '1_150114_HB07NADXX_SIB914A11_GGCTAC_2.fastq.gz').islink()
+
+    Path(mipoutdir).rmdir_p()
