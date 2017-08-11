@@ -33,6 +33,7 @@ deliver_hk_case() {
     cat_files=($(housekeeper get --case ${case_id} --category ${category} 2> /dev/null))
     if [[ $? == 0 ]]; then
         for cat_file in "${cat_files[@]}"; do
+            (>&2 echo "INFO working on ${category} for ${case_id}")
             deliver inbox --case ${case_id} ${cat_file}
         done
     else
@@ -50,6 +51,7 @@ deliver_hk_sample() {
 
     cat_file=$(housekeeper get --sample ${sample_id} --category ${category} 2> /dev/null)
     if [[ $? == 0 ]]; then
+        (>&2 echo "INFO working on ${category} for ${sample_id}")
         deliver inbox --sample ${sample_id} ${cat_file}
     else
         (>&2 echo "WARNING ${category} not found for ${sample_id}")
