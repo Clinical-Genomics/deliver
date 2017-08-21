@@ -7,7 +7,7 @@ source ~/.bashrc
 # VARS #
 ########
 
-MAILTO=bioinfo.clinical@scilifelab.se,anna.leinfelt@scilifelab.se,emilia.ottosson@scilifelab.se
+MAILTO=bioinfo.clinical@scilifelab.se,anna.leinfelt@scilifelab.se,emilia.ottosson@scilifelab.se,anna.zetterlund@scilifelab.se
 ERROR_EMAIL=kenny.billiau@scilifelab.se
 UNABASE=/mnt/hds/proj/bioinfo/DEMUX/
 runs=$(ls ${UNABASE})
