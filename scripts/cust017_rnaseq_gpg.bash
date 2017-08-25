@@ -6,8 +6,8 @@
 ##SBATCH --qos=high
 #SBATCH --output=/mnt/hds/proj/bioinfo/LOG/scapis-%j.out
 #SBATCH --error=/mnt/hds/proj/bioinfo/LOG/scapis-%j.err
-##SBATCH --mail-type=END
-##SBATCH --mail-user=kenny.billiau@scilifelab.se
+#SBATCH --mail-type=FAIL
+#SBATCH --mail-user=kenny.billiau@scilifelab.se
 
 set -ue -o pipefail
 shopt -s nullglob
