@@ -52,10 +52,9 @@ for run in ${runs[@]}; do
             fi
             # end add
   
-            # link the fastq files to MIP_ANALYSIS
             NOW=$(date +"%Y%m%d%H%M%S")
-            deliver mip --flowcell $FC &> ${UNABASE}${run}/createfastqlinks.${FC}.${NOW}.log
             deliver microbial --flowcell $FC &> ${UNABASE}${run}/microbial.${FC}.${NOW}.log
+            stage-cg transfer flowcell $FC &> ${UNABASE}${run}/cg.transfer.${FC}.${NOW}.log
   
             # link the fastq files to cust/INBOX
             deliver_fastqs_fc ${FC}
