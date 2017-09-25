@@ -6,7 +6,7 @@ set -e
 
 FASTQ_DIR=${1?'Please provide a sample directory.'}
 CC_EMAILS="martin.maerz@molecularhealth.com"
-EMAILS="kenny.billiau@scilifelab.se CustomerCareEU@molecularhealth.com"
+EMAILS="kenny.billiau@scilifelab.se,CustomerCareEU@molecularhealth.com"
 
 if [[ -f $FASTQ_DIR ]]; then
     echo >&2 "'${FASTQ_DIR}' is a file, not a directory. Aborting."
@@ -34,10 +34,7 @@ cd $FASTQ_DIR
 
 for READ_DIRECTION in 1 2; do
 
-    FILETYPE=control
-    if [[ $(cglims get --external ${SAMPLE} tumor) == 'yes' ]]; then
-        FILETYPE=tumor
-    fi
+    FILETYPE=tumor
 
     # create the MH file name
     MH_FASTQ_FILENAME="${CASE}_${FILETYPE}_${BARCODE}_${READ_DIRECTION}"
