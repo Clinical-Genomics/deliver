@@ -54,7 +54,7 @@ for run in ${runs[@]}; do
   
             NOW=$(date +"%Y%m%d%H%M%S")
             deliver microbial --flowcell $FC &> ${UNABASE}${run}/microbial.${FC}.${NOW}.log
-            stage-cg transfer flowcell $FC &> ${UNABASE}${run}/cg.transfer.${FC}.${NOW}.log
+            cg transfer flowcell $FC &> ${UNABASE}${run}/cg.transfer.${FC}.${NOW}.log
   
             # link the fastq files to cust/INBOX
             deliver_fastqs_fc ${FC}
