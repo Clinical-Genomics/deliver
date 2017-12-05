@@ -7,8 +7,8 @@ source ~/.bashrc
 # VARS #
 ########
 
-MAILTO=bioinfo.clinical@scilifelab.se,anna.leinfelt@scilifelab.se,emilia.ottosson@scilifelab.se,anna.zetterlund@scilifelab.se
-ERROR_EMAIL=kenny.billiau@scilifelab.se
+MAILTO=clinical-demux@scilifelab.se
+ERROR_EMAIL=clinical-demux@scilifelab.se
 UNABASE=/mnt/hds/proj/bioinfo/DEMUX/
 runs=$(ls ${UNABASE})
 
@@ -22,7 +22,7 @@ log() {
 }
 
 failed() {
-    echo ${FC} | mail -s "ERROR delivery ${FC}" ${EMAIL}
+    echo ${FC} | mail -s "ERROR delivery ${FC}" ${ERROR_EMAIL}
 }
 trap failed ERR
 
