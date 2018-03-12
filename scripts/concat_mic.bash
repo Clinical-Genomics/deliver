@@ -1,0 +1,34 @@
+#!/bin/bash
+
+set -e
+shopt -s nullglob
+
+FASTQ_DIR=${1?'Please provide a project directory.'}
+
+if [[ -f $FASTQ_DIR ]]; then
+    echo >&2 "'${FASTQ_DIR}' is a file, not a directory. Aborting."
+    exit 1
+fi
+
+for DIR in ${FASTQ_DIR}/*; do
+    if [[ -d $DIR ]]; then
+        for READ_DIRECTION in 1 2; do
+            PATTERN="${DIR}/[1-8]_*_${READ_DIRECTION}.fastq.gz"
+            FASTQ_FILES=( ${PATTERN} )
+            CONCAT_FILENAME=$(echo ${FASTQ_FILES[0]} | cut -d"_" -f 2,3,4,5,6)
+            if [[ -z ${CONCAT_FILENAME} ]]; then
+                continue
+            fi
+            echo "find ${DIR} -type f -name '[1-8]_*_${READ_DIRECTION}.fastq.gz' -exec cat {} \; > ${DIR}/${CONCAT_FILENAME}"
+            find ${DIR} -type f -name "[1-8]_*_${READ_DIRECTION}.fastq.gz" -exec cat {} \; > ${DIR}/${CONCAT_FILENAME}
+            BEFORE_SIZE=$(find ${DIR} -maxdepth 2 -type f -name "[1-8]_*_${READ_DIRECTION}.fastq.gz" -exec du -ch {} + | grep total)
+            AFTER_SIZE=$(du -ch ${DIR}/${CONCAT_FILENAME} | grep total)
+            if [[ ${BEFORE_SIZE} != ${AFTER_SIZE} ]]; then
+                echo "${BEFORE_SIZE} != ${AFTER_SIZE} ERROR!"
+            else
+                echo "rm -rf ${PATTERN}"
+                rm -rf ${PATTERN}
+            fi
+        done
+    fi
+done
