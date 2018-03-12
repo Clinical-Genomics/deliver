@@ -13,6 +13,11 @@ if [[ -f $FASTQ_DIR ]]; then
     exit 1
 fi
 
+if [[ $DRYRUN != "false" ]]; then
+    echo >&2 "'\$DRYRUN' is not 'false', will not upload."
+    echo >&2 "Please set DRYRUN=false to upload."
+fi
+
 # get one fastq file to determine induvidual parts of MH-fastq file name
 for FASTQ in ${FASTQ_DIR}/*_1.fastq.gz; do
     FASTQ_FILE=$(basename $FASTQ)
@@ -50,23 +55,27 @@ for READ_DIRECTION in 1 2; do
     md5sum $MH_FASTQ_FILE > ${FASTQ_DIR}/${MH_FASTQ_FILE}.md5
 
     # upload the MH file and md5sum
-    echo "lftp sftp://SFL:@ftp.de.molecularhealth.com/upload/ -e 'put ${MH_FASTQ_FILE}; put ${MH_FASTQ_FILE}.md5; bye;'"
-    lftp sftp://SFL:@ftp.de.molecularhealth.com/upload/ -e "put ${MH_FASTQ_FILE}; put ${MH_FASTQ_FILE}.md5; bye;"
+    if [[ "$DRYRUN" == "false" ]]; then
+        echo "lftp sftp://SFL:@ftp.de.molecularhealth.com/upload/ -e 'put ${MH_FASTQ_FILE}; put ${MH_FASTQ_FILE}.md5; bye;'"
+        lftp sftp://SFL:@ftp.de.molecularhealth.com/upload/ -e "put ${MH_FASTQ_FILE}; put ${MH_FASTQ_FILE}.md5; bye;"
+    fi
 
     # only remove the generated fastq.gz file so we have proof of what we uploaded
     echo "rm ${MH_FASTQ_FILE}"
     rm ${MH_FASTQ_FILE}
 done
 
-# signal completion
-CASE_COMPLETE="${CASE}_complete"
-echo "touch ${FASTQ_DIR}/${CASE_COMPLETE}"
-touch ${FASTQ_DIR}/${CASE_COMPLETE}
-
-echo "lftp sftp://SFL:@ftp.de.molecularhealth.com/upload/ -e 'put ${CASE_COMPLETE}; bye;'"
-lftp sftp://SFL:@ftp.de.molecularhealth.com/upload/ -e "put ${CASE_COMPLETE}; bye;"
-
-echo "echo 'SciLifeLab ${CASE} ${BARCODE} uploaded!' | mail -s 'SciLifeLab ${CASE} ${BARCODE} uploaded!' -c ${CC_EMAILS} ${EMAILS}"
-echo "SciLifeLab ${CASE} ${BARCODE} uploaded!" | mail -s "SciLifeLab ${CASE} ${BARCODE} uploaded!" -c ${CC_EMAILS} ${EMAILS}
+if [[ "$DRYRUN" == "false" ]]; then
+    # signal completion
+    CASE_COMPLETE="${CASE}_complete"
+    echo "touch ${FASTQ_DIR}/${CASE_COMPLETE}"
+    touch ${FASTQ_DIR}/${CASE_COMPLETE}
+    
+    echo "lftp sftp://SFL:@ftp.de.molecularhealth.com/upload/ -e 'put ${CASE_COMPLETE}; bye;'"
+    lftp sftp://SFL:@ftp.de.molecularhealth.com/upload/ -e "put ${CASE_COMPLETE}; bye;"
+    
+    echo "echo 'SciLifeLab ${CASE} ${BARCODE} uploaded!' | mail -s 'SciLifeLab ${CASE} ${BARCODE} uploaded!' -c ${CC_EMAILS} ${EMAILS}"
+    echo "SciLifeLab ${CASE} ${BARCODE} uploaded!" | mail -s "SciLifeLab ${CASE} ${BARCODE} uploaded!" -c ${CC_EMAILS} ${EMAILS}
+fi
 
 # don't remove the _complete file to signal we have delivered

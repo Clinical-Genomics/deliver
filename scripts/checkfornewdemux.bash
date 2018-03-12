@@ -7,10 +7,9 @@ source ~/.bashrc
 # VARS #
 ########
 
-MAILTO=bioinfo.clinical@scilifelab.se,anna.leinfelt@scilifelab.se,emilia.ottosson@scilifelab.se,anna.zetterlund@scilifelab.se
-ERROR_EMAIL=kenny.billiau@scilifelab.se
+MAILTO=clinical-demux@scilifelab.se
+ERROR_EMAIL=clinical-demux@scilifelab.se
 UNABASE=/mnt/hds/proj/bioinfo/DEMUX/
-runs=$(ls ${UNABASE})
 
 #############
 # FUNCTIONS #
@@ -22,7 +21,7 @@ log() {
 }
 
 failed() {
-    echo ${FC} | mail -s "ERROR delivery ${FC}" ${EMAIL}
+    echo "Error delivering ${FC}: $(caller)" | mail -s "ERROR delivery ${FC}" ${ERROR_EMAIL}
 }
 trap failed ERR
 
@@ -30,9 +29,10 @@ trap failed ERR
 # MAIN #
 ########
 
-for run in ${runs[@]}; do
-    if [ -f ${UNABASE}${run}/copycomplete.txt ]; then
-        if [ -f ${UNABASE}${run}/delivery.txt ]; then
+for run in ${UNABASE}/*; do
+    run=$(basename $run)
+    if [[ -f ${UNABASE}${run}/copycomplete.txt ]]; then
+        if [[ -f ${UNABASE}${run}/delivery.txt ]]; then
             log ${run} 'copy is complete and delivery has already started'
         else
             log ${run} 'copy is complete delivery is started' > ${UNABASE}${run}/delivery.txt
@@ -40,21 +40,24 @@ for run in ${runs[@]}; do
   
             # add an X FC to clinstatsdb - because the permanent tunnel is not active on the nodes.
             if [[ -d "${UNABASE}${run}/l1t11" ]]; then
+                log "cgstats add --machine X ${UNABASE}${run}"
                 cgstats add --machine X ${UNABASE}${run}
                 # create stats per project
                 for PROJECT in ${UNABASE}${run}/Unaligned/Project*; do
                     PROJECT=$(basename $PROJECT)
                     PROJECT_NR=${PROJECT##*_}
+                    log "cgstats select --project ${PROJECT_NR} ${FC} &> ${UNABASE}${run}/stats-${PROJECT_NR}-${FC}.txt"
                     cgstats select --project ${PROJECT_NR} ${FC} &> ${UNABASE}${run}/stats-${PROJECT_NR}-${FC}.txt
                 done
                 # create stats per lane
+                log "cgstats lanestats ${UNABASE}${run} &> ${UNABASE}${run}/stats.txt"
                 cgstats lanestats ${UNABASE}${run} &> ${UNABASE}${run}/stats.txt
             fi
             # end add
   
             NOW=$(date +"%Y%m%d%H%M%S")
             deliver microbial --flowcell $FC &> ${UNABASE}${run}/microbial.${FC}.${NOW}.log
-            stage-cg transfer flowcell $FC &> ${UNABASE}${run}/cg.transfer.${FC}.${NOW}.log
+            cg transfer flowcell $FC &> ${UNABASE}${run}/cg.transfer.${FC}.${NOW}.log
   
             # link the fastq files to cust/INBOX
             deliver_fastqs_fc ${FC}
