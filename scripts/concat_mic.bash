@@ -22,8 +22,8 @@ for DIR in ${FASTQ_DIR}/*; do
             if [[ -z ${CONCAT_FILENAME} ]]; then
                 continue
             fi
-            echo "find ${DIR} -type f -name '[1-8]_*_${READ_DIRECTION}.fastq.gz' -exec cat {} \; > ${DIR}/${CONCAT_FILENAME}"
-            find ${DIR} -type f -name "[1-8]_*_${READ_DIRECTION}.fastq.gz" -exec cat {} \; > ${DIR}/${CONCAT_FILENAME}
+            echo "cat ${DIR}/[1-8]_*_${READ_DIRECTION}.fastq.gz > ${DIR}/${CONCAT_FILENAME}"
+            cat ${DIR}/[1-8]_*_${READ_DIRECTION}.fastq.gz > ${DIR}/${CONCAT_FILENAME}
             BEFORE_SIZE=$(find ${DIR} -maxdepth 2 -type f -name "[1-8]_*_${READ_DIRECTION}.fastq.gz" -exec du -ch {} + | grep total)
             AFTER_SIZE=$(du -ch ${DIR}/${CONCAT_FILENAME} | grep total)
             if [[ ${BEFORE_SIZE} != ${AFTER_SIZE} ]]; then
