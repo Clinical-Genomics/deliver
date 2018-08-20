@@ -44,7 +44,8 @@ def inbox_links(config, infile, outdir, sample_id=None, project=None, case=None,
     else:
         outdir_template = '{outdir}/{cust}/INBOX/{group}/{sample}'
         sample = lims_api.sample(sample_id)
-        outdir_parts['sample'] = sample.name
+        sample_name = sample.name.replace(u'\xa0', u' ')
+        outdir_parts['sample'] = sample_name
 
     sample_id = sample.id
     cg_sample = ClinicalSample(sample)
@@ -60,7 +61,7 @@ def inbox_links(config, infile, outdir, sample_id=None, project=None, case=None,
     outdir_parts['group'] = group
 
     complete_outdir = outdir_template.format(**outdir_parts)
-    cust_sample_id = sample.name
+    cust_sample_id = sample.name.replace(u'\xa0', u' ')
 
     if infile_name.endswith('fastq.gz'):
         # the sample name is in the path, not the file name
