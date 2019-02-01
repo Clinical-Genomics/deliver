@@ -10,6 +10,7 @@ source ~/.bashrc
 MAILTO=clinical-demux@scilifelab.se
 ERROR_EMAIL=clinical-demux@scilifelab.se
 UNABASE=/mnt/hds/proj/bioinfo/DEMUX/
+HASTA_DEMUXES_DIR=/home/proj/production/demultiplexed-runs/
 
 #############
 # FUNCTIONS #
@@ -66,6 +67,14 @@ for run in ${UNABASE}/*; do
             # send an email on completion
             log "column -t ${UNABASE}${run}/stats*.txt | mail -s 'Run ${SUBJECT} COMPLETE!' ${MAILTO}"
             column -t ${UNABASE}${run}/stats*.txt | mail -s "Run ${SUBJECT} COMPLETE!" ${MAILTO}
+
+            # post X action: copy to hasta
+            if [[ -d "${UNABASE}${run}/l1t11" ]]; then
+                log "rsync -rvtl ${UNABASE}${run} hasta:${HASTA_DEMUXES_DIR}"
+                rsync -rvtl ${UNABASE}${run} hasta:${HASTA_DEMUXES_DIR}
+                log "ssh hasta \"find -L ${HASTA_DEMUXES_DIR}/${run} -type l -printf 'ln -sf %l %h/%f\n' | sed s'|${UNABASE}|${HASTA_DEMUXES_DIR}|' | sh\""
+                ssh hasta "find -L ${HASTA_DEMUXES_DIR}/${run} -type l -printf 'ln -sf %l %h/%f\n' | sed s'|${UNABASE}|${HASTA_DEMUXES_DIR}|' | sh"
+            fi
         fi
     else
         log ${run} 'is not yet completely copied'
