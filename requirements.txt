@@ -1,4 +1,4 @@
-click
+click<7
 PyYAML
 psutil
 mysql-python
