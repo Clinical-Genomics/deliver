@@ -63,14 +63,14 @@ def microbial(context, root_dir, sample, flowcell, dry_run, project):
         context.abort()
 
 
-@link.command()
+@link.command('ls')
 @click.option('-f', '--flowcell', default=None)
 @click.option('-l', '--lane', default=None)
 @click.option('-s', '--sample', default=None)
 @click.option('-c', '--check', is_flag=True, default=True, help='Check expected fastq files')
 @click.option('-F', '--force', is_flag=True, default=False, help='Include undetermined')
 @click.pass_context
-def ls(context, flowcell, lane, sample, check, force):
+def list_(context, flowcell, lane, sample, check, force):
     """List the fastq files."""
 
     fastq_files = []
@@ -81,15 +81,14 @@ def ls(context, flowcell, lane, sample, check, force):
     user = context.obj['cgstats']['user']
     password = context.obj['cgstats']['password']
    
-    cgstats = CgStats()
-    with cgstats.connect(host, port, db, user, password) as cursor:
+    with CgStats().connect(host, port, db, user, password) as cursor:
         if check:
             sample_infos = getsampleinfo(cursor, flowcell, lane, sample)
             for sample_info in sample_infos:
                 flowcell = sample_info['flowcell']
                 lane = sample_info['lane']
-                sample_info = sample_info['samplename']
-                fastq_files.extend(get_fastq_files(demux_root, flowcell, lane, sample))
+                samplename = sample_info['samplename']
+                fastq_files.extend(get_fastq_files(demux_root, flowcell, lane, samplename))
         else:
             flowcell = flowcell if flowcell else '*'
             lane = lane if lane else '?'
@@ -97,7 +96,7 @@ def ls(context, flowcell, lane, sample, check, force):
             fastq_files = get_fastq_files(demux_root, flowcell, lane, sample)
 
         if not fastq_files:
-            sys.exit(1)
+            context.abort()
 
         for fastq_file in fastq_files:
             link_me = force or not \
