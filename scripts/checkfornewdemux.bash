@@ -60,7 +60,7 @@ for run in ${UNABASE}/*; do
             deliver microbial --flowcell $FC &> ${UNABASE}${run}/microbial.${FC}.${NOW}.log
             cg transfer flowcell $FC &> ${UNABASE}${run}/cg.transfer.${FC}.${NOW}.log
   
-            # link the fastq files to cust/INBOX
+            # link the fastq files to custXXX/inbox
             deliver_fastqs_fc ${FC}
   
             SUBJECT=${FC}

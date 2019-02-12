@@ -15,8 +15,7 @@ from .ext import ext
 log = logging.getLogger(__name__)
 
 __version__ = '1.36.0'
-DEMUXDIR='/mnt/hds/proj/bioinfo/DEMUX/'
-
+DEMUXDIR='/home/proj/production/demultiplexed-runs'
 
 @click.group()
 @click.option('-l', '--log-level', default='INFO', envvar='LOGLEVEL')
@@ -35,7 +34,7 @@ def link(context, log_level, config):
 @click.option('-s', '--sample', help='sample to link')
 @click.option('-p', '--project', help='project to link [NOT IMPLEMENTED]')
 @click.option('--outdir', default='/mnt/hds/proj/bioinfo/MIP_ANALYSIS/customers/', show_default=True, type=click.Path(exists=True), help='path to MIP_ANALYSIS')
-@click.option('--demuxdir', default=DEMUXDIR, show_default=True, type=click.Path(exists=True), help='path to DEMUX')
+@click.option('--demuxdir', show_default=True, type=click.Path(exists=True), help='path to DEMUX')
 @click.option('--force', is_flag=True, help='Link regardless of QC. BEWARE that Undetermined indexes will be linked as well even if pooled sample!')
 @click.option('--skip-undetermined', is_flag=True, help='Skip linking undetermined.')
 @click.option('--sequencing-type', type=click.Choice(['wes', 'wgs']), help='Overwrite sequencing type directory.')
@@ -47,14 +46,14 @@ def mip(flowcell, sample, project, outdir, demuxdir, force, skip_undetermined, s
 
 @link.command()
 @click.argument('infile', type=click.Path(exists=True))
-@click.option('-s', '--sample', help='Sample name. If set, will deliver to cust/INBOX/{family}/{sample}')
-@click.option('-p', '--project', help='Project ID. If set, will deliver to cust/INBOX/{family}')
-@click.option('-c', '--case', help='case name. If set, will deliver to cust/INBOX/{family}')
+@click.option('-s', '--sample', help='Sample name. If set, will deliver to custXXX/inbox/{family}/{sample}')
+@click.option('-p', '--project', help='Project ID. If set, will deliver to custXXX/inbox/{family}')
+@click.option('-c', '--case', help='case name. If set, will deliver to custXXX/inbox/{family}')
 @click.option('--cust', help='Customer name')
-@click.option('--outdir', default='/mnt/hds/proj/', show_default=True, help='Path to customer folders')
+@click.option('--outdir', default='/home/proj/production/customers/', show_default=True, help='Path to customer folders')
 @click.pass_context
 def inbox(context, infile, sample, project, case, cust, outdir):
-    """links files to cust/INBOX/project"""
+    """links files to custXXX/inbox/project"""
     inbox_links(context.obj, infile, outdir, sample, project, case, cust)
 
 

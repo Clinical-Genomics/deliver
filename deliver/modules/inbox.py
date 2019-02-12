@@ -29,20 +29,20 @@ def inbox_links(config, infile, outdir, sample_id=None, project=None, case=None,
     outdir_parts = {
         'outdir': outdir,
         'cust': None,
-        'INBOX': 'INBOX',
+        'inbox': 'inbox',
         'group': None
     }
 
     if project:
-        outdir_template = '{outdir}/{cust}/INBOX/{group}/'
+        outdir_template = '{outdir}/{cust}/{inbox}/{group}/'
         samples = lims_api.get_samples(projectlimsid=project)
         sample = samples[0]
     elif case:
-        outdir_template = '{outdir}/{cust}/INBOX/{group}/'
+        outdir_template = '{outdir}/{cust}/{inbox}/{group}/'
         samples = lims_api.case(*case.split('-', 1))
         sample = samples[0]
     else:
-        outdir_template = '{outdir}/{cust}/INBOX/{group}/{sample}'
+        outdir_template = '{outdir}/{cust}/{inbox}/{group}/{sample}'
         sample = lims_api.sample(sample_id)
         sample_name = sample.name.replace(u'\xa0', u' ')
         outdir_parts['sample'] = sample_name
