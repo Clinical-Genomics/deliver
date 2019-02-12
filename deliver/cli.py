@@ -1,21 +1,21 @@
-# -*- coding: utf-8 -*-
+"""CLI for deliver package"""
 
 import sys
 import logging
-import click
 import yaml
 
+import click
+
 from .exc import MissingFlowcellError
-from .modules.demux import demux_links, is_pooled_lane, get_fastq_files, getsampleinfo
+from .modules.demux import is_pooled_lane, get_fastq_files, getsampleinfo
 from .modules.inbox import inbox_links
 from .modules.microbial import link_microbial
 from .utils.fastq import get_lane, is_undetermined
 from .ext import ext
 
-log = logging.getLogger(__name__)
+LOG = logging.getLogger(__name__)
 
 __version__ = '1.36.0'
-DEMUXDIR='/home/proj/production/demultiplexed-runs'
 
 @click.group()
 @click.option('-l', '--log-level', default='INFO', envvar='LOGLEVEL')
@@ -30,27 +30,13 @@ def link(context, log_level, config):
 
 
 @link.command()
-@click.option('-f', '--flowcell', help='flowcell to link')
-@click.option('-s', '--sample', help='sample to link')
-@click.option('-p', '--project', help='project to link [NOT IMPLEMENTED]')
-@click.option('--outdir', default='/mnt/hds/proj/bioinfo/MIP_ANALYSIS/customers/', show_default=True, type=click.Path(exists=True), help='path to MIP_ANALYSIS')
-@click.option('--demuxdir', show_default=True, type=click.Path(exists=True), help='path to DEMUX')
-@click.option('--force', is_flag=True, help='Link regardless of QC. BEWARE that Undetermined indexes will be linked as well even if pooled sample!')
-@click.option('--skip-undetermined', is_flag=True, help='Skip linking undetermined.')
-@click.option('--sequencing-type', type=click.Choice(['wes', 'wgs']), help='Overwrite sequencing type directory.')
-@click.help_option()
-def mip(flowcell, sample, project, outdir, demuxdir, force, skip_undetermined, sequencing_type):
-    """Links from DEMUX to MIP_ANALYSIS and customer folder"""
-    demux_links(flowcell, sample, project, outdir, demuxdir, force, skip_undetermined, sequencing_type)
-
-
-@link.command()
 @click.argument('infile', type=click.Path(exists=True))
-@click.option('-s', '--sample', help='Sample name. If set, will deliver to custXXX/inbox/{family}/{sample}')
+@click.option('-s', '--sample', help='Sample ID.\
+        If set, will deliver to custXXX/inbox/{family}/{sample}')
 @click.option('-p', '--project', help='Project ID. If set, will deliver to custXXX/inbox/{family}')
 @click.option('-c', '--case', help='case name. If set, will deliver to custXXX/inbox/{family}')
 @click.option('--cust', help='Customer name')
-@click.option('--outdir', default='/home/proj/production/customers/', show_default=True, help='Path to customer folders')
+@click.option('--outdir', show_default=True, help='Path to customer folders')
 @click.pass_context
 def inbox(context, infile, sample, project, case, cust, outdir):
     """links files to custXXX/inbox/project"""
@@ -72,7 +58,7 @@ def microbial(context, root_dir, sample, flowcell, dry_run, project):
         link_microbial(context.obj, flowcell=flowcell, project=project,
                        sample=sample, dry_run=dry_run)
     except MissingFlowcellError as error:
-        log.error("can't find flowcell: %s", error.message)
+        LOG.error("can't find flowcell: %s", error.message)
         context.abort()
 
 
@@ -92,19 +78,19 @@ def pooled(flowcell, lane):
 @click.option('-f', '--flowcell', default=None)
 @click.option('-l', '--lane', default=None)
 @click.option('-s', '--sample', default=None)
-@click.option('-c', '--check', is_flag=True, default=True, help='Check expected fastq files with cgstats')
-@click.option('-F', '--force', is_flag=True, default=False, help='List all fastq files, including undetermined')
+@click.option('-c', '--check', is_flag=True, default=True, help='Check expected fastq files')
+@click.option('-F', '--force', is_flag=True, default=False, help='Include undetermined')
 @click.pass_context
 def ls(context, flowcell, lane, sample, check, force):
     """List the fastq files."""
 
     fastq_files = []
     if check:
-        samples = getsampleinfo(flowcell, lane, sample)
-        for rs in samples:
-            flowcell = rs['flowcell']
-            lane = rs['lane']
-            sample = rs['samplename']
+        sample_infos = getsampleinfo(flowcell, lane, sample)
+        for sample_info in sample_infos:
+            flowcell = sample_info['flowcell']
+            lane = sample_info['lane']
+            sample_info = sample['samplename']
             fastq_files.extend(get_fastq_files(DEMUXDIR, flowcell, lane, sample))
     else:
         flowcell = flowcell if flowcell else '*'
@@ -116,12 +102,14 @@ def ls(context, flowcell, lane, sample, check, force):
         sys.exit(1)
 
     for fastq_file in fastq_files:
-        link_me = force or not (is_pooled_lane(flowcell, get_lane(fastq_file)) and is_undetermined(fastq_file))
+        link_me = force or not \
+                  (is_pooled_lane(flowcell, get_lane(fastq_file)) and is_undetermined(fastq_file))
         if link_me:
             click.echo(fastq_file)
 
 
 def setup_logging(level='INFO'):
+    """Set the default log output"""
     root_logger = logging.getLogger()
     root_logger.setLevel(level)
 
@@ -139,6 +127,3 @@ def setup_logging(level='INFO'):
 
 
 link.add_command(ext)
-
-if __name__ == '__main__':
-    link()
