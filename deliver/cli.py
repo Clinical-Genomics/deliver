@@ -85,18 +85,19 @@ def ls(context, flowcell, lane, sample, check, force):
     """List the fastq files."""
 
     fastq_files = []
+    demux_root = context.obj['demux_root']
     if check:
         sample_infos = getsampleinfo(flowcell, lane, sample)
         for sample_info in sample_infos:
             flowcell = sample_info['flowcell']
             lane = sample_info['lane']
             sample_info = sample['samplename']
-            fastq_files.extend(get_fastq_files(DEMUXDIR, flowcell, lane, sample))
+            fastq_files.extend(get_fastq_files(demux_root, flowcell, lane, sample))
     else:
         flowcell = flowcell if flowcell else '*'
         lane = lane if lane else '?'
         sample = sample if sample else '*'
-        fastq_files = get_fastq_files(DEMUXDIR, flowcell, lane, sample)
+        fastq_files = get_fastq_files(demux_root, flowcell, lane, sample)
 
     if not fastq_files:
         sys.exit(1)
