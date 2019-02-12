@@ -100,7 +100,7 @@ def list_(context, flowcell, lane, sample, check, force):
 
         for fastq_file in fastq_files:
             link_me = force or not \
-                      (is_pooled_lane(flowcell, get_lane(fastq_file)) and is_undetermined(fastq_file))
+                      (is_pooled_lane(cursor, flowcell, get_lane(fastq_file)) and is_undetermined(fastq_file))
             if link_me:
                 click.echo(fastq_file)
 
