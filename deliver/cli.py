@@ -1,16 +1,13 @@
 """CLI for deliver package"""
 
-import sys
 import logging
 import yaml
 
 import click
 
 from .exc import MissingFlowcellError
-from .modules.demux import is_pooled_lane, get_fastq_files, getsampleinfo
 from .modules.inbox import inbox_links
 from .modules.microbial import link_microbial
-from .utils.fastq import get_lane, is_undetermined
 from .ext import ext
 
 LOG = logging.getLogger(__name__)
@@ -60,53 +57,6 @@ def microbial(context, root_dir, sample, flowcell, dry_run, project):
     except MissingFlowcellError as error:
         LOG.error("can't find flowcell: %s", error.message)
         context.abort()
-
-
-@link.command()
-@click.argument('flowcell', required=True)
-@click.argument('lane', required=True)
-def pooled(flowcell, lane):
-    """Return whether or not this lane is pooled."""
-
-    if is_pooled_lane(flowcell, lane):
-        sys.exit(0)
-    else:
-        sys.exit(1)
-
-
-@link.command()
-@click.option('-f', '--flowcell', default=None)
-@click.option('-l', '--lane', default=None)
-@click.option('-s', '--sample', default=None)
-@click.option('-c', '--check', is_flag=True, default=True, help='Check expected fastq files')
-@click.option('-F', '--force', is_flag=True, default=False, help='Include undetermined')
-@click.pass_context
-def ls(context, flowcell, lane, sample, check, force):
-    """List the fastq files."""
-
-    fastq_files = []
-    demux_root = context.obj['demux_root']
-    if check:
-        sample_infos = getsampleinfo(flowcell, lane, sample)
-        for sample_info in sample_infos:
-            flowcell = sample_info['flowcell']
-            lane = sample_info['lane']
-            sample_info = sample['samplename']
-            fastq_files.extend(get_fastq_files(demux_root, flowcell, lane, sample))
-    else:
-        flowcell = flowcell if flowcell else '*'
-        lane = lane if lane else '?'
-        sample = sample if sample else '*'
-        fastq_files = get_fastq_files(demux_root, flowcell, lane, sample)
-
-    if not fastq_files:
-        sys.exit(1)
-
-    for fastq_file in fastq_files:
-        link_me = force or not \
-                  (is_pooled_lane(flowcell, get_lane(fastq_file)) and is_undetermined(fastq_file))
-        if link_me:
-            click.echo(fastq_file)
 
 
 def setup_logging(level='INFO'):
