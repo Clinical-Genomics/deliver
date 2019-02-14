@@ -37,10 +37,12 @@ def link(context, log_level, config):
 @click.option('-p', '--project', help='Project ID. If set, will deliver to custXXX/inbox/{family}')
 @click.option('-c', '--case', help='case name. If set, will deliver to custXXX/inbox/{family}')
 @click.option('--cust', help='Customer name')
-@click.option('--outdir', show_default=True, help='Path to customer folders')
+@click.option('--outdir', help='Path to customer folders')
 @click.pass_context
 def inbox(context, infile, sample, project, case, cust, outdir):
     """links files to custXXX/inbox/project"""
+    if not outdir:
+        outdir = context.obj['inbox_root']
     inbox_links(context.obj, infile, outdir, sample, project, case, cust)
 
 
@@ -80,7 +82,7 @@ def list_(context, flowcell, lane, sample, check, force):
     db   = context.obj['cgstats']['db']
     user = context.obj['cgstats']['user']
     password = context.obj['cgstats']['password']
-   
+
     with CgStats().connect(host, port, db, user, password) as cursor:
         if check:
             sample_infos = getsampleinfo(cursor, flowcell, lane, sample)
