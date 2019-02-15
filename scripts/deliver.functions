@@ -1,5 +1,5 @@
-DEMUX_ROOT=/mnt/hds/proj/bioinfo/DEMUX/
-EXT_ROOT=/mnt/hds/proj/bioinfo/EXTERNAL/
+DEMUX_ROOT=${PROJECT_HOME}/${ENVIRONMENT}/demultiplexed-runs
+EXT_ROOT=${PROJECT_HOME}/${ENVIRONMENT}/external-files
 
 
 log() {
@@ -8,6 +8,8 @@ log() {
 }
 
 add_demux() {
+    echo "Depricated"
+    return
     RUNPATH=${1?'Path to the DEMUX FC'}
 
     if /mnt/hds/proj/bioinfo/SERVER/miniconda/envs/oldcgstats/bin/python /mnt/hds/proj/bioinfo/SCRIPTS/xparseunaligned.py ${RUNPATH} &> ${RUNPATH}/LOG/xparseunaligned.`date +'%Y%m%d%H%M%S'`.log; then
@@ -24,7 +26,7 @@ add_demux() {
 }
 
 deliver_hk_case() {
-    # deliver files based on a case id and a housekeeper category to the cust/INBOX
+    # deliver files based on a case id and a housekeeper category to the custXXX/inbox
 
     local case_id=${1?'please provide a case id'}
     local category=${2?'please provide a category'}
@@ -43,7 +45,7 @@ deliver_hk_case() {
 }
 
 deliver_hk_sample() {
-    # Deliver files based on a sample id and a housekeeper category to the cust/INBOX
+    # Deliver files based on a sample id and a housekeeper category to the custXXX/inbox
 
     local sample_id=${1?'please provide a sample id'}
     local category=${2?'please provide a category'}
@@ -61,7 +63,7 @@ deliver_hk_sample() {
 }
 
 deliver_bamvcf() {
-    # Based on a sample id, deliver the bam/bai:s and vcfs to the cust/INBOX
+    # Based on a sample id, deliver the bam/bai:s and vcfs to the custXXX/inbox
 
     local sample_id=${1?'please provide a sample id'}
     local sample_cats=(bam bai)
@@ -91,7 +93,7 @@ deliver_bamvcf() {
 }
 
 deliver_bamvcfs() {
-    # Deliver files based on a sample id and a housekeeper category to the cust/INBOX
+    # Deliver files based on a sample id and a housekeeper category to the custXXX/inbox
 
     local case_id=${1?'please provide a case id'}
     local samples=($(cglims get --minimal ${case_id} id))
@@ -134,7 +136,7 @@ deliver_all_bamvcfs() {
 }
 
 deliver_fastqs_sample() {
-    # based on a sample id, deliver all fastq files of a sample to the cust/INBOX
+    # based on a sample id, deliver all fastq files of a sample to the custXXX/inbox
 
     sample_id=${1?'please provide a sample id'}
     fcs=$(cgstats flowcells --sample ${sample_id})
@@ -159,7 +161,7 @@ deliver_fastqs_sample() {
 }
 
 deliver_fastqs_case() {
-    # based on a case_id, deliver all fastq files of the sample belonging to a case to the cust/INBOX
+    # based on a case_id, deliver all fastq files of the sample belonging to a case to the custXXX/inbox
 
     case_id=${1?'please provide a case id'}
     samples=$(cglims get --minimal ${case_id} id)
@@ -175,7 +177,7 @@ deliver_fastqs_case() {
 }
 
 deliver_fastqs_project() {
-    # based on a project_id, deliver all fastq files of the sample belonging of the project to the cust/INBOX
+    # based on a project_id, deliver all fastq files of the sample belonging of the project to the custXXX/inbox
 
     project_id=${1?'please provide a project id'}
     samples=$(cglims get --minimal --project ${project_id} id)
@@ -191,7 +193,7 @@ deliver_fastqs_project() {
 }
 
 deliver_fastqs_fc() {
-    # based on a fc, deliver all fastq files of the samples on a FC to the cust/INBOX
+    # based on a fc, deliver all fastq files of the samples on a FC to the custXXX/inbox
 
     fc=${1?'please provide a FC id'}
     samples=$(cgstats samples --flowcell ${fc})
@@ -370,13 +372,13 @@ import_sample_as_ext() {
 
     fastqs=$(deliver ls --sample ${sample_id})
 
-    # link to our INBOX first .. with a proper name
+    # link to our inbox first .. with a proper name
     for fastq in ${fastqs[@]}; do
-        deliver inbox --outdir /mnt/hds/proj/INBOX/ --sample ${sample_id} ${fastq}
+        deliver inbox --outdir ${PROJECT_HOME}/${ENVIRONMENT}/inbox/ --sample ${sample_id} ${fastq}
     done
 
     # now import to EXTERNAL
-    for inbox_fastq in /mnt/hds/proj/INBOX/${cust_id}/INBOX/*/${name}/*.fastq.gz; do
+    for inbox_fastq in ${PROJECT_HOME}/${ENVIRONMENT}/inbox/${cust_id}/inbox/*/${name}/*.fastq.gz; do
         deliver ext inbox ${inbox_fastq}
     done
 
