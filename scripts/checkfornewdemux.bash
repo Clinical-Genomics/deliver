@@ -74,6 +74,8 @@ for run in ${UNABASE}/*; do
                 rsync -rvtl ${UNABASE}${run} hasta:${HASTA_DEMUXES_DIR}
                 log "ssh hasta \"find -L ${HASTA_DEMUXES_DIR}/${run} -type l -printf 'ln -sf %l %h/%f\n' | sed s'|${UNABASE}|${HASTA_DEMUXES_DIR}|' | sh\""
                 ssh hasta "find -L ${HASTA_DEMUXES_DIR}/${run} -type l -printf 'ln -sf %l %h/%f\n' | sed s'|${UNABASE}|${HASTA_DEMUXES_DIR}|' | sh"
+                log "ssh hasta \"rm ${HASTA_DEMUXES_DIR}/${run}/delivery.txt\""
+                ssh hasta "rm ${HASTA_DEMUXES_DIR}/${run}/delivery.txt"
                 log "column -t ${UNABASE}${run}/stats*.txt | mail -s 'Run ${SUBJECT} synced to hasta!' ${MAILTO}"
                 column -t ${UNABASE}${run}/stats*.txt | mail -s "Run ${SUBJECT} synced to hasta!" ${MAILTO}
             fi
