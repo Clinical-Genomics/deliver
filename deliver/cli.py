@@ -16,7 +16,7 @@ from .modules.db import CgStats
 
 LOG = logging.getLogger(__name__)
 
-__version__ = '2.0.0'
+__version__ = '2.1.0'
 
 @click.group()
 @click.option('-l', '--log-level', default='INFO', envvar='LOGLEVEL')
