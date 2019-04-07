@@ -8,8 +8,8 @@ useprod
 # VARS #
 ########
 
-ERROR_EMAIL=clinical-demux@scilifelab.se
-HASTA_DEMUXES_DIR=${PROJECT_HOME}/${ENVIRONMENT}/demultiplexed-runs/
+HASTA_DEMUXES_DIR=${1-${PROJECT_HOME}/${ENVIRONMENT}/demultiplexed-runs/}
+ERROR_EMAIL=${2-clinical-demux@scilifelab.se}
 
 #############
 # FUNCTIONS #
