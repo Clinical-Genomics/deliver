@@ -40,6 +40,11 @@ for run in ${HASTA_DEMUXES_DIR}/*; do
   
             NOW=$(date +"%Y%m%d%H%M%S")
             cg transfer flowcell $FC &> ${HASTA_DEMUXES_DIR}${run}/cg.transfer.${FC}.${NOW}.log
+
+            # send an email on completion
+            SUBJECT=${FC}
+            log "column -t ${UNABASE}${run}/stats*.txt | mail -s 'Run ${SUBJECT} COMPLETE!' ${MAILTO}"
+            column -t ${UNABASE}${run}/stats*.txt | mail -s "Run ${SUBJECT} COMPLETE!" ${MAILTO}
         fi
     else
         log ${run} 'is not yet completely copied'
