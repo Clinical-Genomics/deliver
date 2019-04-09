@@ -8,8 +8,8 @@ useprod
 # VARS #
 ########
 
-ERROR_EMAIL=clinical-demux@scilifelab.se
-HASTA_DEMUXES_DIR=${PROJECT_HOME}/${ENVIRONMENT}/demultiplexed-runs/
+HASTA_DEMUXES_DIR=${1-${PROJECT_HOME}/${ENVIRONMENT}/demultiplexed-runs/}
+MAILTO=${2-clinical-demux@scilifelab.se}
 
 #############
 # FUNCTIONS #
@@ -21,7 +21,7 @@ log() {
 }
 
 failed() {
-    echo "Error delivering ${FC}: $(caller)" | mail -s "ERROR delivery ${FC}" ${ERROR_EMAIL}
+    echo "Error delivering ${FC}: $(caller)" | mail -s "ERROR delivery ${FC}" ${MAILTO}
 }
 trap failed ERR
 
@@ -40,6 +40,11 @@ for run in ${HASTA_DEMUXES_DIR}/*; do
   
             NOW=$(date +"%Y%m%d%H%M%S")
             cg transfer flowcell $FC &> ${HASTA_DEMUXES_DIR}${run}/cg.transfer.${FC}.${NOW}.log
+
+            # send an email on completion
+            SUBJECT=${FC}
+            log "column -t ${HASTA_DEMUXES_DIR}/${run}/stats*.txt | mail -s 'Run ${SUBJECT} COMPLETE!' ${MAILTO}"
+            column -t ${HASTA_DEMUXES_DIR}/${run}/stats*.txt | mail -s "Run ${SUBJECT} COMPLETE!" ${MAILTO}
         fi
     else
         log ${run} 'is not yet completely copied'

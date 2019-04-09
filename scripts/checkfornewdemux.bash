@@ -58,16 +58,7 @@ for run in ${UNABASE}/*; do
   
             NOW=$(date +"%Y%m%d%H%M%S")
             deliver microbial --flowcell $FC &> ${UNABASE}${run}/microbial.${FC}.${NOW}.log
-            cg transfer flowcell $FC &> ${UNABASE}${run}/cg.transfer.${FC}.${NOW}.log
   
-            # link the fastq files to custXXX/inbox
-            deliver_fastqs_fc ${FC}
-  
-            SUBJECT=${FC}
-            # send an email on completion
-            log "column -t ${UNABASE}${run}/stats*.txt | mail -s 'Run ${SUBJECT} COMPLETE!' ${MAILTO}"
-            column -t ${UNABASE}${run}/stats*.txt | mail -s "Run ${SUBJECT} COMPLETE!" ${MAILTO}
-
             # post X action: copy to hasta
             if [[ -d "${UNABASE}${run}/l1t11" ]]; then
                 log "rsync -rvtl ${UNABASE}${run} hasta:${HASTA_DEMUXES_DIR}"
@@ -76,8 +67,6 @@ for run in ${UNABASE}/*; do
                 ssh hasta "find -L ${HASTA_DEMUXES_DIR}/${run} -type l -printf 'ln -sf %l %h/%f\n' | sed s'|${UNABASE}|${HASTA_DEMUXES_DIR}|' | sh"
                 log "ssh hasta \"rm ${HASTA_DEMUXES_DIR}/${run}/delivery.txt\""
                 ssh hasta "rm ${HASTA_DEMUXES_DIR}/${run}/delivery.txt"
-                log "column -t ${UNABASE}${run}/stats*.txt | mail -s 'Run ${SUBJECT} synced to hasta!' ${MAILTO}"
-                column -t ${UNABASE}${run}/stats*.txt | mail -s "Run ${SUBJECT} synced to hasta!" ${MAILTO}
             fi
         fi
     else
