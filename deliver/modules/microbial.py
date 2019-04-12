@@ -13,12 +13,14 @@ import logging
 import re
 
 from path import Path
-from cglims.api import ClinicalLims, ClinicalSample
-from cgstats.db import api
-from cgstats.db.models import Demux, Flowcell, Sample, Unaligned
+
+from requests.exceptions import HTTPError
 from sqlalchemy import or_
 from sqlalchemy.orm.exc import NoResultFound
 
+from cglims.api import ClinicalLims, ClinicalSample
+from cgstats.db import api
+from cgstats.db.models import Demux, Flowcell, Sample, Unaligned
 from deliver.exc import MissingFlowcellError
 from deliver.modules.demux import get_fastq_files
 
@@ -43,12 +45,16 @@ def link_microbial(config, flowcell=None, project=None, sample=None,
     lims_samples = (lims_api.sample(lims_id) for lims_id in lims_ids)
     relevant_samples = []
     for sample in lims_samples:
-        cgsample = ClinicalSample(sample)
+        try:
+            cgsample = ClinicalSample(sample)
+        except HTTPError:
+            log.warning('Skipping %s: not found in LIMS', sample)
+            continue
         if cgsample.pipeline == 'mwgs':
             relevant_samples.append(sample)
         else:
-            log.warning('Skipping {} (pipeline: {}) (apptag: {})'.\
-                      format(sample.id, cgsample.pipeline, cgsample.apptag))
+            log.warning('Skipping %s (pipeline: %s) (apptag: %s)',
+                        sample.id, cgsample.pipeline, cgsample.apptag)
 
     for lims_sample in relevant_samples:
         log.info("working on sample: %s", lims_sample.id)
@@ -124,14 +130,14 @@ def get_flowcells(csdb_manager, lims_id):
                      .join(Demux.unaligned)
                      .join(Unaligned.sample)
                      .filter(
-                         or_(Sample.samplename.like("{}_%".format(lims_id)), Sample.samplename.like("{}".format(lims_id)))
+                             or_(Sample.samplename.like("{}_%".format(lims_id)),
+                                 Sample.samplename.like("{}".format(lims_id)))
                      ))
     return query
 
 
 def get_fastqs(demux_root, flowcell_id, project_id, lims_id):
     """Get FASTQ files for a sample."""
-    demux_path = Path(demux_root)
     fastqs = get_fastq_files(demuxdir=demux_root, fc=flowcell_id, sample_name=lims_id)
     # skip files with "Undertermined" in the filename
     relevant_files = (Path(fastq_path) for fastq_path in fastqs
