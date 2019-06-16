@@ -1,9 +1,5 @@
 #!/bin/bash
 
-shopt -s expand_aliases
-source ${HOME}/.bashrc
-useprod
-
 ########
 # VARS #
 ########
