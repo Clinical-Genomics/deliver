@@ -6,7 +6,7 @@
 
 HASTA_DEMUXES_DIR=${1-${PROJECT_HOME}/${ENVIRONMENT}/demultiplexed-runs/}
 ERROR_EMAIL=${2-clinical-demux@scilifelab.se}
-MAILTO=${clinical-demux@scilifelab.se}
+MAILTO=${2-clinical-demux@scilifelab.se}
 
 #############
 # FUNCTIONS #
