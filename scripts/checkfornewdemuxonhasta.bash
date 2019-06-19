@@ -6,6 +6,7 @@
 
 HASTA_DEMUXES_DIR=${1-${PROJECT_HOME}/${ENVIRONMENT}/demultiplexed-runs/}
 ERROR_EMAIL=${2-clinical-demux@scilifelab.se}
+MAILTO=${clinical-demux@scilifelab.se}
 
 #############
 # FUNCTIONS #
@@ -56,8 +57,8 @@ for run in ${HASTA_DEMUXES_DIR}/*; do
 
             # send an email on completion
             SUBJECT=${FC}
-            log "column -t ${UNABASE}${run}/stats*.txt | mail -s 'Run ${SUBJECT} COMPLETE!' ${MAILTO}"
-            column -t ${UNABASE}${run}/stats*.txt | mail -s "Run ${SUBJECT} COMPLETE!" ${MAILTO}
+            log "column -t ${HASTA_DEMUXES_DIR}/${run}/stats*.txt | mail -s 'Run ${SUBJECT} COMPLETE!' ${MAILTO}"
+            column -t ${HASTA_DEMUXES_DIR}/${run}/stats*.txt | mail -s "Run ${SUBJECT} COMPLETE!" ${MAILTO}
         fi
     else
         log ${run} 'is not yet completely copied'
