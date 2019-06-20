@@ -5,7 +5,6 @@
 ########
 
 HASTA_DEMUXES_DIR=${1-${PROJECT_HOME}/${ENVIRONMENT}/demultiplexed-runs/}
-ERROR_EMAIL=${2-clinical-demux@scilifelab.se}
 MAILTO=${2-clinical-demux@scilifelab.se}
 
 #############
@@ -18,7 +17,7 @@ log() {
 }
 
 failed() {
-    echo "Error delivering ${FC}: $(caller)" | mail -s "ERROR delivery ${FC}" ${ERROR_EMAIL}
+    echo "Error delivering ${FC}: $(caller)" | mail -s "ERROR delivery ${FC}" ${MAILTO}
 }
 trap failed ERR
 
