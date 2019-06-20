@@ -1,8 +1,5 @@
 #!/bin/bash
 
-shopt -s expand_aliases
-source ~/.bashrc
-
 ########
 # VARS #
 ########
@@ -10,7 +7,7 @@ source ~/.bashrc
 MAILTO=clinical-demux@scilifelab.se
 ERROR_EMAIL=clinical-demux@scilifelab.se
 UNABASE=/mnt/hds/proj/bioinfo/DEMUX/
-HASTA_DEMUXES_DIR=/home/proj/production/demultiplexed-runs/
+HASTA_DEMUXES_DIR=/home/proj/${ENVIRONMENT}/demultiplexed-runs/
 
 #############
 # FUNCTIONS #
