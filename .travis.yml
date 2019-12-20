@@ -1,11 +1,12 @@
 language: python
+# 2.7 on hasta
 python:
   - "2.7"
 
 # command to install dependencies
 # pip locked to version in P_deliver
 install:
-  - pip install pip==10.0.1
+  - pip install pip==19.0.1
   - pip install cython
   - pip install -U -r requirements.txt .
 # command to run tests
