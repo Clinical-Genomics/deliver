@@ -1,11 +1,13 @@
 language: python
+# 3.7 on hasta and 3.6 on thalamus
 python:
-  - "2.7"
+  - "3.7"
+  - "3.6"
 
 # command to install dependencies
-# pip locked to version in P_deliver
+# pip locked to version in prod on thalamus
 install:
-  - pip install pip==10.0.1
+  - pip install pip==9.0.1
   - pip install cython
   - pip install -U -r requirements.txt .
 # command to run tests
