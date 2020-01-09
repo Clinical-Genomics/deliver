@@ -1,6 +1,8 @@
 language: python
+# 3.7 for jobs on travis
 # 2.7 on hasta
 python:
+  - "3.7"
   - "2.7"
 
 # command to install dependencies
