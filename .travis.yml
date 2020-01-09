@@ -8,26 +8,30 @@ jobs:
     - name: "production dependencies"
       python: 2.7
       #if: type = pull_request
+      install:
+          - pip install pip==19.0.1
+          - pip install cython
+          - pip install -U -r requirements.txt .
       script:
-        - pip install pip==19.0.1
-        - pip install cython
-        - pip install -U -r requirements.txt .
         - pip check
     - name: "development dependencies"
       python: 2.7
       #if: type = pull_request
-      script:
+      install:
         - pip install cython
         - pip install -U -r requirements.txt .
         - pip install -U -r requirements-dev.txt .
+      script:
         - pip check
     - name: "test & coverage"
       python: 2.7
       #if: NOT type = pull_request
-      script:
+      install:
         - pip install -U -r requirements.txt .
         - pip install -U -r requirements-dev.txt .
+      script:
         - coverage run --branch --omit="*.html" --source "$(basename "$PWD")" setup.py test
+      after_success:
         - coveralls
     - name: "code formatting"
       python: 3.8
@@ -38,8 +42,9 @@ jobs:
     - name: "pylint score"
       python: 3.8
       #if: type = pull_request
-      script:
+      install:
         - pip install -U pylint
+      script:
         - grep -r -E "pylint. {0,1}disable\=" .; if [ $? -eq 0 ]; then echo "Can not run pylint scoring with any pylint warnings disabled, please remove them and try again" && false; else true; fi
         - (git --no-pager diff --name-only --diff-filter=M $TRAVIS_COMMIT_RANGE | grep -F ".py" || echo "$(basename "$PWD")") > $TRAVIS_HOME/before_files.txt
         - (git --no-pager diff --name-only --diff-filter=AM $TRAVIS_COMMIT_RANGE | grep -F ".py" || echo "$(basename "$PWD")") > $TRAVIS_HOME/after_files.txt
@@ -50,8 +55,9 @@ jobs:
     - name: "linting"
       python: 3.8
       #if: type = pull_request
-      script:
+      install:
         - pip install -U -r requirements-dev.txt
+      script:
         - git reset --soft ${TRAVIS_COMMIT_RANGE%...*} && git lint
 
 notifications:
