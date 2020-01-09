@@ -25,14 +25,15 @@ jobs:
       python: 2.7
       #if: NOT type = pull_request
       script:
-        - pip install -U -r requirements-dev.txt
+        - pip install -U -r requirements.txt .
+        - pip install -U -r requirements-dev.txt .
         - coverage run --branch --omit="*.html" --source "$(basename "$PWD")" setup.py test
         - coveralls
     - name: "code formatting"
       python: 3.8
       #if: type = pull_request
+      install: pip install -U black
       script:
-        - pip install -U black
         - git --no-pager diff --name-only --diff-filter=AM $TRAVIS_COMMIT_RANGE | grep -F ".py" | xargs black --check
     - name: "pylint score"
       python: 3.8
