@@ -7,10 +7,6 @@ python:
   - "3.6"
   - "3.5"
   - "3.4"
-  - "3.3"
-  - "3.2"
-  - "3.1"
-  - "3.0"
   - "2.7"
 
 # command to install dependencies
@@ -18,7 +14,6 @@ python:
 install:
   - pip install pip==19.0.1
   - pip install cython
-  - pip install -U -r requirements.txt .
 # command to run tests
 script:
 #  - pytest
@@ -30,29 +25,31 @@ jobs:
     - name: "production dependencies"
       #if: type = pull_request
       script:
+        - pip install -U -r requirements.txt .
         - pip check
     - name: "development dependencies"
       #if: type = pull_request
       script:
+        - pip install -U -r requirements.txt .
         - pip install -U -r requirements-dev.txt .
         - pip check
     - name: "coverage"
       #if: NOT type = pull_request
       script:
         - pip install --upgrade pip
+        - pip install -U -r requirements.txt .
         - pip install -U -r requirements-dev.txt
         - coverage run --branch --omit="*.html" --source "$(basename "$PWD")" setup.py test
         - coveralls
     - name: "code formatting"
       #if: type = pull_request
       script:
-        - pip install --upgrade pip
-        - pip install black
+        - pip install --upgrade pip && pip install -U black
         - git --no-pager diff --name-only --diff-filter=AM $TRAVIS_COMMIT_RANGE | grep -F ".py" | xargs black --check
     - name: "pylint score"
       #if: type = pull_request
       script:
-        - pip install --upgrade pip && pip install -U -r requirements-dev.txt .
+        - pip install --upgrade pip && pip install -U pylint
         - grep -r -E "pylint. {0,1}disable\=" .; if [ $? -eq 0 ]; then echo "Can not run pylint scoring with any pylint warnings disabled, please remove them and try again" && false; else true; fi
         - (git --no-pager diff --name-only --diff-filter=M $TRAVIS_COMMIT_RANGE | grep -F ".py" || echo "$(basename "$PWD")") > $TRAVIS_HOME/before_files.txt
         - (git --no-pager diff --name-only --diff-filter=AM $TRAVIS_COMMIT_RANGE | grep -F ".py" || echo "$(basename "$PWD")") > $TRAVIS_HOME/after_files.txt
