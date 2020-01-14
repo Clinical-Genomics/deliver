@@ -20,7 +20,7 @@ jobs:
       if: type = pull_request
       python: "2.7"   # on hasta
       install:
-        - pip install pip==19.0.1  # pip version in prod170926
+        # - pip install pip==19.0.1  # pip version in prod170926
         - pip install -U cython
         - pip install -U -r requirements.txt
       script: pip check
