@@ -1,5 +1,4 @@
 language: python
-
 cache: pip
 
 jobs:
@@ -13,6 +12,7 @@ jobs:
 
     - name: "Package install"
       if: type = pull_request
+      python: "2.7.15"   # on P_deliver
       install: python setup.py install
       script: true
 
@@ -27,6 +27,7 @@ jobs:
 
     - name: "Development dependencies"
       if: type = pull_request
+      python: "2.7.15"   # on P_deliver
       install:
         - pip install cython
         - pip install -U -r requirements.txt -r requirements-dev.txt .
@@ -34,6 +35,7 @@ jobs:
 
     - name: "Coverage"
       if: NOT type = pull_request
+      python: "2.7.15"   # on P_deliver
       install:
         - pip install -U cython
         - pip install -U -r requirements.txt -r requirements-dev.txt .
