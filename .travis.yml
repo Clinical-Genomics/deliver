@@ -5,9 +5,9 @@ cache: pip
 jobs:
   include:
 
-    - name: "Tests on python 2.7"
+    - name: "Tests on python 2.7 (Hasta)"
       if: type = pull_request
-      python: "2.7"   # on hasta
+      python: "2.7.15"   # on P_deliver
       install: pip install -U -r requirements.txt -r requirements-dev.txt .
       script: pytest
 
@@ -16,11 +16,11 @@ jobs:
       install: python setup.py install
       script: true
 
-    - name: "Production dependencies on python 2.7"
+    - name: "Production dependencies on Hasta"
       if: type = pull_request
-      python: "2.7"   # on hasta
+      python: "2.7.15"            # on P_deliver
       install:
-        # - pip install pip==19.0.1  # pip version in prod170926
+        - pip install pip==19.0.1  # pip version in P_deliver
         - pip install -U cython
         - pip install -U -r requirements.txt
       script: pip check
