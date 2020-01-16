@@ -7,7 +7,7 @@ jobs:
     - name: "Tests on python 2.7 (Hasta)"
       if: type = pull_request
       python: "2.7.15"   # on P_deliver
-      install: pip install -U -r requirements.txt -r requirements-dev.txt .
+      install: pip install . -r requirements-dev.txt
       script: pytest
 
     - name: "Package install"
@@ -21,8 +21,8 @@ jobs:
       python: "2.7.15"            # on P_deliver
       install:
         - pip install pip==19.0.1  # pip version in P_deliver
-        - pip install -U cython
-        - pip install -U -r requirements.txt .
+        - pip install cython
+        - pip install .
       script: pip check
 
     - name: "Development dependencies"
@@ -30,26 +30,26 @@ jobs:
       python: "2.7.15"   # on P_deliver
       install:
         - pip install cython
-        - pip install -U -r requirements.txt -r requirements-dev.txt .
+        - pip install . -r requirements-dev.txt
       script: pip check
 
     - name: "Coverage"
       if: NOT type = pull_request
       python: "2.7.15"   # on P_deliver
       install:
-        - pip install -U cython
-        - pip install -U -r requirements.txt -r requirements-dev.txt .
+        - pip install cython
+        - pip install . -r requirements-dev.txt
       script: coverage run --branch --omit="*.html" --source "$(basename "$PWD")" setup.py test
       after_success: coveralls
 
     - name: "Code formatting"
       if: type = pull_request
-      install: pip install -U black
+      install: pip install black
       script: git --no-pager diff --name-only --diff-filter=AM $TRAVIS_COMMIT_RANGE | grep -F ".py" | xargs black --check
 
     - name: "Pylint score"
       if: type = pull_request
-      install: pip install -U pylint
+      install: pip install pylint
       script:
         - grep -r -E "pylint. {0,1}disable\=" .; if [ $? -eq 0 ]; then echo "Can not run pylint scoring with any pylint warnings disabled, please remove them and try again" && false; else true; fi
         - (git --no-pager diff --name-only --diff-filter=M $TRAVIS_COMMIT_RANGE | grep -F ".py" || echo "$(basename "$PWD")") > $TRAVIS_HOME/before_files.txt
@@ -64,7 +64,7 @@ jobs:
 
     - name: "Linting"
       if: type = pull_request
-      install: pip install -U -r requirements-dev.txt
+      install: pip install -r requirements-dev.txt
       script: git reset --soft ${TRAVIS_COMMIT_RANGE%...*} && git lint
 
 notifications:
