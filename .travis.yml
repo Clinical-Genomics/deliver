@@ -34,7 +34,7 @@ jobs:
       script: pip check
 
     - name: "Coverage"
-      if: NOT type = pull_request
+      if: NOT type = push
       python: "2.7.15"   # on P_deliver
       install:
         - pip install cython
