@@ -1,8 +1,10 @@
 #!/bin/bash
 
+SET_ENVIRONMENT=${ENVIRONMENT}
+
 shopt -s expand_aliases
 source ${HOME}/.bashrc
-if [[ ${ENVIRONMENT} == 'production' ]]; then
+if [[ ${SET_ENVIRONMENT} == 'production' ]]; then
     useprod
 else
     usestage
